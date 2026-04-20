@@ -58,14 +58,11 @@ function renderVitrine(filtro = 'Todos') {
     if(prods.length === 0) { grid.innerHTML = '<p style="color:#718096; grid-column: 1 / -1;">Nenhum produto encontrado.</p>'; return; }
 
     grid.innerHTML = prods.map(p => {
-        // FIM DO PISCA PISCA: Lógica limpa para imagem via Div Background
         const temFoto = p.foto && p.foto.trim() !== '';
         const imgStyle = temFoto ? `background-image: url('${p.foto}');` : '';
         const imgText = temFoto ? '' : 'Sem Imagem';
-        
         let subtitulo = p.regraPreco === 'm2' ? 'A partir de m²' : (p.regraPreco === 'pacote' ? 'Grade Fechada' : 'Preço Unitário');
         let precoVitrine = p.regraPreco === 'pacote' && p.pacotes && p.pacotes.length > 0 ? p.pacotes[0].preco : (p.preco || 0);
-        
         let corFundo = p.tipo === 'grafico' ? 'bg-grafico' : (p.tipo === 'visual' ? 'bg-visual' : 'bg-outros');
 
         return `
@@ -80,6 +77,16 @@ function renderVitrine(filtro = 'Todos') {
 
 function abrirConfigurador(idProduto) {
     const p = bdProdutos.find(x => x.id === idProduto); if(!p) return;
+    
+    // 1. CARREGA A IMAGEM NO TOPO DO MODAL
+    const headerImg = document.getElementById('modalHeaderImg');
+    if(p.foto && p.foto.trim() !== '') {
+        headerImg.style.backgroundImage = `url('${p.foto}')`;
+        headerImg.style.display = 'block';
+    } else {
+        headerImg.style.display = 'none'; // Esconde se não tiver foto
+    }
+
     document.getElementById('modalNomeProd').innerText = p.nome;
     document.getElementById('modalProdId').value = p.id;
     document.getElementById('modalProdRegra').value = p.regraPreco;
@@ -88,9 +95,9 @@ function abrirConfigurador(idProduto) {
     const divMedidas = document.getElementById('modalCorpoMedidas');
     const divAcabamentos = document.getElementById('modalCorpoAcabamentos');
 
-    // 1. GERA MEDIDAS, PACOTES OU UNIDADE
+    // 2. GERA MEDIDAS
     if (p.regraPreco === 'm2') {
-        divMedidas.innerHTML = `<div class="input-group"><label>Largura (m)</label><input type="number" id="w2pLargura" value="1.00" step="0.01" max="${p.larguraMax}" oninput="calcularPrecoAoVivo()"><small style="color:#718096; font-size:11px;">Máx. Bobina: ${p.larguraMax}m</small></div><div class="input-group"><label>Altura (m)</label><input type="number" id="w2pAltura" value="1.00" step="0.01" max="${p.compMax}" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Quantidade de Lonas</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
+        divMedidas.innerHTML = `<div class="input-group"><label>Largura (m)</label><input type="number" id="w2pLargura" value="1.00" step="0.01" max="${p.larguraMax}" oninput="calcularPrecoAoVivo()"><small style="color:#718096; font-size:11px;">Máx. Bobina: ${p.larguraMax}m</small></div><div class="input-group"><label>Altura (m)</label><input type="number" id="w2pAltura" value="1.00" step="0.01" max="${p.compMax}" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
     } else if (p.regraPreco === 'pacote') {
         let options = (p.pacotes || []).map(pct => `<option value="${pct.qtd}" data-preco="${pct.preco}">${pct.qtd} un. - R$ ${pct.preco.toFixed(2)}</option>`).join('');
         if(!options) options = `<option value="1" data-preco="0">Nenhum pacote cadastrado</option>`;
@@ -99,15 +106,25 @@ function abrirConfigurador(idProduto) {
         divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
     }
 
-    // 2. GERA ACABAMENTOS PERMITIDOS
+    // 3. GERA ACABAMENTOS (COM O "MARCADO POR PADRÃO")
     const acabamentosProd = p.acabamentos || [];
     if(acabamentosProd.length > 0) {
-        let htmlAcab = `<label style="display:block; font-weight:bold; color:#4A5568; margin-bottom:10px;">Opções e Acabamentos extras</label><div class="lista-acabamentos-modal">`;
+        let htmlAcab = `<label style="display:block; font-weight:bold; color:#4A5568; margin-bottom:15px; font-size:16px;">Opções e Acabamentos extras</label><div class="lista-acabamentos-modal">`;
         acabamentosProd.forEach(idAcab => {
             const a = bdAcabamentos.find(x => x.id === idAcab);
             if(a) {
                 let lbl = a.regra === 'lote' ? 'Taxa Fixa Lote' : (a.regra === 'm2' ? 'Por m²' : 'Cada');
-                htmlAcab += `<label class="check-box-custom"><div><input type="checkbox" class="w2p-check-acab" value="${a.nome}" data-regra="${a.regra}" data-preco="${a.venda}" onchange="calcularPrecoAoVivo()"><span style="font-weight:bold; color:#2D3748; font-size:14px;">${a.nome}</span></div><span style="color:#38A169; font-weight:bold; font-size:13px;">+ R$ ${a.venda.toFixed(2)} <small>(${lbl})</small></span></label>`;
+                // LÓGICA DO PADRÃO AQUI
+                let isChecked = (a.padrao === true) ? 'checked' : '';
+                
+                htmlAcab += `
+                <label class="check-box-custom">
+                    <div style="display:flex; align-items:center;">
+                        <input type="checkbox" class="w2p-check-acab" value="${a.nome}" data-regra="${a.regra}" data-preco="${a.venda}" onchange="calcularPrecoAoVivo()" ${isChecked}>
+                        <span style="font-weight:bold; color:#2D3748; font-size:15px;">${a.nome}</span>
+                    </div>
+                    <span style="color:var(--cor-sucesso); font-weight:bold; font-size:14px;">+ R$ ${a.venda.toFixed(2)} <small style="font-weight:normal;">(${lbl})</small></span>
+                </label>`;
             }
         });
         divAcabamentos.innerHTML = htmlAcab + `</div>`;
@@ -151,9 +168,9 @@ function calcularPrecoAoVivo() {
             let area = metrosTotais > 0 ? metrosTotais : 1; 
             totalAcab += (pAcab * area) * qtd;
         } else if (rAcab === 'lote') {
-            totalAcab += pAcab; // Taxa Única (Ex: Faca Especial R$ 80, independente se tem 1 ou 1000 cartões)
+            totalAcab += pAcab; 
         } else {
-            totalAcab += (pAcab * qtd); // Unidade: R$ 0.10 x 1000 cartões = 100.
+            totalAcab += (pAcab * qtd); 
         }
     });
 
@@ -170,7 +187,7 @@ function confirmarAdicaoCarrinho() {
         info = `${qtd}x Un. (${document.getElementById('w2pLargura').value}x${document.getElementById('w2pAltura').value}m). `;
     } else if (regraProduto === 'pacote') {
         qtd = document.getElementById('w2pPacote').value;
-        info = `Pacote Fechado: ${qtd} Unidades. `;
+        info = `Pacote: ${qtd} Unidades. `;
     } else {
         qtd = parseInt(document.getElementById('w2pQtd')?.value) || 1;
         info = `${qtd}x Unidades. `;
@@ -213,7 +230,7 @@ function enviarPedido() {
 }
 
 // ==========================================
-// CADASTROS E LÓGICA DAS GRADES (PACOTES)
+// CADASTROS GERAIS
 // ==========================================
 function ajustarCamposProduto() {
     const tipo = document.getElementById('prodTipo').value; const regra = document.getElementById('prodRegraPreco').value;
@@ -222,16 +239,11 @@ function ajustarCamposProduto() {
     const boxBase = document.getElementById('boxPrecoBase'); const boxPacotes = document.getElementById('boxPacotes');
 
     if (tipo === 'visual') { if(divCor) divCor.style.display = 'none'; if(divTam) divTam.style.display = 'none'; } else { if(divCor) divCor.style.display = 'block'; if(divTam) divTam.style.display = 'block'; }
-    
-    // Mostra/Esconde Telas de Preço
     boxMed.style.display = 'none'; boxBase.style.display = 'none'; boxPacotes.style.display = 'none';
-    if (regra === 'm2') { boxMed.style.display = 'grid'; boxBase.style.display = 'block'; lblPreco.innerText = "Preço por m² (R$)"; } 
-    else if (regra === 'pacote') { boxPacotes.style.display = 'block'; } 
-    else { boxBase.style.display = 'block'; lblPreco.innerText = "Preço Unitário (R$)"; }
+    if (regra === 'm2') { boxMed.style.display = 'grid'; boxBase.style.display = 'block'; lblPreco.innerText = "Preço por m² (R$)"; } else if (regra === 'pacote') { boxPacotes.style.display = 'block'; } else { boxBase.style.display = 'block'; lblPreco.innerText = "Preço Unitário (R$)"; }
 }
 document.addEventListener('DOMContentLoaded', ajustarCamposProduto);
 
-// NOVA FUNÇÃO: Adiciona a linha de quantidade na grade
 function addLinhaPacote(q = '', p = '') {
     const div = document.createElement('div'); div.className = 'linha-pacote';
     div.innerHTML = `<input type="number" class="pacote-qtd" placeholder="Qtd (Ex: 1000)" value="${q}"><input type="number" class="pacote-preco" placeholder="Valor Total (R$)" step="0.01" value="${p}"><button type="button" class="btn-rem-pacote" onclick="this.parentElement.remove()">X</button>`;
@@ -241,69 +253,61 @@ function addLinhaPacote(q = '', p = '') {
 async function salvarProduto() {
     const id = document.getElementById('prodId').value; const checks = document.querySelectorAll('.check-acab-prod:checked');
     const regra = document.getElementById('prodRegraPreco').value;
-    
-    // Captura os pacotes se for o caso
     let pacotes = [];
     if(regra === 'pacote') {
-        document.querySelectorAll('.linha-pacote').forEach(l => {
-            let q = parseInt(l.querySelector('.pacote-qtd').value); let p = parseFloat(l.querySelector('.pacote-preco').value);
-            if(q && p) pacotes.push({qtd: q, preco: p});
-        });
-        pacotes.sort((a,b) => a.qtd - b.qtd);
-        if(pacotes.length === 0) return alert("Adicione pelo menos uma quantidade e preço no pacote!");
+        document.querySelectorAll('.linha-pacote').forEach(l => { let q = parseInt(l.querySelector('.pacote-qtd').value); let p = parseFloat(l.querySelector('.pacote-preco').value); if(q && p) pacotes.push({qtd: q, preco: p}); });
+        pacotes.sort((a,b) => a.qtd - b.qtd); if(pacotes.length === 0) return alert("Adicione pelo menos uma quantidade e preço!");
     }
-
-    const dados = { 
-        tipo: document.getElementById('prodTipo').value, categoria: document.getElementById('prodCategoria').value, 
-        nome: document.getElementById('prodNome').value, foto: document.getElementById('prodFoto').value, 
-        cor: document.getElementById('prodCor').value, material: document.getElementById('prodMaterial').value, 
-        tamanho: document.getElementById('prodTamanho').value, prazo: document.getElementById('prodPrazo').value, 
-        regraPreco: regra, preco: parseFloat(document.getElementById('prodPreco').value) || 0, 
-        larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 1.50, compMax: parseFloat(document.getElementById('prodCompMax').value) || 100, 
-        acabamentos: Array.from(checks).map(c => c.value), pacotes: pacotes 
-    };
+    const dados = { tipo: document.getElementById('prodTipo').value, categoria: document.getElementById('prodCategoria').value, nome: document.getElementById('prodNome').value, foto: document.getElementById('prodFoto').value, cor: document.getElementById('prodCor').value, material: document.getElementById('prodMaterial').value, tamanho: document.getElementById('prodTamanho').value, prazo: document.getElementById('prodPrazo').value, regraPreco: regra, preco: parseFloat(document.getElementById('prodPreco').value) || 0, larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 1.50, compMax: parseFloat(document.getElementById('prodCompMax').value) || 100, acabamentos: Array.from(checks).map(c => c.value), pacotes: pacotes };
     if (!dados.nome) return alert("Nome obrigatório!");
     if (id) await db.collection("produtos").doc(id).update(dados); else await db.collection("produtos").add(dados);
     limparFormProduto(); alert("Produto salvo!");
 }
 
-function renderProd() { 
-    document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => {
-        let textoPreco = p.regraPreco === 'pacote' ? `Grade (${(p.pacotes||[]).length} pacotes)` : `R$ ${p.preco.toFixed(2)}`;
-        return `<tr><td><b>${p.nome}</b><br><small style="color:#718096">${p.categoria}</small></td><td>${p.tipo === 'visual' ? 'Com. Visual' : p.tipo}</td><td style="color:#2F855A; font-weight:bold;">${textoPreco}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editProd('${p.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="deletarDoc('produtos', '${p.id}')"><i class="fa fa-trash"></i></button></td></tr>`;
-    }).join(''); 
-}
-
-function editProd(id) { 
-    const p = bdProdutos.find(x => x.id === id); document.getElementById('prodId').value = p.id; document.getElementById('prodTipo').value = p.tipo; document.getElementById('prodCategoria').value = p.categoria; document.getElementById('prodNome').value = p.nome; document.getElementById('prodFoto').value = p.foto || ''; document.getElementById('prodCor').value = p.cor || 'N/A'; document.getElementById('prodMaterial').value = p.material || ''; document.getElementById('prodTamanho').value = p.tamanho || ''; document.getElementById('prodPrazo').value = p.prazo || ''; document.getElementById('prodRegraPreco').value = p.regraPreco; document.getElementById('prodPreco').value = p.preco; document.getElementById('prodLargMax').value = p.larguraMax || 1.50; document.getElementById('prodCompMax').value = p.compMax || 100; 
-    document.getElementById('listaGradePacotes').innerHTML = "";
-    if(p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
-    ajustarCamposProduto(); atualizarListaAcabamentosProduto(p.acabamentos || []); window.scrollTo(0,0); 
-}
-
-function limparFormProduto() { 
-    document.getElementById('prodId').value = ""; document.getElementById('prodNome').value = ""; document.getElementById('prodFoto').value = ""; document.getElementById('prodMaterial').value = ""; document.getElementById('prodTamanho').value = ""; document.getElementById('prodPrazo').value = ""; document.getElementById('prodPreco').value = "0.00"; 
-    document.getElementById('listaGradePacotes').innerHTML = ""; // Limpa as linhas extras
-    ajustarCamposProduto(); atualizarListaAcabamentosProduto(); 
-}
+function renderProd() { document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => { let textoPreco = p.regraPreco === 'pacote' ? `Grade (${(p.pacotes||[]).length} pacotes)` : `R$ ${p.preco.toFixed(2)}`; return `<tr><td><b>${p.nome}</b><br><small style="color:#718096">${p.categoria}</small></td><td>${p.tipo === 'visual' ? 'Com. Visual' : p.tipo}</td><td style="color:#2F855A; font-weight:bold;">${textoPreco}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editProd('${p.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="deletarDoc('produtos', '${p.id}')"><i class="fa fa-trash"></i></button></td></tr>`; }).join(''); }
+function editProd(id) { const p = bdProdutos.find(x => x.id === id); document.getElementById('prodId').value = p.id; document.getElementById('prodTipo').value = p.tipo; document.getElementById('prodCategoria').value = p.categoria; document.getElementById('prodNome').value = p.nome; document.getElementById('prodFoto').value = p.foto || ''; document.getElementById('prodCor').value = p.cor || 'N/A'; document.getElementById('prodMaterial').value = p.material || ''; document.getElementById('prodTamanho').value = p.tamanho || ''; document.getElementById('prodPrazo').value = p.prazo || ''; document.getElementById('prodRegraPreco').value = p.regraPreco; document.getElementById('prodPreco').value = p.preco; document.getElementById('prodLargMax').value = p.larguraMax || 1.50; document.getElementById('prodCompMax').value = p.compMax || 100; document.getElementById('listaGradePacotes').innerHTML = ""; if(p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco)); ajustarCamposProduto(); atualizarListaAcabamentosProduto(p.acabamentos || []); window.scrollTo(0,0); }
+function limparFormProduto() { document.getElementById('prodId').value = ""; document.getElementById('prodNome').value = ""; document.getElementById('prodFoto').value = ""; document.getElementById('prodMaterial').value = ""; document.getElementById('prodTamanho').value = ""; document.getElementById('prodPrazo').value = ""; document.getElementById('prodPreco').value = "0.00"; document.getElementById('listaGradePacotes').innerHTML = ""; ajustarCamposProduto(); atualizarListaAcabamentosProduto(); }
 
 function atualizarListaAcabamentosProduto(salvos = []) { const container = document.getElementById('listaCheckAcabamentos'); const cat = document.getElementById('prodCategoria')?.value; if (!cat || bdAcabamentos.length === 0) { container.innerHTML = '<small>Nenhum acabamento...</small>'; return; } const filtrados = bdAcabamentos.filter(a => (a.categoria || "") === cat || (a.categoria || "").includes("Geral")); if(filtrados.length === 0) { container.innerHTML = '<small>Nenhum para esta categoria.</small>'; return; } const arrSalvos = Array.isArray(salvos) ? salvos : []; container.innerHTML = filtrados.map(a => `<label><input type="checkbox" class="check-acab-prod" value="${a.id}" ${arrSalvos.includes(a.id) ? 'checked' : ''}> ${a.nome} <small>(${a.grupo || 'Solto'})</small></label>`).join(''); }
 
-// CRUD CLIENTES (MANTIDO)
-async function salvarCliente() { const id = document.getElementById('cliId').value; const dados = { nome: document.getElementById('cliNome').value, documento: document.getElementById('cliDoc').value, telefone: document.getElementById('cliTel').value, endereco: document.getElementById('cliEnd').value }; if (!dados.nome) return alert("O Nome/Razão Social é obrigatório."); if (id) await db.collection("clientes").doc(id).update(dados); else await db.collection("clientes").add(dados); limparFormCliente(); alert("Cliente salvo!"); }
+async function salvarCliente() { const id = document.getElementById('cliId').value; const dados = { nome: document.getElementById('cliNome').value, documento: document.getElementById('cliDoc').value, telefone: document.getElementById('cliTel').value, endereco: document.getElementById('cliEnd').value }; if (!dados.nome) return alert("Obrigatório."); if (id) await db.collection("clientes").doc(id).update(dados); else await db.collection("clientes").add(dados); limparFormCliente(); }
 function renderCli() { document.getElementById('listaClientes').innerHTML = bdClientes.map(c => `<tr><td><b>${c.nome}</b></td><td>${c.documento}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editCli('${c.id}')"><i class="fa fa-pen"></i></button></td></tr>`).join(''); document.getElementById('cartCliente').innerHTML = `<option value="">Selecione um cliente...</option>` + bdClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); }
 function editCli(id) { const c = bdClientes.find(x => x.id === id); document.getElementById('cliId').value = c.id; document.getElementById('cliNome').value = c.nome; document.getElementById('cliDoc').value = c.documento || ''; document.getElementById('cliTel').value = c.telefone || ''; document.getElementById('cliEnd').value = c.endereco || ''; window.scrollTo(0,0); }
 function limparFormCliente() { document.getElementById('cliId').value = ""; document.getElementById('cliNome').value = ""; document.getElementById('cliDoc').value = ""; document.getElementById('cliTel').value = ""; document.getElementById('cliEnd').value = ""; }
 
-// CRUD CATEGORIA (MANTIDO)
-async function salvarCategoria() { const id = document.getElementById('catId').value; const nome = document.getElementById('catNome').value; if (!nome) return alert("Digite o nome!"); if (id) await db.collection("categorias").doc(id).update({nome}); else await db.collection("categorias").add({nome}); document.getElementById('catId').value = ""; document.getElementById('catNome').value = ""; }
+async function salvarCategoria() { const id = document.getElementById('catId').value; const nome = document.getElementById('catNome').value; if (!nome) return; if (id) await db.collection("categorias").doc(id).update({nome}); else await db.collection("categorias").add({nome}); document.getElementById('catId').value = ""; document.getElementById('catNome').value = ""; }
 function renderCat() { document.getElementById('listaCategorias').innerHTML = bdCategorias.map(c => `<tr><td>${c.nome}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editCat('${c.id}','${c.nome}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="deletarDoc('categorias', '${c.id}')"><i class="fa fa-trash"></i></button></td></tr>`).join(''); const selects = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); document.getElementById('prodCategoria').innerHTML = selects; document.getElementById('acabCategoria').innerHTML = `<option value="Geral (Aparece em todos)">Geral (Aparece em todos)</option>` + selects; atualizarListaAcabamentosProduto(); }
 function editCat(id, n) { document.getElementById('catId').value = id; document.getElementById('catNome').value = n; }
 
-// CRUD ACABAMENTO (MANTIDO)
-async function salvarAcabamento() { const id = document.getElementById('acabId').value; const dados = { nome: document.getElementById('acabNome').value, grupo: document.getElementById('acabGrupo').value, categoria: document.getElementById('acabCategoria').value, regra: document.getElementById('acabRegra').value, venda: parseFloat(document.getElementById('acabPrecoVenda').value) || 0, custo: parseFloat(document.getElementById('acabCusto').value) || 0 }; if (id) await db.collection("acabamentos").doc(id).update(dados); else await db.collection("acabamentos").add(dados); limparFormAcabamento(); }
-function renderAcab() { document.getElementById('listaAcabamentos').innerHTML = bdAcabamentos.map(a => `<tr><td><b>${a.nome}</b><br><small style="color:#718096">${a.grupo || 'Solto'}</small></td><td style="color:#2F855A; font-weight:bold;">R$ ${a.venda.toFixed(2)}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editAcab('${a.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="deletarDoc('acabamentos', '${a.id}')"><i class="fa fa-trash"></i></button></td></tr>`).join(''); }
-function editAcab(id) { const a = bdAcabamentos.find(x => x.id === id); document.getElementById('acabId').value = a.id; document.getElementById('acabNome').value = a.nome; document.getElementById('acabGrupo').value = a.grupo || ''; document.getElementById('acabCategoria').value = a.categoria; document.getElementById('acabRegra').value = a.regra; document.getElementById('acabPrecoVenda').value = a.venda; document.getElementById('acabCusto').value = a.custo; window.scrollTo(0,0); }
-function limparFormAcabamento() { document.getElementById('acabId').value = ""; document.getElementById('acabNome').value = ""; document.getElementById('acabGrupo').value = ""; document.getElementById('acabPrecoVenda').value = "0.00"; document.getElementById('acabCusto').value = "0.00"; }
+// SALVA O ACABAMENTO COM O "padrao: true/false"
+async function salvarAcabamento() { 
+    const id = document.getElementById('acabId').value; 
+    const dados = { 
+        nome: document.getElementById('acabNome').value, 
+        grupo: document.getElementById('acabGrupo').value, 
+        categoria: document.getElementById('acabCategoria').value, 
+        regra: document.getElementById('acabRegra').value, 
+        venda: parseFloat(document.getElementById('acabPrecoVenda').value) || 0, 
+        custo: parseFloat(document.getElementById('acabCusto').value) || 0,
+        padrao: document.getElementById('acabPadrao').checked // SALVA A NOVA OPÇÃO AQUI
+    }; 
+    if (id) await db.collection("acabamentos").doc(id).update(dados); 
+    else await db.collection("acabamentos").add(dados); 
+    limparFormAcabamento(); 
+}
 
+function renderAcab() { document.getElementById('listaAcabamentos').innerHTML = bdAcabamentos.map(a => `<tr><td><b>${a.nome}</b><br><small style="color:#718096">${a.grupo || 'Solto'}</small></td><td style="color:#2F855A; font-weight:bold;">R$ ${a.venda.toFixed(2)}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editAcab('${a.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="deletarDoc('acabamentos', '${a.id}')"><i class="fa fa-trash"></i></button></td></tr>`).join(''); }
+
+// EDITA O ACABAMENTO COM O "padrao"
+function editAcab(id) { 
+    const a = bdAcabamentos.find(x => x.id === id); 
+    document.getElementById('acabId').value = a.id; document.getElementById('acabNome').value = a.nome; 
+    document.getElementById('acabGrupo').value = a.grupo || ''; document.getElementById('acabCategoria').value = a.categoria; 
+    document.getElementById('acabRegra').value = a.regra; document.getElementById('acabPrecoVenda').value = a.venda; 
+    document.getElementById('acabCusto').value = a.custo; 
+    document.getElementById('acabPadrao').checked = a.padrao || false; // PUXA A OPÇÃO
+    window.scrollTo(0,0); 
+}
+
+function limparFormAcabamento() { document.getElementById('acabId').value = ""; document.getElementById('acabNome').value = ""; document.getElementById('acabGrupo').value = ""; document.getElementById('acabPrecoVenda').value = "0.00"; document.getElementById('acabCusto').value = "0.00"; document.getElementById('acabPadrao').checked = false; }
 function deletarDoc(colecao, id) { if (confirm("Apagar este item para sempre?")) db.collection(colecao).doc(id).delete(); }
