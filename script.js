@@ -55,8 +55,9 @@ function abrirConfigurador(idProduto) {
     document.getElementById('modalProdPrecoBase').value = p.preco;
 
     const divMedidas = document.getElementById('modalCorpoMedidas');
+    const divCores = document.getElementById('modalCorpoCores');
     
-    // RENDERIZADOR DE MEDIDAS E DESCONTOS NO MODAL
+    // 1. RENDERIZADOR DE MEDIDAS / QUANTIDADES
     if (p.regraPreco === 'm2') {
         divMedidas.innerHTML = `<div class="input-group"><label>Largura (m)</label><input type="number" id="w2pLargura" value="1.00" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Altura (m)</label><input type="number" id="w2pAltura" value="1.00" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Qtd</label><input type="number" id="w2pQtd" value="1" oninput="calcularPrecoAoVivo()"></div>`;
     } else if (p.regraPreco === 'pacote') {
@@ -64,11 +65,37 @@ function abrirConfigurador(idProduto) {
         divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><select id="w2pPacote" onchange="calcularPrecoAoVivo()">${opts}</select></div>`;
     } else if (p.regraPreco === 'progressivo') {
         let miniTabela = (p.progressivo || []).map(t => `${t.qtd}+ un (R$ ${t.preco.toFixed(2)}/cd)`).join(' | ');
-        divMedidas.innerHTML = `<div class="input-group"><label>Quantidade Impressões</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"><small style="color:#38A169; display:block; margin-top:6px; font-weight:bold;">${miniTabela}</small></div>`;
+        divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"><small style="color:#38A169; display:block; margin-top:6px; font-weight:bold;">${miniTabela}</small></div>`;
     } else {
         divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
     }
 
+    // 2. FRENTE E VERSO (NOVIDADE)
+    if (p.impVerso === 'sim') {
+        const taxa = p.taxaVerso || 80;
+        divCores.innerHTML = `
+            <div class="divisor-config" style="margin: 10px 0 20px;"><span>Impressão</span></div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                <label class="check-box-custom">
+                    <div style="display:flex; align-items:center;">
+                        <input type="radio" name="w2p_lados" value="1" onchange="calcularPrecoAoVivo()" checked>
+                        <span style="font-weight:bold; color:#2D3748;">Apenas Frente</span>
+                    </div>
+                </label>
+                <label class="check-box-custom">
+                    <div style="display:flex; align-items:center;">
+                        <input type="radio" name="w2p_lados" value="${1 + (taxa/100)}" onchange="calcularPrecoAoVivo()">
+                        <span style="font-weight:bold; color:#2D3748;">Frente e Verso</span>
+                    </div>
+                    <span style="color:var(--cor-sucesso); font-weight:bold; font-size:13px;">+ ${taxa}%</span>
+                </label>
+            </div>
+        `;
+    } else {
+        divCores.innerHTML = '';
+    }
+
+    // 3. ACABAMENTOS
     const divAcab = document.getElementById('modalCorpoAcabamentos');
     const permitidos = p.acabamentos || [];
     let htmlAcab = "";
@@ -112,6 +139,7 @@ function calcularPrecoAoVivo() {
     
     let qtd = 1; let totalBase = 0; let m2 = 0;
 
+    // 1. CALCULA A BASE BRUTA
     if(regra === 'm2') {
         const l = parseFloat(document.getElementById('w2pLargura').value) || 0; const a = parseFloat(document.getElementById('w2pAltura').value) || 0;
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
@@ -121,9 +149,9 @@ function calcularPrecoAoVivo() {
         qtd = parseInt(sel.value) || 1; totalBase = parseFloat(sel.options[sel.selectedIndex]?.dataset.preco) || 0;
     } else if(regra === 'progressivo') {
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
-        let precoUnitario = base; // Preço padrão se não achar faixa
+        let precoUnitario = base;
         if(p && p.progressivo) {
-            let faixas = p.progressivo.slice().sort((a,b) => b.qtd - a.qtd); // Do maior pro menor
+            let faixas = p.progressivo.slice().sort((a,b) => b.qtd - a.qtd);
             let faixaEncontrada = faixas.find(f => qtd >= f.qtd);
             if(faixaEncontrada) precoUnitario = faixaEncontrada.preco;
         }
@@ -132,6 +160,14 @@ function calcularPrecoAoVivo() {
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1; totalBase = base * qtd;
     }
 
+    // 2. APLICA O MULTIPLICADOR DE FRENTE E VERSO (SE EXISTIR)
+    const radioLados = document.querySelector('input[name="w2p_lados"]:checked');
+    if (radioLados) {
+        let multiplicador = parseFloat(radioLados.value) || 1;
+        totalBase = totalBase * multiplicador;
+    }
+
+    // 3. SOMA OS ACABAMENTOS EXTRAS
     let totalAcab = 0;
     document.querySelectorAll('.btn-acab-escolha.selecionado').forEach(b => {
         const precoA = parseFloat(b.dataset.preco) || 0; const regA = b.dataset.regra;
@@ -150,6 +186,13 @@ function confirmarAdicaoCarrinho() {
     if(r === 'm2') info = `${document.getElementById('w2pQtd').value} un. (${document.getElementById('w2pLargura').value}x${document.getElementById('w2pAltura').value}m)`;
     else if(r === 'pacote') info = `Pacote ${document.getElementById('w2pPacote').value} un.`;
     else info = `${document.getElementById('w2pQtd').value} un.`;
+
+    const radioLados = document.querySelector('input[name="w2p_lados"]:checked');
+    if(radioLados && radioLados.value > 1) {
+        info += `<br><b>Impr:</b> Frente e Verso`;
+    } else if (radioLados) {
+        info += `<br><b>Impr:</b> Apenas Frente`;
+    }
 
     let detalhes = [];
     document.querySelectorAll('.btn-acab-escolha.selecionado').forEach(b => detalhes.push(b.querySelector('b').innerText));
@@ -188,6 +231,10 @@ function ajustarCamposProduto() {
     document.getElementById('boxPacotes').style.display = r === 'pacote' ? 'block' : 'none';
     document.getElementById('boxProgressivo').style.display = r === 'progressivo' ? 'block' : 'none';
     document.getElementById('boxMedidas').style.display = r === 'm2' ? 'grid' : 'none';
+
+    // Front/Back logic
+    const impV = document.getElementById('prodImpVerso');
+    if(impV) document.getElementById('boxTaxaVerso').style.display = impV.value === 'sim' ? 'block' : 'none';
 }
 
 function addLinhaPacote(q='', p='') { 
@@ -220,12 +267,16 @@ async function salvarProduto() {
         document.querySelectorAll('.linha-prog-item').forEach(l => progressivo.push({ qtd: parseInt(l.querySelector('.q').value), preco: parseFloat(l.querySelector('.p').value) }));
     }
 
+    const impVerso = document.getElementById('prodImpVerso') ? document.getElementById('prodImpVerso').value : 'nao';
+    const taxaVerso = document.getElementById('prodTaxaVerso') ? parseFloat(document.getElementById('prodTaxaVerso').value) : 80;
+
     const dados = {
         nome: document.getElementById('prodNome').value, categoria: document.getElementById('prodCategoria').value,
         tipo: document.getElementById('prodTipo').value, foto: document.getElementById('prodFoto').value,
         material: document.getElementById('prodMaterial').value, tamanho: document.getElementById('prodTamanho').value,
         regraPreco: regra, preco: parseFloat(document.getElementById('prodPreco').value) || 0,
         larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0, compMax: parseFloat(document.getElementById('prodCompMax').value) || 0,
+        impVerso: impVerso, taxaVerso: taxaVerso, // Salvando a nova regra!
         acabamentos: acabList, pacotes: pacotes, progressivo: progressivo
     };
 
@@ -245,6 +296,9 @@ function editProd(id) {
     document.getElementById('prodPreco').value = p.preco || 0; document.getElementById('prodLargMax').value = p.larguraMax || 0;
     document.getElementById('prodCompMax').value = p.compMax || 0;
     
+    if(document.getElementById('prodImpVerso')) document.getElementById('prodImpVerso').value = p.impVerso || 'nao';
+    if(document.getElementById('prodTaxaVerso')) document.getElementById('prodTaxaVerso').value = p.taxaVerso || 80;
+
     document.getElementById('listaGradePacotes').innerHTML = "";
     if(p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
     
