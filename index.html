@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GVA ERP Gráfico</title>
+    <title>GVA Gráfica ERP</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -25,7 +25,11 @@
 
     <div id="appInterface" class="app-container" style="display: none;">
         <aside class="sidebar">
-            <div class="sidebar-header">GVA ERP</div>
+            <div class="sidebar-header" style="text-align: center; padding: 20px;">
+                <img id="logo-img" src="COLE_O_LINK_DA_SUA_LOGO_AQUI" alt="Logo GVA" style="max-width: 100%; max-height: 60px; display: none;">
+                
+                <span id="logo-texto" style="font-size: 22px; font-weight: 800; color: var(--cor-principal);">GVA Gráfica</span>
+            </div>
             <nav class="menu">
                 <button onclick="mudarAba('loja')" class="ativo"><i class="fa fa-store"></i> Loja</button>
                 <button onclick="mudarAba('producao')"><i class="fa fa-tasks"></i> Produção</button>
