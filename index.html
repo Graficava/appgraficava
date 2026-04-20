@@ -38,10 +38,112 @@
         </aside>
 
         <main class="main-content">
-            <section id="aba-loja" class="aba ativa"><h2>Vitrine da Loja (Em breve)</h2></section>
-            <section id="aba-producao" class="aba"><h2>Painel de Produção (Em breve)</h2></section>
-            <section id="aba-financeiro" class="aba"><h2>Financeiro (Em breve)</h2></section>
-            <section id="aba-cadastros" class="aba"><h2>Gestão de Cadastros (Em breve)</h2></section>
+            <section id="aba-loja" class="aba ativa"><h2>Vitrine da Loja (Em breve na Fase 3)</h2></section>
+            <section id="aba-producao" class="aba"><h2>Painel de Produção (Em breve na Fase 4)</h2></section>
+            <section id="aba-financeiro" class="aba"><h2>Financeiro (Em breve na Fase 5)</h2></section>
+            
+            <section id="aba-cadastros" class="aba">
+                <div class="sub-menu">
+                    <button onclick="mudarSubAba('sub-cat')" class="sub-ativo" id="btn-sub-cat">Categorias</button>
+                    <button onclick="mudarSubAba('sub-prod')" id="btn-sub-prod">Produtos Base</button>
+                    <button onclick="mudarSubAba('sub-acab')" id="btn-sub-acab">Grade de Acabamentos</button>
+                </div>
+
+                <div id="sub-cat" class="sub-aba sub-ativa">
+                    <div class="card">
+                        <h3>Nova Categoria</h3>
+                        <div class="form-linha">
+                            <input type="hidden" id="catId">
+                            <input type="text" id="catNome" placeholder="Ex: Comunicação Visual">
+                            <button class="btn-salvar" onclick="salvarCategoria()">Salvar Categoria</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Categorias Cadastradas</h3>
+                        <table class="tabela-erp">
+                            <thead><tr><th>Nome</th><th style="text-align:right;">Ação</th></tr></thead>
+                            <tbody id="listaCategorias"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="sub-prod" class="sub-aba">
+                    <div class="card">
+                        <h3>Novo Produto Base (Casca)</h3>
+                        <div class="form-grid">
+                            <input type="hidden" id="prodId">
+                            <div class="input-group"><label>Nome do Produto</label><input type="text" id="prodNome" placeholder="Ex: Cartão de Visita"></div>
+                            <div class="input-group"><label>Categoria</label><select id="prodCategoria"></select></div>
+                            <div class="input-group"><label>Regra W2P (Como cobra?)</label>
+                                <select id="prodRegra">
+                                    <option value="unidade">Unidade / Lote Fechado (Offset/Brindes)</option>
+                                    <option value="folha">Páginas Dinâmicas (Apostilas/Livros)</option>
+                                    <option value="m2">Medida M² (Lonas/Adesivos Grandes)</option>
+                                    <option value="cm2">Medida CM² (Adesivos Recorte)</option>
+                                </select>
+                            </div>
+                            <div class="input-group"><label>Qtds Fixas Permitidas</label><input type="text" id="prodQtds" placeholder="Ex: 500,1000 (Vazio = Livre)"></div>
+                        </div>
+                        <h4 style="margin-top:20px;">Tabela de Preços Base (R$)</h4>
+                        <div id="precos-produto" class="container-precos"></div>
+                        <button class="btn-add-faixa" onclick="addFaixaPreco('precos-produto')">+ Adicionar Preço/Quantidade</button>
+                        <br><br>
+                        <button class="btn-salvar" onclick="salvarProduto()">Salvar Produto Base</button>
+                        <button class="btn-limpar" onclick="limparFormProduto()">Limpar</button>
+                    </div>
+                    <div class="card">
+                        <h3>Produtos Cadastrados</h3>
+                        <table class="tabela-erp">
+                            <thead><tr><th>Produto</th><th>Regra</th><th style="text-align:right;">Ações</th></tr></thead>
+                            <tbody id="listaProdutos"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="sub-acab" class="sub-aba">
+                    <div class="card">
+                        <h3>Nova Opção de Grade / Acabamento</h3>
+                        <div class="form-grid">
+                            <input type="hidden" id="acabId">
+                            <div class="input-group"><label>Nome da Opção</label><input type="text" id="acabNome" placeholder="Ex: Verniz Total Frente"></div>
+                            <div class="input-group"><label>Grupo (Para virar menu dropdown)</label><input type="text" id="acabGrupo" placeholder="Ex: Cobertura (Vazio = Checkbox solto)"></div>
+                            <div class="input-group"><label>Aparece em qual categoria?</label><select id="acabCategoria"></select></div>
+                            <div class="input-group"><label>Lógica Matemática</label>
+                                <select id="acabRegra">
+                                    <option value="unidade_simples">Fixo por Lote / Unidade</option>
+                                    <option value="cobrar_area_m2">Multiplicar por Metro Quadrado (m²)</option>
+                                    <option value="cobrar_area_cm2">Multiplicar por Centímetro Quadrado (cm²)</option>
+                                    <option value="cobrar_paginas_frente">Multiplicar por Páginas (Só Frente)</option>
+                                    <option value="cobrar_paginas_verso">Multiplicar por Páginas (Frente/Verso)</option>
+                                    <option value="cobrar_folhas">Multiplicar por Folhas Físicas</option>
+                                    <option value="cobrar_fixo">Consultar Escalonamento, cobrar 1x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <h4 style="margin-top:20px;">Tabela de Preços (Venda)</h4>
+                        <div id="precos-acabamento" class="container-precos"></div>
+                        <button class="btn-add-faixa" onclick="addFaixaPreco('precos-acabamento')">+ Adicionar Preço/Quantidade</button>
+                        
+                        <h4 style="margin-top:20px;">Custos e Logística</h4>
+                        <div class="form-grid" style="background:#f9f9f9; padding:15px; border-radius:8px;">
+                            <div class="input-group"><label>Custo Base (R$)</label><input type="number" id="acabCusto" value="0.00" step="0.01"></div>
+                            <div class="input-group"><label>Prazo Extra (Dias)</label><input type="number" id="acabPrazo" value="0"></div>
+                        </div>
+                        <br>
+                        <button class="btn-salvar" onclick="salvarAcabamento()">Salvar Opção na Grade</button>
+                        <button class="btn-limpar" onclick="limparFormAcabamento()">Limpar</button>
+                    </div>
+                    <div class="card">
+                        <h3>Grade Cadastrada</h3>
+                        <input type="text" id="buscaAcab" placeholder="Buscar acabamento..." oninput="filtrarAcabamentos()" style="width:100%; padding:8px; margin-bottom:10px;">
+                        <table class="tabela-erp">
+                            <thead><tr><th>Vínculo</th><th>Opção W2P</th><th>Preço Base</th><th>Regra</th><th style="text-align:right;">Ações</th></tr></thead>
+                            <tbody id="listaAcabamentos"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
