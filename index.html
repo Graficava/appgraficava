@@ -27,7 +27,6 @@
         <aside class="sidebar">
             <div class="sidebar-header" style="text-align: center; padding: 20px;">
                 <img id="logo-img" src="COLE_O_LINK_DA_SUA_LOGO_AQUI" alt="Logo GVA" style="max-width: 100%; max-height: 60px; display: none;">
-                
                 <span id="logo-texto" style="font-size: 22px; font-weight: 800; color: var(--cor-principal);">GVA Gráfica</span>
             </div>
             <nav class="menu">
@@ -40,7 +39,42 @@
         </aside>
 
         <main class="main-content">
-            <section id="aba-loja" class="aba ativa"><h2>Vitrine (Fase 3)</h2></section>
+            <section id="aba-loja" class="aba ativa">
+                <div class="loja-layout">
+                    <div class="loja-vitrine">
+                        <div class="filtro-cat" id="menuFiltroCat">
+                            </div>
+                        <div class="vitrine-grid" id="gradeProdutos">
+                            </div>
+                    </div>
+                    
+                    <div class="loja-sidebar">
+                        <div class="card">
+                            <h3 style="margin-top:0;"><i class="fa fa-shopping-cart"></i> Carrinho Atual</h3>
+                            <div id="listaCarrinho" class="carrinho-itens">
+                                <small style="color:#A0AEC0;">O carrinho está vazio.</small>
+                            </div>
+                            <hr style="border: 0; border-top: 1px solid var(--cor-borda); margin: 15px 0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <span style="font-weight:bold; color:#4A5568;">Total:</span>
+                                <span style="font-size:22px; font-weight:bold; color:var(--cor-sucesso);">R$ <span id="totalCarrinho">0.00</span></span>
+                            </div>
+                            
+                            <div class="input-group" style="margin-bottom:15px;">
+                                <label>Nome do Cliente</label>
+                                <input type="text" id="nomeClienteCarrinho" placeholder="Ex: João da Silva">
+                            </div>
+                            <div class="input-group" style="margin-bottom:15px;">
+                                <label>WhatsApp / Contato</label>
+                                <input type="text" id="telClienteCarrinho" placeholder="(00) 00000-0000">
+                            </div>
+
+                            <button class="btn-salvar" style="width:100%; padding:12px;" onclick="enviarPedido()"><i class="fa fa-check"></i> Fechar Pedido</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section id="aba-producao" class="aba"><h2>Produção (Fase 4)</h2></section>
             <section id="aba-financeiro" class="aba"><h2>Financeiro (Fase 5)</h2></section>
             
@@ -77,7 +111,7 @@
                             </div>
                             <div class="input-group"><label>Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()"></select></div>
                             <div class="input-group"><label>Nome do Produto</label><input type="text" id="prodNome"></div>
-                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Link da imagem"></div>
+                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Link da imagem (opcional)"></div>
                         </div>
 
                         <div class="form-grid" style="margin-top:15px;">
@@ -90,18 +124,18 @@
                                 </select>
                             </div>
                             <div class="input-group"><label>Material</label><input type="text" id="prodMaterial"></div>
-                            <div class="input-group" id="grp-tamanho"><label>Tamanho</label><input type="text" id="prodTamanho" placeholder="Ex: 9x5cm"></div>
+                            <div class="input-group" id="grp-tamanho"><label>Tamanho Fixo</label><input type="text" id="prodTamanho" placeholder="Ex: 9x5cm"></div>
                             <div class="input-group"><label>Prazo Produção (Dias)</label><input type="number" id="prodPrazo"></div>
                         </div>
 
                         <div class="form-grid" style="margin-top:15px;">
-                            <div class="input-group"><label>Forma de Preço</label>
+                            <div class="input-group"><label>Forma de Preço (A Matemática)</label>
                                 <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
                                     <option value="unidade">Preço por Unidade / Qtd Fixa</option>
                                     <option value="m2">Preço por Metro Quadrado (m²)</option>
                                 </select>
                             </div>
-                            <div class="input-group"><label id="labelPreco">Preço (R$)</label><input type="number" id="prodPreco" step="0.01"></div>
+                            <div class="input-group"><label id="labelPreco">Preço Base (R$)</label><input type="number" id="prodPreco" step="0.01"></div>
                         </div>
 
                         <div id="boxMedidas" class="form-grid" style="display:none; background:#f0f7ff; padding:15px; margin-top:15px; border-radius:8px;">
@@ -125,7 +159,7 @@
                             <button class="btn-limpar" onclick="limparFormProduto()">Limpar</button>
                         </div>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Tipo</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Tipo</th><th>Preço Base</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
                 </div>
 
                 <div id="sub-acab" class="sub-aba">
@@ -133,29 +167,54 @@
                         <h3>Novo Acabamento</h3>
                         <div class="form-grid">
                             <input type="hidden" id="acabId">
-                            <div class="input-group"><label>Nome</label><input type="text" id="acabNome"></div>
-                            <div class="input-group"><label>Grupo Menu</label><input type="text" id="acabGrupo"></div>
-                            <div class="input-group"><label>Categoria</label><select id="acabCategoria"></select></div>
-                            <div class="input-group"><label>Cálculo</label>
+                            <div class="input-group"><label>Nome (Ex: Ilhós Metálico / Verniz Localizado)</label><input type="text" id="acabNome"></div>
+                            <div class="input-group"><label>Grupo no Menu (Opcional)</label><input type="text" id="acabGrupo" placeholder="Ex: Acabamentos Extras"></div>
+                            <div class="input-group"><label>Categoria de Vínculo</label><select id="acabCategoria"></select></div>
+                            <div class="input-group"><label>Matemática do Acabamento</label>
                                 <select id="acabRegra">
-                                    <option value="fixo">Preço Fixo / Unidade</option>
-                                    <option value="m2">Multiplicar por m²</option>
+                                    <option value="fixo">Preço Fixo / Por Unidade</option>
+                                    <option value="m2">Multiplicar por m² (Ex: Laminação por metro)</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-grid" style="margin-top:15px;">
-                            <div class="input-group"><label>Venda (R$)</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
-                            <div class="input-group"><label>Custo (R$)</label><input type="number" id="acabCusto" step="0.01"></div>
+                            <div class="input-group"><label>Preço de Venda (R$)</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
+                            <div class="input-group"><label>Custo Interno (R$)</label><input type="number" id="acabCusto" step="0.01"></div>
                         </div>
                         <div style="margin-top:20px;">
-                            <button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button>
+                            <button class="btn-salvar" onclick="salvarAcabamento()">Salvar Acabamento</button>
                             <button class="btn-limpar" onclick="limparFormAcabamento()">Limpar</button>
                         </div>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento</th><th>Regra</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
                 </div>
             </section>
         </main>
+    </div>
+
+    <div id="modalW2P" class="modal-fundo" style="display:none;">
+        <div class="modal-conteudo card">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:15px; margin-bottom:20px;">
+                <h2 id="modalNomeProd" style="margin:0; color:var(--cor-principal);">Nome do Produto</h2>
+                <button onclick="fecharModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#A0AEC0;">X</button>
+            </div>
+            
+            <input type="hidden" id="modalProdId">
+            <input type="hidden" id="modalProdRegra">
+            <input type="hidden" id="modalProdPrecoBase">
+            
+            <div id="modalCorpoMedidas" class="form-grid" style="margin-bottom:20px;"></div>
+            
+            <div id="modalCorpoAcabamentos" style="margin-bottom:20px;"></div>
+
+            <div class="modal-footer" style="background:#F8FAFC; padding:15px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <span style="display:block; font-size:12px; color:#718096; font-weight:bold;">VALOR TOTAL:</span>
+                    <span style="font-size:24px; font-weight:900; color:var(--cor-principal);">R$ <span id="modalSubtotal">0.00</span></span>
+                </div>
+                <button class="btn-salvar" onclick="confirmarAdicaoCarrinho()"><i class="fa fa-plus"></i> Add ao Carrinho</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
