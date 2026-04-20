@@ -81,25 +81,27 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 .modal-fundo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
 .modal-conteudo { width: 90%; max-width: 650px; max-height: 95vh; overflow-y: auto; }
 
-/* CAIXAS LADO A LADO NA VITRINE (CSS GRID) */
+/* DESIGN PREMIUM: CARDS DE ACABAMENTO LADO A LADO */
 .lista-acabamentos-modal { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-    gap: 12px; 
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); 
+    gap: 15px; 
 }
 .check-box-custom { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 12px 15px; border: 2px solid #E2E8F0; border-radius: 8px; 
-    background: #FFF; cursor: pointer; transition: all 0.2s ease; 
+    display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; 
+    padding: 15px; border: 2px solid #E2E8F0; border-radius: 10px; 
+    background: #F8FAFC; cursor: pointer; transition: all 0.2s ease; position: relative;
 }
-.check-box-custom:hover { border-color: #CBD5E0; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+.check-box-custom:hover { border-color: #CBD5E0; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); background: #FFF; }
 .check-box-custom:has(input:checked) { 
-    border-color: var(--cor-principal); background: #F0F4FF; 
+    border-color: var(--cor-principal); background: #F0F4FF; box-shadow: 0 4px 12px rgba(62, 59, 159, 0.1);
 }
-/* Aumentei a bolinha do radio e o quadrado do check */
 .check-box-custom input[type="radio"], .check-box-custom input[type="checkbox"] { 
-    transform: scale(1.4); margin-right: 12px; accent-color: var(--cor-principal); cursor: pointer; 
+    position: absolute; top: 15px; right: 15px; transform: scale(1.3); accent-color: var(--cor-principal); cursor: pointer; margin:0;
 }
+.check-box-custom .acab-nome { font-weight: 700; color: #2D3748; font-size: 14px; margin-bottom: 8px; padding-right: 25px; line-height: 1.3; }
+.check-box-custom .acab-preco { color: var(--cor-sucesso); font-weight: 800; font-size: 14px; display: block; }
+.check-box-custom .acab-regra { color: #A0AEC0; font-size: 11px; font-weight: bold; }
 
 .carrinho-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #EDF2F7; }
 .btn-remover-item { background: none; border: none; color: #E53E3E; cursor: pointer; font-size: 14px; }
@@ -114,6 +116,6 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
     .form-linha { flex-direction: column; }
     .loja-layout { flex-direction: column; }
     .loja-sidebar { width: 100%; position: relative; }
-    .lista-acabamentos-modal { grid-template-columns: 1fr; } /* Celular fica um embaixo do outro */
+    .lista-acabamentos-modal { grid-template-columns: 1fr; } /* No celular um embaixo do outro */
     #modalHeaderImg { height: 160px; } 
 }
