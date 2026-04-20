@@ -14,7 +14,6 @@ const db = firebase.firestore();
 
 let bdCategorias = [], bdProdutos = [], bdAcabamentos = [];
 
-// LOGIN E NAVEGAÇÃO
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('telaLogin').style.display = 'none';
@@ -47,7 +46,6 @@ function mudarSubAba(sub) {
     document.getElementById('btn-' + sub).classList.add('sub-ativo');
 }
 
-// LOGICA DE CAMPOS
 function ajustarCamposProduto() {
     const tipo = document.getElementById('prodTipo').value;
     const regraPreco = document.getElementById('prodRegraPreco').value;
@@ -75,7 +73,6 @@ function ajustarCamposProduto() {
 }
 document.addEventListener('DOMContentLoaded', ajustarCamposProduto);
 
-// BD
 function iniciarLeitura() {
     db.collection("categorias").onSnapshot(s => {
         bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
@@ -88,11 +85,10 @@ function iniciarLeitura() {
     db.collection("acabamentos").onSnapshot(s => {
         bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
         renderAcab();
-        atualizarListaAcabamentosProduto(); // Atualiza os checkboxes se houver mudança no BD
+        atualizarListaAcabamentosProduto(); 
     });
 }
 
-// CATEGORIAS
 async function salvarCategoria() {
     const id = document.getElementById('catId').value;
     const nome = document.getElementById('catNome').value;
@@ -109,29 +105,39 @@ function renderCat() {
     const selects = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
     document.getElementById('prodCategoria').innerHTML = selects;
     document.getElementById('acabCategoria').innerHTML = `<option value="Geral (Aparece em todos)">Geral (Aparece em todos)</option>` + selects;
-    atualizarListaAcabamentosProduto(); // Atualiza a lista quando carregar as categorias
+    atualizarListaAcabamentosProduto(); 
 }
 function editCat(id, n) { document.getElementById('catId').value = id; document.getElementById('catNome').value = n; }
 
-// --- A MÁGICA DOS CHECKBOXES DE ACABAMENTOS ---
+// --- LÓGICA DE CHECKBOXES BLINDADA ---
 function atualizarListaAcabamentosProduto(selecionadosSalvos = []) {
-    const categoriaSelecionada = document.getElementById('prodCategoria').value;
+    const catSelect = document.getElementById('prodCategoria');
     const container = document.getElementById('listaCheckAcabamentos');
     
-    // Filtra os acabamentos que pertencem a esta categoria OU que são "Geral"
-    const acabamentosFiltrados = bdAcabamentos.filter(a => 
-        a.categoria === categoriaSelecionada || 
-        a.categoria.includes("Geral")
-    );
+    if (!catSelect || !container) return;
+    const categoriaSelecionada = catSelect.value;
 
-    if(acabamentosFiltrados.length === 0) {
-        container.innerHTML = '<small style="color:#718096;">Nenhum acabamento cadastrado para esta categoria.</small>';
+    if (bdAcabamentos.length === 0) {
+        container.innerHTML = '<small style="color:#718096;">Nenhum acabamento encontrado no banco de dados...</small>';
         return;
     }
 
-    // Cria os checkboxes
+    // Filtra os acabamentos com proteção contra erros
+    const acabamentosFiltrados = bdAcabamentos.filter(a => {
+        const cat = a.categoria || ""; // Se for vazio/antigo, evita que o sistema trave
+        return cat === categoriaSelecionada || cat.includes("Geral");
+    });
+
+    if(acabamentosFiltrados.length === 0) {
+        container.innerHTML = '<small style="color:#718096;">Nenhum acabamento para esta categoria.</small>';
+        return;
+    }
+
+    // Garante que é um array para não dar erro no includes
+    const salvos = Array.isArray(selecionadosSalvos) ? selecionadosSalvos : [];
+
     container.innerHTML = acabamentosFiltrados.map(a => {
-        const estaMarcado = selecionadosSalvos.includes(a.id) ? 'checked' : '';
+        const estaMarcado = salvos.includes(a.id) ? 'checked' : '';
         return `
             <label>
                 <input type="checkbox" class="check-acab-prod" value="${a.id}" ${estaMarcado}> 
@@ -141,11 +147,9 @@ function atualizarListaAcabamentosProduto(selecionadosSalvos = []) {
     }).join('');
 }
 
-// PRODUTOS
 async function salvarProduto() {
     const id = document.getElementById('prodId').value;
     
-    // Pega todos os checkboxes de acabamentos que o usuário marcou
     const checkboxes = document.querySelectorAll('.check-acab-prod:checked');
     const acabamentosPermitidos = Array.from(checkboxes).map(c => c.value);
 
@@ -162,7 +166,7 @@ async function salvarProduto() {
         preco: parseFloat(document.getElementById('prodPreco').value) || 0,
         larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 1.50,
         compMax: parseFloat(document.getElementById('prodCompMax').value) || 100,
-        acabamentos: acabamentosPermitidos // SALVA A LISTA AQUI
+        acabamentos: acabamentosPermitidos 
     };
 
     if (!dados.nome) return alert("Nome do produto é obrigatório!");
@@ -199,7 +203,6 @@ function editProd(id) {
     document.getElementById('prodCompMax').value = p.compMax || 100;
     
     ajustarCamposProduto();
-    // Chama a função para marcar os checkboxes que já estavam salvos neste produto
     atualizarListaAcabamentosProduto(p.acabamentos || []);
     
     window.scrollTo(0,0);
@@ -211,10 +214,9 @@ function limparFormProduto() {
     document.getElementById('prodTamanho').value = ""; document.getElementById('prodPrazo').value = "";
     document.getElementById('prodPreco').value = "0.00";
     ajustarCamposProduto();
-    atualizarListaAcabamentosProduto(); // Reseta os checkboxes
+    atualizarListaAcabamentosProduto();
 }
 
-// ACABAMENTOS
 async function salvarAcabamento() {
     const id = document.getElementById('acabId').value;
     const dados = {
