@@ -49,9 +49,7 @@
                     <div class="loja-sidebar">
                         <div class="card">
                             <h3 style="margin-top:0;"><i class="fa fa-shopping-cart"></i> Carrinho Atual</h3>
-                            <div id="listaCarrinho" class="carrinho-itens">
-                                <small style="color:#A0AEC0;">O carrinho está vazio.</small>
-                            </div>
+                            <div id="listaCarrinho" class="carrinho-itens"><small style="color:#A0AEC0;">O carrinho está vazio.</small></div>
                             <hr style="border: 0; border-top: 1px solid var(--cor-borda); margin: 15px 0;">
                             
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -79,10 +77,8 @@
                                 <div class="input-group" id="divParcelas" style="display:none;">
                                     <label>Qtd. Parcelas</label>
                                     <select id="cartParcelas">
-                                        <option value="2x">2x</option><option value="3x">3x</option>
-                                        <option value="4x">4x</option><option value="5x">5x</option>
-                                        <option value="6x">6x</option><option value="7x">7x</option>
-                                        <option value="8x">8x</option><option value="9x">9x</option>
+                                        <option value="2x">2x</option><option value="3x">3x</option><option value="4x">4x</option><option value="5x">5x</option>
+                                        <option value="6x">6x</option><option value="7x">7x</option><option value="8x">8x</option><option value="9x">9x</option>
                                         <option value="10x">10x</option><option value="11x">11x</option><option value="12x">12x</option>
                                     </select>
                                 </div>
@@ -163,7 +159,7 @@
                             </div>
                             <div class="input-group"><label>Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()"></select></div>
                             <div class="input-group"><label>Nome do Produto</label><input type="text" id="prodNome"></div>
-                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Link da imagem"></div>
+                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Deixe em branco se não tiver"></div>
                         </div>
 
                         <div class="form-grid" style="margin-top:15px;">
@@ -175,11 +171,21 @@
                             <div class="input-group"><label>Prazo Produção (Dias)</label><input type="number" id="prodPrazo"></div>
                         </div>
 
-                        <div class="form-grid" style="margin-top:15px;">
-                            <div class="input-group"><label>Forma de Preço</label>
-                                <select id="prodRegraPreco" onchange="ajustarCamposProduto()"><option value="unidade">Preço por Unidade</option><option value="m2">Preço por m²</option></select>
+                        <div class="form-grid" style="margin-top:15px; align-items: end;">
+                            <div class="input-group"><label>Forma de Preço (A Matemática)</label>
+                                <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
+                                    <option value="unidade">Preço Livre (Multiplica pela Qtd digitada)</option>
+                                    <option value="pacote">Pacotes Fechados (Grade Ex: 100, 500 un)</option>
+                                    <option value="m2">Preço por Metro Quadrado (m²)</option>
+                                </select>
                             </div>
-                            <div class="input-group"><label id="labelPreco">Preço Base (R$)</label><input type="number" id="prodPreco" step="0.01"></div>
+                            <div class="input-group" id="boxPrecoBase"><label id="labelPreco">Preço Base (R$)</label><input type="number" id="prodPreco" step="0.01"></div>
+                        </div>
+
+                        <div id="boxPacotes" style="display:none; background:#FFFBEB; padding:15px; margin-top:15px; border-radius:8px; border: 1px solid #F6E05E;">
+                            <label style="color:#B7791F; font-weight:bold; margin-bottom:10px; display:block;"><i class="fa fa-cubes"></i> Grade de Quantidades e Preços (Pacotes)</label>
+                            <div id="listaGradePacotes"></div>
+                            <button class="btn-acao-edit" onclick="addLinhaPacote()" style="margin-top:10px;"><i class="fa fa-plus"></i> Adicionar Quantidade</button>
                         </div>
 
                         <div id="boxMedidas" class="form-grid" style="display:none; background:#f0f7ff; padding:15px; margin-top:15px; border-radius:8px;">
@@ -198,7 +204,7 @@
                             <button class="btn-limpar" onclick="limparFormProduto()">Limpar</button>
                         </div>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Tipo</th><th>Preço Base</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Tipo</th><th>Preço / Regra</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
                 </div>
 
                 <div id="sub-acab" class="sub-aba">
@@ -209,7 +215,13 @@
                             <div class="input-group"><label>Nome</label><input type="text" id="acabNome"></div>
                             <div class="input-group"><label>Grupo Menu</label><input type="text" id="acabGrupo"></div>
                             <div class="input-group"><label>Categoria</label><select id="acabCategoria"></select></div>
-                            <div class="input-group"><label>Cálculo</label><select id="acabRegra"><option value="fixo">Preço Fixo</option><option value="m2">Multiplicar por m²</option></select></div>
+                            <div class="input-group"><label>Cálculo</label>
+                                <select id="acabRegra">
+                                    <option value="unidade">Por Unidade (Multiplica pela Qtd do produto)</option>
+                                    <option value="lote">Taxa Fixa (Cobra 1x no Pedido/Lote)</option>
+                                    <option value="m2">Multiplicar por m²</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-grid" style="margin-top:15px;">
                             <div class="input-group"><label>Preço de Venda (R$)</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
