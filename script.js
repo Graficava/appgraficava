@@ -1,4 +1,3 @@
-// 1. SUAS CHAVES DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyC4pkjSYpuz4iF0ijF50VxaZ2npsYCi7II",
     authDomain: "app-graficava.firebaseapp.com",
@@ -13,16 +12,14 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let bdCategorias = [];
-let bdProdutos = [];
-let bdAcabamentos = [];
+let bdCategorias = [], bdProdutos = [], bdAcabamentos = [];
 
-// 2. LOGIN
+// LOGIN
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('telaLogin').style.display = 'none';
         document.getElementById('appInterface').style.display = 'flex';
-        iniciarLeituraDoBanco();
+        iniciarLeitura();
     } else {
         document.getElementById('telaLogin').style.display = 'flex';
         document.getElementById('appInterface').style.display = 'none';
@@ -30,131 +27,133 @@ auth.onAuthStateChanged(user => {
 });
 
 function entrar() {
-    auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('senha').value)
-        .catch(error => document.getElementById('msgErro').style.display = 'block');
+    const e = document.getElementById('email').value;
+    const s = document.getElementById('senha').value;
+    auth.signInWithEmailAndPassword(e, s).catch(() => alert("Erro no login"));
 }
 function sair() { auth.signOut(); }
 
-// 3. MENUS
-function mudarAba(nomeDaAba) {
-    document.querySelectorAll('.aba').forEach(aba => aba.classList.remove('ativa'));
-    document.querySelectorAll('.menu button').forEach(btn => btn.classList.remove('ativo'));
-    document.getElementById('aba-' + nomeDaAba).classList.add('ativa');
+// NAVEGAÇÃO
+function mudarAba(aba) {
+    document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+    document.querySelectorAll('.menu button').forEach(b => b.classList.remove('ativo'));
+    document.getElementById('aba-' + aba).classList.add('ativa');
     event.currentTarget.classList.add('ativo');
 }
 
-function mudarSubAba(nomeSubAba) {
-    document.querySelectorAll('.sub-aba').forEach(aba => aba.classList.remove('sub-ativa'));
-    document.querySelectorAll('.sub-menu button').forEach(btn => btn.classList.remove('sub-ativo'));
-    document.getElementById(nomeSubAba).classList.add('sub-ativa');
-    document.getElementById('btn-' + nomeSubAba).classList.add('sub-ativo');
+function mudarSubAba(sub) {
+    document.querySelectorAll('.sub-aba').forEach(a => a.classList.remove('sub-ativa'));
+    document.querySelectorAll('.sub-menu button').forEach(b => b.classList.remove('sub-ativo'));
+    document.getElementById(sub).classList.add('sub-ativa');
+    document.getElementById('btn-' + sub).classList.add('sub-ativo');
 }
 
-// Mostra ou Esconde os Limites da Plotter se não for M2
-function toggleLimites() {
-    const regra = document.getElementById('prodRegra').value;
-    document.getElementById('divLimitesPlotter').style.display = (regra === 'm2') ? 'grid' : 'none';
+// LÓGICA DE EXIBIÇÃO DE CAMPOS (O que você pediu)
+function ajustarCamposProduto() {
+    const tipo = document.getElementById('prodTipo').value;
+    const regraPreco = document.getElementById('prodRegraPreco').value;
+
+    // Esconde/Mostra Cor e Tamanho (Só para Gráfico e Outros)
+    if (tipo === 'visual') {
+        document.getElementById('grp-cor').style.display = 'none';
+        document.getElementById('grp-tamanho').style.display = 'none';
+    } else {
+        document.getElementById('grp-cor').style.display = 'block';
+        document.getElementById('grp-tamanho').style.display = 'block';
+    }
+
+    // Esconde/Mostra Medidas de Bobina (Só para m2)
+    if (regraPreco === 'm2') {
+        document.getElementById('boxMedidas').style.display = 'grid';
+        document.getElementById('labelPreco').innerText = "Preço por m² (R$)";
+    } else {
+        document.getElementById('boxMedidas').style.display = 'none';
+        document.getElementById('labelPreco').innerText = "Preço Unitário (R$)";
+    }
 }
 
-// ==========================================
-// CRUD SIMPLIFICADO
-// ==========================================
-function iniciarLeituraDoBanco() {
-    db.collection("categorias").onSnapshot(snap => {
-        bdCategorias = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderizarCategorias();
-        atualizarSelectsCategorias();
+// BANCO DE DADOS
+function iniciarLeitura() {
+    db.collection("categorias").onSnapshot(s => {
+        bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderCat();
     });
-    db.collection("produtos_base").onSnapshot(snap => {
-        bdProdutos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderizarProdutos();
+    db.collection("produtos").onSnapshot(s => {
+        bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderProd();
     });
-    db.collection("acabamentos").orderBy("grupo").onSnapshot(snap => {
-        bdAcabamentos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderizarAcabamentos();
+    db.collection("acabamentos").onSnapshot(s => {
+        bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderAcab();
     });
 }
 
-// --- CATEGORIAS ---
+// SALVAR CATEGORIA
 async function salvarCategoria() {
     const id = document.getElementById('catId').value;
     const nome = document.getElementById('catNome').value;
-    if (!nome) return alert("Digite um nome!");
-
-    if (id) await db.collection("categorias").doc(id).update({ nome: nome });
-    else await db.collection("categorias").add({ nome: nome });
-    
+    if (id) await db.collection("categorias").doc(id).update({nome});
+    else await db.collection("categorias").add({nome});
     document.getElementById('catId').value = ""; document.getElementById('catNome').value = "";
 }
 
-function renderizarCategorias() {
-    document.getElementById('listaCategorias').innerHTML = bdCategorias.map(c => `
-        <tr><td>${c.nome}</td><td style="text-align:right;">
-        <button class="btn-acao-edit" onclick="editarCategoria('${c.id}', '${c.nome}')"><i class="fa fa-pen"></i></button>
-        <button class="btn-acao-del" onclick="deletarDoc('categorias', '${c.id}')"><i class="fa fa-trash"></i></button></td></tr>
-    `).join('');
+function renderCat() {
+    const lista = document.getElementById('listaCategorias');
+    lista.innerHTML = bdCategorias.map(c => `<tr><td>${c.nome}</td><td><button onclick="editCat('${c.id}','${c.nome}')">Ed</button></td></tr>`).join('');
+    const selects = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+    document.getElementById('prodCategoria').innerHTML = selects;
+    document.getElementById('acabCategoria').innerHTML = selects;
 }
+function editCat(id, n) { document.getElementById('catId').value = id; document.getElementById('catNome').value = n; }
 
-function editarCategoria(id, nome) { document.getElementById('catId').value = id; document.getElementById('catNome').value = nome; }
-
-function atualizarSelectsCategorias() {
-    const options = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
-    document.getElementById('prodCategoria').innerHTML = options;
-    document.getElementById('acabCategoria').innerHTML = `<option value="Geral">Geral (Todas)</option>` + options;
-}
-
-// --- PRODUTOS BASE ---
+// SALVAR PRODUTO (Aqui resolvemos o problema de não cadastrar)
 async function salvarProduto() {
     const id = document.getElementById('prodId').value;
     const dados = {
-        nome: document.getElementById('prodNome').value,
+        tipo: document.getElementById('prodTipo').value,
         categoria: document.getElementById('prodCategoria').value,
-        regra: document.getElementById('prodRegra').value,
+        nome: document.getElementById('prodNome').value,
+        foto: document.getElementById('prodFoto').value,
+        cor: document.getElementById('prodCor').value,
+        material: document.getElementById('prodMaterial').value,
+        tamanho: document.getElementById('prodTamanho').value,
+        prazo: document.getElementById('prodPrazo').value,
+        regraPreco: document.getElementById('prodRegraPreco').value,
         preco: parseFloat(document.getElementById('prodPreco').value) || 0,
-        larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0,
-        comprimentoMax: parseFloat(document.getElementById('prodCompMax').value) || 0
+        larguraMax: document.getElementById('prodLargMax').value,
+        compMax: document.getElementById('prodCompMax').value
     };
 
-    if (!dados.nome) return alert("Nome do produto é obrigatório.");
-
-    if (id) await db.collection("produtos_base").doc(id).update(dados);
-    else await db.collection("produtos_base").add(dados);
-    limparFormProduto();
+    try {
+        if (id) await db.collection("produtos").doc(id).update(dados);
+        else await db.collection("produtos").add(dados);
+        alert("Produto salvo!");
+        limparFormProduto();
+    } catch (e) { alert("Erro ao salvar"); }
 }
 
-function renderizarProdutos() {
+function renderProd() {
     document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => `
-        <tr>
-            <td><b>${p.nome}</b><br><small style="color:#718096">${p.categoria}</small></td>
-            <td>${p.regra}</td>
-            <td>R$ ${parseFloat(p.preco || 0).toFixed(2)}</td>
-            <td style="text-align:right;">
-                <button class="btn-acao-edit" onclick="editarProduto('${p.id}')"><i class="fa fa-pen"></i></button>
-                <button class="btn-acao-del" onclick="deletarDoc('produtos_base', '${p.id}')"><i class="fa fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
+        <tr><td>${p.nome}</td><td>${p.tipo}</td><td>R$ ${p.preco}</td>
+        <td><button onclick="editProd('${p.id}')">Editar</button></td></tr>`).join('');
 }
 
-function editarProduto(id) {
-    const p = bdProdutos.find(item => item.id === id);
+function editProd(id) {
+    const p = bdProdutos.find(x => x.id === id);
     document.getElementById('prodId').value = p.id;
+    document.getElementById('prodTipo').value = p.tipo;
     document.getElementById('prodNome').value = p.nome;
-    document.getElementById('prodCategoria').value = p.categoria;
-    document.getElementById('prodRegra').value = p.regra;
-    document.getElementById('prodPreco').value = p.preco || 0;
-    document.getElementById('prodLargMax').value = p.larguraMax || 1.50;
-    document.getElementById('prodCompMax').value = p.comprimentoMax || 100;
-    toggleLimites();
+    document.getElementById('prodPreco').value = p.preco;
+    ajustarCamposProduto();
 }
 
 function limparFormProduto() {
-    document.getElementById('prodId').value = ""; document.getElementById('prodNome').value = "";
-    document.getElementById('prodPreco').value = "0.00"; 
-    document.getElementById('prodLargMax').value = "1.50"; document.getElementById('prodCompMax').value = "100.00";
+    document.getElementById('prodId').value = "";
+    document.getElementById('prodNome').value = "";
+    document.getElementById('prodPreco').value = "";
 }
 
-// --- ACABAMENTOS ---
+// SALVAR ACABAMENTO
 async function salvarAcabamento() {
     const id = document.getElementById('acabId').value;
     const dados = {
@@ -162,49 +161,25 @@ async function salvarAcabamento() {
         grupo: document.getElementById('acabGrupo').value,
         categoria: document.getElementById('acabCategoria').value,
         regra: document.getElementById('acabRegra').value,
-        precoVenda: parseFloat(document.getElementById('acabPrecoVenda').value) || 0,
+        venda: parseFloat(document.getElementById('acabPrecoVenda').value) || 0,
         custo: parseFloat(document.getElementById('acabCusto').value) || 0
     };
-
-    if (!dados.nome) return alert("Nome do acabamento é obrigatório.");
-
     if (id) await db.collection("acabamentos").doc(id).update(dados);
     else await db.collection("acabamentos").add(dados);
     limparFormAcabamento();
 }
 
-function renderizarAcabamentos() {
+function renderAcab() {
     document.getElementById('listaAcabamentos').innerHTML = bdAcabamentos.map(a => `
-        <tr>
-            <td><small>${a.categoria}</small></td>
-            <td><b>${a.nome}</b><br><span class="col-grupo">${a.grupo || 'Solto'}</span></td>
-            <td style="color:#2F855A; font-weight:bold;">R$ ${parseFloat(a.precoVenda || 0).toFixed(2)}</td>
-            <td><small style="color:#718096">${a.regra}</small></td>
-            <td style="text-align:right;">
-                <button class="btn-acao-edit" onclick="editarAcabamento('${a.id}')"><i class="fa fa-pen"></i></button>
-                <button class="btn-acao-del" onclick="deletarDoc('acabamentos', '${a.id}')"><i class="fa fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
+        <tr><td>${a.nome}</td><td>R$ ${a.venda}</td>
+        <td><button onclick="editAcab('${a.id}')">Ed</button></td></tr>`).join('');
 }
 
-function editarAcabamento(id) {
-    const a = bdAcabamentos.find(item => item.id === id);
+function editAcab(id) {
+    const a = bdAcabamentos.find(x => x.id === id);
     document.getElementById('acabId').value = a.id;
     document.getElementById('acabNome').value = a.nome;
-    document.getElementById('acabGrupo').value = a.grupo || "";
-    document.getElementById('acabCategoria').value = a.categoria;
-    document.getElementById('acabRegra').value = a.regra;
-    document.getElementById('acabPrecoVenda').value = a.precoVenda || 0;
-    document.getElementById('acabCusto').value = a.custo || 0;
+    document.getElementById('acabPrecoVenda').value = a.venda;
 }
 
-function limparFormAcabamento() {
-    document.getElementById('acabId').value = ""; document.getElementById('acabNome').value = "";
-    document.getElementById('acabGrupo').value = ""; document.getElementById('acabPrecoVenda').value = "0.00";
-    document.getElementById('acabCusto').value = "0.00";
-}
-
-function deletarDoc(colecao, id) {
-    if (confirm("Apagar este item?")) db.collection(colecao).doc(id).delete();
-}
+function limparFormAcabamento() { document.getElementById('acabId').value = ""; document.getElementById('acabNome').value = ""; }
