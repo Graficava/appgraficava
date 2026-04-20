@@ -53,34 +53,52 @@
                                 <small style="color:#A0AEC0;">O carrinho está vazio.</small>
                             </div>
                             <hr style="border: 0; border-top: 1px solid var(--cor-borda); margin: 15px 0;">
+                            
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                <span style="font-weight:bold; color:#4A5568;">Total:</span>
-                                <span style="font-size:22px; font-weight:bold; color:var(--cor-sucesso);">R$ <span id="totalCarrinho">0.00</span></span>
+                                <span style="font-weight:bold; color:#4A5568;">Total c/ Frete:</span>
+                                <span style="font-size:22px; font-weight:bold; color:var(--cor-sucesso);">R$ <span id="totalCarrinho" data-subtotal="0">0.00</span></span>
                             </div>
                             
                             <div class="input-group" style="margin-bottom:15px;">
                                 <label>Cliente</label>
-                                <select id="cartCliente">
-                                    <option value="">Selecione um cliente...</option>
-                                </select>
+                                <select id="cartCliente"><option value="">Selecione um cliente...</option></select>
                             </div>
                             
                             <div class="form-linha" style="margin-bottom:15px;">
                                 <div class="input-group">
                                     <label>Pagamento</label>
-                                    <select id="cartPagamento">
+                                    <select id="cartPagamento" onchange="toggleOpcoesPagamento()">
                                         <option value="Pix">Pix</option>
-                                        <option value="Cartão">Cartão (Débito/Crédito)</option>
                                         <option value="Dinheiro">Dinheiro</option>
+                                        <option value="Debito">Cartão de Débito</option>
+                                        <option value="Credito_Vista">Cartão de Crédito (à vista)</option>
+                                        <option value="Credito_Parcelado">Cartão de Crédito (Parcelado)</option>
                                         <option value="Faturado">Boleto (Faturado)</option>
                                     </select>
                                 </div>
+                                <div class="input-group" id="divParcelas" style="display:none;">
+                                    <label>Qtd. Parcelas</label>
+                                    <select id="cartParcelas">
+                                        <option value="2x">2x</option><option value="3x">3x</option>
+                                        <option value="4x">4x</option><option value="5x">5x</option>
+                                        <option value="6x">6x</option><option value="7x">7x</option>
+                                        <option value="8x">8x</option><option value="9x">9x</option>
+                                        <option value="10x">10x</option><option value="11x">11x</option><option value="12x">12x</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-linha" style="margin-bottom:15px;">
                                 <div class="input-group">
                                     <label>Entrega</label>
-                                    <select id="cartEntrega">
+                                    <select id="cartEntrega" onchange="toggleOpcoesEntrega()">
                                         <option value="Retirada">Retirada na Loja</option>
                                         <option value="Motoboy">Motoboy / Transp.</option>
                                     </select>
+                                </div>
+                                <div class="input-group" id="divFrete" style="display:none;">
+                                    <label style="color:var(--cor-principal);">Taxa Frete (R$)</label>
+                                    <input type="number" id="cartFreteValor" value="0.00" step="0.01" oninput="atualizarTotalComFrete()">
                                 </div>
                             </div>
 
@@ -109,7 +127,7 @@
                             <div class="input-group"><label>Nome / Razão Social</label><input type="text" id="cliNome"></div>
                             <div class="input-group"><label>CPF / CNPJ</label><input type="text" id="cliDoc"></div>
                             <div class="input-group"><label>WhatsApp / Telefone</label><input type="text" id="cliTel"></div>
-                            <div class="input-group"><label>Endereço Completo</label><input type="text" id="cliEnd" placeholder="Rua, Número, Bairro, CEP..."></div>
+                            <div class="input-group"><label>Endereço Completo</label><input type="text" id="cliEnd"></div>
                         </div>
                         <div style="margin-top:20px;">
                             <button class="btn-salvar" onclick="salvarCliente()">Salvar Cliente</button>
@@ -150,12 +168,7 @@
 
                         <div class="form-grid" style="margin-top:15px;">
                             <div class="input-group" id="grp-cor"><label>Cor</label>
-                                <select id="prodCor">
-                                    <option value="4x0">4x0 (Só Frente)</option>
-                                    <option value="4x1">4x1 (Frente e Verso PB)</option>
-                                    <option value="4x4">4x4 (Colorido Frente/Verso)</option>
-                                    <option value="N/A">Não se aplica</option>
-                                </select>
+                                <select id="prodCor"><option value="4x0">4x0</option><option value="4x1">4x1</option><option value="4x4">4x4</option><option value="N/A">Não se aplica</option></select>
                             </div>
                             <div class="input-group"><label>Material</label><input type="text" id="prodMaterial"></div>
                             <div class="input-group" id="grp-tamanho"><label>Tamanho Fixo</label><input type="text" id="prodTamanho" placeholder="Ex: 9x5cm"></div>
@@ -164,10 +177,7 @@
 
                         <div class="form-grid" style="margin-top:15px;">
                             <div class="input-group"><label>Forma de Preço</label>
-                                <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
-                                    <option value="unidade">Preço por Unidade / Qtd Fixa</option>
-                                    <option value="m2">Preço por Metro Quadrado (m²)</option>
-                                </select>
+                                <select id="prodRegraPreco" onchange="ajustarCamposProduto()"><option value="unidade">Preço por Unidade</option><option value="m2">Preço por m²</option></select>
                             </div>
                             <div class="input-group"><label id="labelPreco">Preço Base (R$)</label><input type="number" id="prodPreco" step="0.01"></div>
                         </div>
@@ -178,8 +188,7 @@
                         </div>
 
                         <div class="form-grid" style="margin-top:20px; display:block;">
-                            <div class="input-group">
-                                <label style="color: var(--cor-principal);"><i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto</label>
+                            <div class="input-group"><label style="color: var(--cor-principal);"><i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto</label>
                                 <div id="listaCheckAcabamentos" class="caixa-checkbox"><small style="color:#718096;">Selecione uma categoria primeiro...</small></div>
                             </div>
                         </div>
@@ -197,22 +206,17 @@
                         <h3>Novo Acabamento</h3>
                         <div class="form-grid">
                             <input type="hidden" id="acabId">
-                            <div class="input-group"><label>Nome (Ex: Ilhós)</label><input type="text" id="acabNome"></div>
+                            <div class="input-group"><label>Nome</label><input type="text" id="acabNome"></div>
                             <div class="input-group"><label>Grupo Menu</label><input type="text" id="acabGrupo"></div>
                             <div class="input-group"><label>Categoria</label><select id="acabCategoria"></select></div>
-                            <div class="input-group"><label>Cálculo</label>
-                                <select id="acabRegra">
-                                    <option value="fixo">Preço Fixo / Por Unidade</option>
-                                    <option value="m2">Multiplicar por m²</option>
-                                </select>
-                            </div>
+                            <div class="input-group"><label>Cálculo</label><select id="acabRegra"><option value="fixo">Preço Fixo</option><option value="m2">Multiplicar por m²</option></select></div>
                         </div>
                         <div class="form-grid" style="margin-top:15px;">
                             <div class="input-group"><label>Preço de Venda (R$)</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
                             <div class="input-group"><label>Custo Interno (R$)</label><input type="number" id="acabCusto" step="0.01"></div>
                         </div>
                         <div style="margin-top:20px;">
-                            <button class="btn-salvar" onclick="salvarAcabamento()">Salvar Acabamento</button>
+                            <button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button>
                             <button class="btn-limpar" onclick="limparFormAcabamento()">Limpar</button>
                         </div>
                     </div>
@@ -228,7 +232,6 @@
                 <h2 id="modalNomeProd" style="margin:0; color:var(--cor-principal);">Nome do Produto</h2>
                 <button onclick="fecharModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#A0AEC0;">X</button>
             </div>
-            
             <input type="hidden" id="modalProdId">
             <input type="hidden" id="modalProdRegra">
             <input type="hidden" id="modalProdPrecoBase">
@@ -237,10 +240,7 @@
             <div id="modalCorpoAcabamentos" style="margin-bottom:20px;"></div>
 
             <div class="modal-footer" style="background:#F8FAFC; padding:15px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <span style="display:block; font-size:12px; color:#718096; font-weight:bold;">VALOR TOTAL:</span>
-                    <span style="font-size:24px; font-weight:900; color:var(--cor-principal);">R$ <span id="modalSubtotal">0.00</span></span>
-                </div>
+                <div><span style="display:block; font-size:12px; color:#718096; font-weight:bold;">VALOR TOTAL:</span><span style="font-size:24px; font-weight:900; color:var(--cor-principal);">R$ <span id="modalSubtotal">0.00</span></span></div>
                 <button class="btn-salvar" onclick="confirmarAdicaoCarrinho()"><i class="fa fa-plus"></i> Add ao Carrinho</button>
             </div>
         </div>
