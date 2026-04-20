@@ -47,6 +47,10 @@ input, select { width: 100%; padding: 10px; border: 1px solid #CBD5E0; border-ra
 .btn-add-lista { background:white; border:1px solid #CBD5E0; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold; color:#4A5568; font-size:12px; margin-top:5px; }
 .btn-rem-lista { background:#FFF5F5; color:#E53E3E; border:1px solid #FEB2B2; border-radius:6px; width:35px; cursor:pointer; font-weight:bold; }
 
+/* Estilos de Variações no Cadastro */
+.caixa-atributo { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #BEE3F8; }
+.linha-opcao-atrib { display: flex; gap: 5px; margin-top: 5px; }
+
 .setup-acabamentos { margin-top: 20px; }
 .setup-acabamentos label { color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px; display: block; }
 .mini-lista-acab { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid #EDF2F7; max-height: 200px; overflow-y: auto; }
@@ -83,13 +87,8 @@ input, select { width: 100%; padding: 10px; border: 1px solid #CBD5E0; border-ra
 .divisor-config::before { content: ""; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #E2E8F0; z-index: 1; }
 .divisor-config span { position: relative; z-index: 2; background: white; padding: 0 15px; font-size: 12px; font-weight: 800; color: #A0AEC0; text-transform: uppercase; letter-spacing: 1px; }
 
-/* BOTÕES ESTILO CHECKBOX (FRENTE E VERSO) */
-.check-box-custom { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border: 2px solid #E2E8F0; border-radius: 8px; background: #FFF; cursor: pointer; transition: all 0.2s ease; }
-.check-box-custom:hover { border-color: #CBD5E0; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-.check-box-custom:has(input:checked) { border-color: var(--cor-primaria); background: #F0F4FF; }
-.check-box-custom input[type="radio"], .check-box-custom input[type="checkbox"] { transform: scale(1.4); margin-right: 12px; accent-color: var(--cor-primaria); cursor: pointer; }
+.config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
 
-/* ACABAMENTOS */
 .config-acab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 .btn-acab-escolha { border: 2px solid #EDF2F7; border-radius: 12px; padding: 15px; cursor: pointer; transition: 0.2s; background: white; position: relative; display: flex; flex-direction: column; gap: 4px; }
 .btn-acab-escolha:hover { border-color: #CBD5E0; }
