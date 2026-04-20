@@ -42,10 +42,8 @@
             <section id="aba-loja" class="aba ativa">
                 <div class="loja-layout">
                     <div class="loja-vitrine">
-                        <div class="filtro-cat" id="menuFiltroCat">
-                            </div>
-                        <div class="vitrine-grid" id="gradeProdutos">
-                            </div>
+                        <div class="filtro-cat" id="menuFiltroCat"></div>
+                        <div class="vitrine-grid" id="gradeProdutos"></div>
                     </div>
                     
                     <div class="loja-sidebar">
@@ -61,12 +59,29 @@
                             </div>
                             
                             <div class="input-group" style="margin-bottom:15px;">
-                                <label>Nome do Cliente</label>
-                                <input type="text" id="nomeClienteCarrinho" placeholder="Ex: João da Silva">
+                                <label>Cliente</label>
+                                <select id="cartCliente">
+                                    <option value="">Selecione um cliente...</option>
+                                </select>
                             </div>
-                            <div class="input-group" style="margin-bottom:15px;">
-                                <label>WhatsApp / Contato</label>
-                                <input type="text" id="telClienteCarrinho" placeholder="(00) 00000-0000">
+                            
+                            <div class="form-linha" style="margin-bottom:15px;">
+                                <div class="input-group">
+                                    <label>Pagamento</label>
+                                    <select id="cartPagamento">
+                                        <option value="Pix">Pix</option>
+                                        <option value="Cartão">Cartão (Débito/Crédito)</option>
+                                        <option value="Dinheiro">Dinheiro</option>
+                                        <option value="Faturado">Boleto (Faturado)</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>Entrega</label>
+                                    <select id="cartEntrega">
+                                        <option value="Retirada">Retirada na Loja</option>
+                                        <option value="Motoboy">Motoboy / Transp.</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <button class="btn-salvar" style="width:100%; padding:12px;" onclick="enviarPedido()"><i class="fa fa-check"></i> Fechar Pedido</button>
@@ -75,17 +90,36 @@
                 </div>
             </section>
 
-            <section id="aba-producao" class="aba"><h2>Produção (Fase 4)</h2></section>
-            <section id="aba-financeiro" class="aba"><h2>Financeiro (Fase 5)</h2></section>
+            <section id="aba-producao" class="aba"><h2>Produção (Em breve)</h2></section>
+            <section id="aba-financeiro" class="aba"><h2>Financeiro (Em breve)</h2></section>
             
             <section id="aba-cadastros" class="aba">
                 <div class="sub-menu">
-                    <button onclick="mudarSubAba('sub-cat')" class="sub-ativo" id="btn-sub-cat">Categorias</button>
+                    <button onclick="mudarSubAba('sub-cli')" class="sub-ativo" id="btn-sub-cli">Clientes</button>
+                    <button onclick="mudarSubAba('sub-cat')" id="btn-sub-cat">Categorias</button>
                     <button onclick="mudarSubAba('sub-prod')" id="btn-sub-prod">Produtos Base</button>
                     <button onclick="mudarSubAba('sub-acab')" id="btn-sub-acab">Acabamentos</button>
                 </div>
 
-                <div id="sub-cat" class="sub-aba sub-ativa">
+                <div id="sub-cli" class="sub-aba sub-ativa">
+                    <div class="card">
+                        <h3>Cadastro de Cliente</h3>
+                        <div class="form-grid">
+                            <input type="hidden" id="cliId">
+                            <div class="input-group"><label>Nome / Razão Social</label><input type="text" id="cliNome"></div>
+                            <div class="input-group"><label>CPF / CNPJ</label><input type="text" id="cliDoc"></div>
+                            <div class="input-group"><label>WhatsApp / Telefone</label><input type="text" id="cliTel"></div>
+                            <div class="input-group"><label>Endereço Completo</label><input type="text" id="cliEnd" placeholder="Rua, Número, Bairro, CEP..."></div>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <button class="btn-salvar" onclick="salvarCliente()">Salvar Cliente</button>
+                            <button class="btn-limpar" onclick="limparFormCliente()">Limpar</button>
+                        </div>
+                    </div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Cliente</th><th>Documento</th><th>Ação</th></tr></thead><tbody id="listaClientes"></tbody></table></div>
+                </div>
+
+                <div id="sub-cat" class="sub-aba">
                     <div class="card">
                         <h3>Nova Categoria</h3>
                         <div class="form-linha">
@@ -111,7 +145,7 @@
                             </div>
                             <div class="input-group"><label>Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()"></select></div>
                             <div class="input-group"><label>Nome do Produto</label><input type="text" id="prodNome"></div>
-                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Link da imagem (opcional)"></div>
+                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Link da imagem"></div>
                         </div>
 
                         <div class="form-grid" style="margin-top:15px;">
@@ -129,7 +163,7 @@
                         </div>
 
                         <div class="form-grid" style="margin-top:15px;">
-                            <div class="input-group"><label>Forma de Preço (A Matemática)</label>
+                            <div class="input-group"><label>Forma de Preço</label>
                                 <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
                                     <option value="unidade">Preço por Unidade / Qtd Fixa</option>
                                     <option value="m2">Preço por Metro Quadrado (m²)</option>
@@ -145,12 +179,8 @@
 
                         <div class="form-grid" style="margin-top:20px; display:block;">
                             <div class="input-group">
-                                <label style="color: var(--cor-principal);">
-                                    <i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto
-                                </label>
-                                <div id="listaCheckAcabamentos" class="caixa-checkbox">
-                                    <small style="color:#718096;">Selecione uma categoria primeiro...</small>
-                                </div>
+                                <label style="color: var(--cor-principal);"><i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto</label>
+                                <div id="listaCheckAcabamentos" class="caixa-checkbox"><small style="color:#718096;">Selecione uma categoria primeiro...</small></div>
                             </div>
                         </div>
 
@@ -167,13 +197,13 @@
                         <h3>Novo Acabamento</h3>
                         <div class="form-grid">
                             <input type="hidden" id="acabId">
-                            <div class="input-group"><label>Nome (Ex: Ilhós Metálico / Verniz Localizado)</label><input type="text" id="acabNome"></div>
-                            <div class="input-group"><label>Grupo no Menu (Opcional)</label><input type="text" id="acabGrupo" placeholder="Ex: Acabamentos Extras"></div>
-                            <div class="input-group"><label>Categoria de Vínculo</label><select id="acabCategoria"></select></div>
-                            <div class="input-group"><label>Matemática do Acabamento</label>
+                            <div class="input-group"><label>Nome (Ex: Ilhós)</label><input type="text" id="acabNome"></div>
+                            <div class="input-group"><label>Grupo Menu</label><input type="text" id="acabGrupo"></div>
+                            <div class="input-group"><label>Categoria</label><select id="acabCategoria"></select></div>
+                            <div class="input-group"><label>Cálculo</label>
                                 <select id="acabRegra">
                                     <option value="fixo">Preço Fixo / Por Unidade</option>
-                                    <option value="m2">Multiplicar por m² (Ex: Laminação por metro)</option>
+                                    <option value="m2">Multiplicar por m²</option>
                                 </select>
                             </div>
                         </div>
@@ -204,7 +234,6 @@
             <input type="hidden" id="modalProdPrecoBase">
             
             <div id="modalCorpoMedidas" class="form-grid" style="margin-bottom:20px;"></div>
-            
             <div id="modalCorpoAcabamentos" style="margin-bottom:20px;"></div>
 
             <div class="modal-footer" style="background:#F8FAFC; padding:15px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
