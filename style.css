@@ -1,0 +1,45 @@
+:root {
+    --cor-principal: #3E3B9F; /* Azul GVA */
+    --cor-fundo: #F4F6F8;
+    --cor-texto: #333;
+}
+
+body, html { margin: 0; padding: 0; font-family: Arial, sans-serif; background: var(--cor-fundo); color: var(--cor-texto); height: 100%; }
+
+/* --- LOGIN --- */
+.login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--cor-principal); }
+.login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; max-width: 320px; text-align: center; }
+.login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+.login-box button { width: 100%; padding: 12px; background: var(--cor-principal); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; }
+.login-box button:hover { opacity: 0.9; }
+
+/* --- ESTRUTURA DO SISTEMA --- */
+.app-container { display: flex; height: 100vh; overflow: hidden; }
+
+/* Menu Lateral (Desktop) */
+.sidebar { width: 250px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+.sidebar-header { padding: 20px; font-size: 20px; font-weight: bold; color: var(--cor-principal); text-align: center; border-bottom: 1px solid #eee; }
+.menu { flex: 1; padding: 15px 0; }
+.menu button { width: 100%; text-align: left; padding: 15px 20px; background: none; border: none; cursor: pointer; font-size: 16px; color: #555; display: flex; gap: 10px; align-items: center; }
+.menu button:hover { background: #f0f0f0; }
+.menu button.ativo { background: var(--cor-principal); color: white; border-radius: 0 20px 20px 0; width: 90%; }
+.btn-sair { padding: 15px; background: #ffebee; color: #c62828; border: none; cursor: pointer; font-weight: bold; }
+
+/* Área Central */
+.main-content { flex: 1; padding: 30px; overflow-y: auto; }
+.aba { display: none; }
+.aba.ativa { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- RESPONSIVO (CELULAR) --- */
+@media (max-width: 768px) {
+    .app-container { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #ddd; }
+    .sidebar-header { display: none; }
+    .menu { display: flex; overflow-x: auto; padding: 0; }
+    .menu button { padding: 15px; justify-content: center; white-space: nowrap; border-radius: 0; width: auto; }
+    .menu button.ativo { border-radius: 0; border-bottom: 3px solid var(--cor-principal); }
+    .btn-sair { display: none; } /* Oculto no menu superior do celular, podemos colocar dentro das configs depois */
+    .main-content { padding: 15px; }
+}

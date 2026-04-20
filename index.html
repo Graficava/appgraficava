@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GVA ERP Gráfico</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <div id="telaLogin" class="login-container">
+        <div class="login-box">
+            <h2>GVA Sistema</h2>
+            <p>Acesso Restrito</p>
+            <input type="email" id="email" placeholder="Seu e-mail">
+            <input type="password" id="senha" placeholder="Sua senha">
+            <button onclick="entrar()">Entrar</button>
+            <p id="msgErro" style="color: red; font-size: 14px; display: none;">Login inválido!</p>
+        </div>
+    </div>
+
+    <div id="appInterface" class="app-container" style="display: none;">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">GVA ERP</div>
+            <nav class="menu">
+                <button onclick="mudarAba('loja')" class="ativo"><i class="fa fa-store"></i> Loja</button>
+                <button onclick="mudarAba('producao')"><i class="fa fa-tasks"></i> Produção</button>
+                <button onclick="mudarAba('financeiro')"><i class="fa fa-chart-line"></i> Financeiro</button>
+                <button onclick="mudarAba('cadastros')"><i class="fa fa-database"></i> Cadastros</button>
+            </nav>
+            <button onclick="sair()" class="btn-sair"><i class="fa fa-sign-out-alt"></i> Sair</button>
+        </aside>
+
+        <main class="main-content">
+            <section id="aba-loja" class="aba ativa"><h2>Vitrine da Loja (Em breve)</h2></section>
+            <section id="aba-producao" class="aba"><h2>Painel de Produção (Em breve)</h2></section>
+            <section id="aba-financeiro" class="aba"><h2>Financeiro (Em breve)</h2></section>
+            <section id="aba-cadastros" class="aba"><h2>Gestão de Cadastros (Em breve)</h2></section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
