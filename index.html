@@ -164,7 +164,11 @@
                             <div class="input-group"><label>Comprimento Máx (m)</label><input type="number" id="prodCompMax" value="100" step="0.01"></div>
                         </div>
 
-                        <div class="form-grid" style="margin-top:20px; display:block;"><div class="input-group"><label style="color: var(--cor-principal);"><i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto</label><div id="listaCheckAcabamentos" class="caixa-checkbox"><small style="color:#718096;">Selecione uma categoria primeiro...</small></div></div></div>
+                        <div style="margin-top:20px; display:block;">
+                            <label style="color: var(--cor-principal); display:block; margin-bottom:10px; font-weight:bold;"><i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto</label>
+                            <div id="listaCheckAcabamentos" class="caixa-checkbox" style="display: flex; flex-direction: column; gap: 0; padding:0; overflow:hidden;"><small style="padding:15px; color:#718096;">Selecione uma categoria primeiro...</small></div>
+                        </div>
+
                         <div style="margin-top:20px;"><button class="btn-salvar" onclick="salvarProduto()">Salvar Produto</button><button class="btn-limpar" onclick="limparFormProduto()">Limpar</button></div>
                     </div>
                     <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Tipo</th><th>Preço / Regra</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
@@ -176,22 +180,17 @@
                         <div class="form-grid">
                             <input type="hidden" id="acabId">
                             <div class="input-group"><label>Nome</label><input type="text" id="acabNome"></div>
-                            <div class="input-group"><label>Grupo Menu</label><input type="text" id="acabGrupo"></div>
+                            <div class="input-group"><label>Grupo Menu (Ex: Fixação)</label><input type="text" id="acabGrupo" placeholder="Para agrupar botões"></div>
                             <div class="input-group"><label>Categoria</label><select id="acabCategoria"></select></div>
                             <div class="input-group"><label>Cálculo</label><select id="acabRegra"><option value="unidade">Por Unidade (Multiplica pela Qtd do produto)</option><option value="lote">Taxa Fixa (Cobra 1x no Pedido/Lote)</option><option value="m2">Multiplicar por m²</option></select></div>
                         </div>
                         <div class="form-grid" style="margin-top:15px;">
                             <div class="input-group"><label>Preço de Venda (R$)</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
                             <div class="input-group"><label>Custo Interno (R$)</label><input type="number" id="acabCusto" step="0.01"></div>
-                            <div class="input-group" style="display: flex; align-items: center; justify-content: flex-start;">
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--cor-principal); margin:0;">
-                                    <input type="checkbox" id="acabPadrao" style="width: 20px; height: 20px; margin:0;"> Já vem marcado por padrão? (Incluso)
-                                </label>
-                            </div>
                         </div>
                         <div style="margin-top:20px;"><button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button><button class="btn-limpar" onclick="limparFormAcabamento()">Limpar</button></div>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento</th><th>Regra</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento / Grupo</th><th>Regra</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
                 </div>
             </section>
         </main>
@@ -200,16 +199,13 @@
     <div id="modalW2P" class="modal-fundo" style="display:none;">
         <div class="modal-conteudo card" style="padding: 0; overflow: hidden; border:none;">
             
-            <div id="modalHeaderImg" style="width: 100%; height: 220px; background-size: cover; background-position: center; position: relative;">
+            <div id="modalHeaderImg" style="width: 100%; height: 220px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #EDF2F7; position: relative;">
                 <button onclick="fecharModal()" style="position:absolute; top:15px; right:15px; background:white; border:none; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2); color:#4A5568;">X</button>
             </div>
 
             <div style="padding: 25px;">
                 <h2 id="modalNomeProd" style="margin:0 0 20px 0; color:var(--cor-texto); font-size: 24px;">Nome do Produto</h2>
-                
-                <input type="hidden" id="modalProdId">
-                <input type="hidden" id="modalProdRegra">
-                <input type="hidden" id="modalProdPrecoBase">
+                <input type="hidden" id="modalProdId"><input type="hidden" id="modalProdRegra"><input type="hidden" id="modalProdPrecoBase">
                 
                 <div id="modalCorpoMedidas" class="form-grid" style="margin-bottom:25px;"></div>
                 <div id="modalCorpoAcabamentos" style="margin-bottom:25px;"></div>
