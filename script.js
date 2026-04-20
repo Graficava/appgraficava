@@ -57,7 +57,7 @@ function abrirConfigurador(idProduto) {
     const divMedidas = document.getElementById('modalCorpoMedidas');
     const divCores = document.getElementById('modalCorpoCores');
     
-    // 1. QUANTIDADES E MEDIDAS
+    // QUANTIDADES E MEDIDAS
     if (p.regraPreco === 'm2') {
         divMedidas.innerHTML = `<div class="input-group"><label>Largura (m)</label><input type="number" id="w2pLargura" value="1.00" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Altura (m)</label><input type="number" id="w2pAltura" value="1.00" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Qtd</label><input type="number" id="w2pQtd" value="1" oninput="calcularPrecoAoVivo()"></div>`;
     } else if (p.regraPreco === 'pacote') {
@@ -70,9 +70,9 @@ function abrirConfigurador(idProduto) {
         divMedidas.innerHTML = `<div class="input-group"><label>Qtd Impressões</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
     }
 
-    // 2. FRENTE E VERSO (A MATEMÁTICA CORRETA: O MULTIPLICADOR/DESCONTO)
+    // FRENTE E VERSO (MATEMÁTICA CORRETA)
     if (p.permiteLados === 'sim') {
-        const mult = p.multVerso || 0.80; // O 0.80 que você pediu
+        const mult = p.multVerso || 0.80;
         divCores.innerHTML = `
             <div class="divisor-config" style="margin: 10px 0 20px;"><span>Formato de Impressão</span></div>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
@@ -95,7 +95,7 @@ function abrirConfigurador(idProduto) {
         divCores.innerHTML = '';
     }
 
-    // 3. ACABAMENTOS
+    // ACABAMENTOS
     const divAcab = document.getElementById('modalCorpoAcabamentos');
     const permitidos = p.acabamentos || [];
     let htmlAcab = ""; let grupos = {};
@@ -137,7 +137,6 @@ function calcularPrecoAoVivo() {
     
     let qtd = 1; let totalBase = 0; let m2 = 0; let precoUnitario = precoBaseFixo;
 
-    // 1. ACHA O PREÇO UNITÁRIO BASEADO NA REGRA (Ex: Desconto Progressivo)
     if(regra === 'm2') {
         const l = parseFloat(document.getElementById('w2pLargura').value) || 0; const a = parseFloat(document.getElementById('w2pAltura').value) || 0;
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
@@ -145,7 +144,6 @@ function calcularPrecoAoVivo() {
     } else if(regra === 'pacote') {
         const sel = document.getElementById('w2pPacote');
         qtd = parseInt(sel.value) || 1; precoUnitario = parseFloat(sel.options[sel.selectedIndex]?.dataset.preco) || 0;
-        // No pacote o precoUnitario já é o total do pacote.
     } else if(regra === 'progressivo') {
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
         if(p && p.progressivo) {
@@ -157,16 +155,14 @@ function calcularPrecoAoVivo() {
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
     }
 
-    // 2. APLICA O MULTIPLICADOR (Ex: O 0.80 DO FRENTE E VERSO) NO PREÇO UNITÁRIO!
     const radioLados = document.querySelector('input[name="w2p_lados"]:checked');
     if (radioLados && regra !== 'pacote') {
         let multiplicador = parseFloat(radioLados.value) || 1;
         precoUnitario = precoUnitario * multiplicador; 
     }
 
-    // 3. CALCULA O TOTAL
-    if(regra === 'pacote') { totalBase = precoUnitario; } // Pacote já é o total fechado
-    else { totalBase = precoUnitario * qtd; } // Multiplica o preço unitário (já com o 0.80) pela quantidade!
+    if(regra === 'pacote') { totalBase = precoUnitario; } 
+    else { totalBase = precoUnitario * qtd; }
 
     let totalAcab = 0;
     document.querySelectorAll('.btn-acab-escolha.selecionado').forEach(b => {
@@ -216,7 +212,84 @@ function toggleOpcoesPagamento() { document.getElementById('divParcelas').style.
 function toggleOpcoesEntrega() { document.getElementById('divFrete').style.display = document.getElementById('cartEntrega').value === 'Motoboy' ? 'block' : 'none'; atualizarTotalComFrete(); }
 function enviarPedido() { if(carrinho.length===0) return alert('Carrinho vazio!'); alert('Pedido Gerado!'); carrinho=[]; renderCarrinho(); }
 
-// CADASTROS
+
+// ===============================================
+// CORREÇÃO: As abas e os botões de edição voltaram!
+// ===============================================
+
+function mudarAba(a) { 
+    document.querySelectorAll('.aba').forEach(x => x.classList.remove('ativa')); 
+    document.querySelectorAll('.menu button').forEach(x => x.classList.remove('ativo')); 
+    document.getElementById('aba-'+a).classList.add('ativa'); 
+    event.currentTarget.classList.add('ativo'); 
+}
+
+function mudarSubAba(s) { 
+    document.querySelectorAll('.sub-aba').forEach(x => x.classList.remove('sub-ativa')); 
+    document.querySelectorAll('.sub-menu button').forEach(x => x.classList.remove('sub-ativo')); 
+    document.getElementById(s).classList.add('sub-ativa'); 
+    document.getElementById('btn-' + s).classList.add('sub-ativo'); 
+}
+
+function fecharModal() { document.getElementById('modalW2P').style.display = 'none'; }
+function entrar() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('senha').value); }
+function sair() { auth.signOut(); }
+
+
+// --- CLIENTES ---
+async function salvarCliente() { 
+    const id = document.getElementById('cliId').value; 
+    const d = { nome: document.getElementById('cliNome').value, documento: document.getElementById('cliDoc').value, telefone: document.getElementById('cliTel').value, endereco: document.getElementById('cliEnd').value }; 
+    if (!d.nome) return alert("O nome é obrigatório!");
+    if(id) await db.collection("clientes").doc(id).update(d); else await db.collection("clientes").add(d); 
+    limparFormCliente(); 
+}
+function renderCli() { 
+    document.getElementById('listaClientes').innerHTML = bdClientes.map(c => `<tr><td>${c.nome}</td><td>${c.documento}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editCli('${c.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="db.collection('clientes').doc('${c.id}').delete()"><i class="fa fa-trash"></i></button></td></tr>`).join(''); 
+    document.getElementById('cartCliente').innerHTML = `<option value="">Selecione um cliente...</option>` + bdClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); 
+}
+function editCli(id) { 
+    const c = bdClientes.find(x => x.id === id); 
+    document.getElementById('cliId').value = c.id; document.getElementById('cliNome').value = c.nome; 
+    document.getElementById('cliDoc').value = c.documento || ''; document.getElementById('cliTel').value = c.telefone || ''; document.getElementById('cliEnd').value = c.endereco || ''; window.scrollTo(0,0); 
+}
+function limparFormCliente() { document.getElementById('cliId').value = ""; document.getElementById('cliNome').value = ""; document.getElementById('cliDoc').value = ""; document.getElementById('cliTel').value = ""; document.getElementById('cliEnd').value = ""; }
+
+
+// --- CATEGORIAS ---
+async function salvarCategoria() { 
+    const id = document.getElementById('catId').value; const n = document.getElementById('catNome').value; 
+    if(!n) return;
+    if(id) await db.collection("categorias").doc(id).update({nome: n}); else await db.collection("categorias").add({nome: n}); 
+    document.getElementById('catId').value = ""; document.getElementById('catNome').value = ""; 
+}
+function renderCat() { 
+    document.getElementById('listaCategorias').innerHTML = bdCategorias.map(c => `<tr><td>${c.nome}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editCat('${c.id}','${c.nome}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="db.collection('categorias').doc('${c.id}').delete()"><i class="fa fa-trash"></i></button></td></tr>`).join(''); 
+    document.getElementById('prodCategoria').innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); document.getElementById('acabCategoria').innerHTML = document.getElementById('prodCategoria').innerHTML; 
+}
+function editCat(id, n) { document.getElementById('catId').value = id; document.getElementById('catNome').value = n; }
+
+
+// --- ACABAMENTOS ---
+async function salvarAcabamento() { 
+    const id = document.getElementById('acabId').value; 
+    const d = { nome: document.getElementById('acabNome').value, grupo: document.getElementById('acabGrupo').value, categoria: document.getElementById('acabCategoria').value, regra: document.getElementById('acabRegra').value, venda: parseFloat(document.getElementById('acabPrecoVenda').value)||0, custo: parseFloat(document.getElementById('acabCusto').value)||0 }; 
+    if(id) await db.collection("acabamentos").doc(id).update(d); else await db.collection("acabamentos").add(d); 
+    limparFormAcabamento(); 
+}
+function renderAcab() { 
+    document.getElementById('listaAcabamentos').innerHTML = bdAcabamentos.map(a => `<tr><td>${a.nome} (${a.grupo || 'Solto'})</td><td>R$ ${a.venda.toFixed(2)}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editAcab('${a.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="db.collection('acabamentos').doc('${a.id}').delete()"><i class="fa fa-trash"></i></button></td></tr>`).join(''); 
+}
+function editAcab(id) { 
+    const a = bdAcabamentos.find(x => x.id === id); 
+    document.getElementById('acabId').value = a.id; document.getElementById('acabNome').value = a.nome; 
+    document.getElementById('acabGrupo').value = a.grupo || ''; document.getElementById('acabCategoria').value = a.categoria; 
+    document.getElementById('acabRegra').value = a.regra; document.getElementById('acabPrecoVenda').value = a.venda; document.getElementById('acabCusto').value = a.custo; window.scrollTo(0,0); 
+}
+function limparFormAcabamento() { document.getElementById('acabId').value = ""; document.getElementById('acabNome').value = ""; document.getElementById('acabGrupo').value = ""; document.getElementById('acabPrecoVenda').value = ""; document.getElementById('acabCusto').value = ""; }
+
+
+// --- PRODUTOS ---
 function ajustarCamposProduto() {
     const r = document.getElementById('prodRegraPreco').value;
     const t = document.getElementById('prodTipo').value;
@@ -270,10 +343,13 @@ async function salvarProduto() {
 
     if(id) await db.collection("produtos").doc(id).update(dados); else await db.collection("produtos").add(dados);
     document.getElementById('listaGradePacotes').innerHTML = ""; document.getElementById('listaGradeProgressivo').innerHTML = "";
+    document.getElementById('prodId').value = ""; document.getElementById('prodNome').value = ""; document.getElementById('prodFoto').value = ""; document.getElementById('prodPreco').value = "";
     alert("Produto Salvo!");
 }
 
-function renderProd() { document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => `<tr><td>${p.nome}</td><td>${p.regraPreco}</td><td><button class="btn-acao-edit" onclick="editProd('${p.id}')">Editar</button> <button class="btn-acao-del" onclick="db.collection('produtos').doc('${p.id}').delete()">X</button></td></tr>`).join(''); }
+function renderProd() { 
+    document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => `<tr><td>${p.nome}</td><td>${p.regraPreco}</td><td style="text-align:right;"><button class="btn-acao-edit" onclick="editProd('${p.id}')"><i class="fa fa-pen"></i></button> <button class="btn-acao-del" onclick="db.collection('produtos').doc('${p.id}').delete()"><i class="fa fa-trash"></i></button></td></tr>`).join(''); 
+}
 
 function editProd(id) {
     const p = bdProdutos.find(x => x.id === id);
@@ -305,16 +381,3 @@ function atualizarListaAcabamentosProduto(salvos = []) {
         return `<div class="setup-linha-acab"><label><input type="checkbox" class="check-acab-prod" value="${a.id}" ${checked}> ${a.nome}</label><i class="fa fa-star star-padrao ${starAtiva}" onclick="this.classList.toggle('ativo')"></i></div>`;
     }).join('');
 }
-
-// RESTANTE GERAL
-function mudarAba(a) { document.querySelectorAll('.aba').forEach(x => x.classList.remove('ativa')); document.getElementById('aba-'+a).classList.add('ativa'); }
-function mudarSubAba(s) { document.querySelectorAll('.sub-aba').forEach(x => x.classList.remove('sub-ativa')); document.getElementById(s).classList.add('sub-ativa'); }
-function fecharModal() { document.getElementById('modalW2P').style.display = 'none'; }
-function entrar() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('senha').value); }
-function sair() { auth.signOut(); }
-function salvarCategoria() { const n = document.getElementById('catNome').value; db.collection("categorias").add({nome: n}); }
-function renderCat() { document.getElementById('listaCategorias').innerHTML = bdCategorias.map(c => `<tr><td>${c.nome}</td><td><button onclick="db.collection('categorias').doc('${c.id}').delete()">x</button></td></tr>`).join(''); document.getElementById('prodCategoria').innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); document.getElementById('acabCategoria').innerHTML = document.getElementById('prodCategoria').innerHTML; }
-async function salvarCliente() { const d = { nome: document.getElementById('cliNome').value, documento: document.getElementById('cliDoc').value, telefone: document.getElementById('cliTel').value, endereco: document.getElementById('cliEnd').value }; db.collection("clientes").add(d); }
-function renderCli() { document.getElementById('listaClientes').innerHTML = bdClientes.map(c => `<tr><td>${c.nome}</td><td>${c.documento}</td><td><button onclick="db.collection('clientes').doc('${c.id}').delete()">x</button></td></tr>`).join(''); document.getElementById('cartCliente').innerHTML = bdClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join(''); }
-async function salvarAcabamento() { const d = { nome: document.getElementById('acabNome').value, grupo: document.getElementById('acabGrupo').value, categoria: document.getElementById('acabCategoria').value, regra: document.getElementById('acabRegra').value, venda: parseFloat(document.getElementById('acabPrecoVenda').value), custo: parseFloat(document.getElementById('acabCusto').value) }; db.collection("acabamentos").add(d); }
-function renderAcab() { document.getElementById('listaAcabamentos').innerHTML = bdAcabamentos.map(a => `<tr><td>${a.nome} (${a.grupo})</td><td>R$ ${a.venda.toFixed(2)}</td><td><button onclick="db.collection('acabamentos').doc('${a.id}').delete()">x</button></td></tr>`).join(''); }
