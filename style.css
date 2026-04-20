@@ -69,11 +69,17 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 .filtro-cat button.ativo { background: var(--cor-principal); color: white; border-color: var(--cor-principal); }
 
 .vitrine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-.produto-card { background: white; border: 1px solid var(--cor-borda); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
-.produto-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--cor-principal); }
-.produto-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; background: #EDF2F7; }
+
+/* CORES PASTÉIS DOS CARDS - SOLICITAÇÃO NOVA */
+.produto-card { border: 1px solid var(--cor-borda); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; background: white; }
+.bg-grafico { background-color: #EBF8FF; border-color: #90CDF4; } /* Azul Claro Pastel */
+.bg-visual { background-color: #FEFCBF; border-color: #F6E05E; } /* Amarelo Claro Pastel */
+.bg-outros { background-color: #F0FFF4; border-color: #9AE6B4; } /* Verde Claro Pastel */
+
+.produto-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); filter: brightness(0.98); }
+.produto-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; background: rgba(255,255,255,0.5); }
 .produto-card h4 { margin: 0 0 5px 0; color: #2D3748; font-size: 16px; }
-.produto-card p { margin: 0 0 15px 0; color: var(--cor-principal); font-weight: bold; font-size: 14px; }
+.produto-card p { margin: 0 0 15px 0; color: #4A5568; font-weight: bold; font-size: 14px; }
 
 .modal-fundo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
 .modal-conteudo { width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); margin: 0; }
@@ -95,4 +101,5 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
     .form-linha { flex-direction: column; }
     .loja-layout { flex-direction: column; }
     .loja-sidebar { width: 100%; position: relative; }
+    .caixa-checkbox { grid-template-columns: 1fr; }
 }
