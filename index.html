@@ -25,9 +25,8 @@
 
     <div id="appInterface" class="app-container" style="display: none;">
         <aside class="sidebar">
-            <div class="sidebar-header" style="text-align: center; padding: 20px;">
-                <img id="logo-img" src="COLE_O_LINK_DA_SUA_LOGO_AQUI" alt="Logo GVA" style="max-width: 100%; max-height: 60px; display: none;">
-                <span id="logo-texto" style="font-size: 22px; font-weight: 800; color: var(--cor-principal);">GVA Gráfica</span>
+            <div class="sidebar-header">
+                <span id="logo-texto">GVA Gráfica</span>
             </div>
             <nav class="menu">
                 <button onclick="mudarAba('loja')" class="ativo"><i class="fa fa-store"></i> Loja</button>
@@ -48,130 +47,111 @@
                     
                     <div class="loja-sidebar">
                         <div class="card">
-                            <h3 style="margin-top:0;"><i class="fa fa-shopping-cart"></i> Carrinho Atual</h3>
-                            <div id="listaCarrinho" class="carrinho-itens"><small style="color:#A0AEC0;">O carrinho está vazio.</small></div>
-                            <hr style="border: 0; border-top: 1px solid var(--cor-borda); margin: 15px 0;">
-                            
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                <span style="font-weight:bold; color:#4A5568;">Total c/ Frete:</span>
-                                <span style="font-size:22px; font-weight:bold; color:var(--cor-sucesso);">R$ <span id="totalCarrinho" data-subtotal="0">0.00</span></span>
+                            <h3><i class="fa fa-shopping-cart"></i> Carrinho</h3>
+                            <div id="listaCarrinho" class="carrinho-itens"></div>
+                            <div class="cart-resumo">
+                                <span>Total:</span>
+                                <b id="totalCarrinho" data-subtotal="0">R$ 0.00</b>
                             </div>
-                            
-                            <div class="input-group" style="margin-bottom:15px;">
-                                <label>Cliente</label>
-                                <select id="cartCliente"><option value="">Selecione um cliente...</option></select>
+                            <div class="input-group"><label>Cliente</label><select id="cartCliente"></select></div>
+                            <div class="form-linha">
+                                <div class="input-group"><label>Pagamento</label><select id="cartPagamento" onchange="toggleOpcoesPagamento()">
+                                    <option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Debito">Débito</option>
+                                    <option value="Credito_Vista">Crédito à vista</option><option value="Credito_Parcelado">Crédito Parcelado</option>
+                                </select></div>
+                                <div class="input-group" id="divParcelas" style="display:none;"><label>Parcelas</label><select id="cartParcelas"></select></div>
                             </div>
-                            
-                            <div class="form-linha" style="margin-bottom:15px;">
-                                <div class="input-group">
-                                    <label>Pagamento</label>
-                                    <select id="cartPagamento" onchange="toggleOpcoesPagamento()">
-                                        <option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Debito">Cartão de Débito</option>
-                                        <option value="Credito_Vista">Cartão de Crédito (à vista)</option><option value="Credito_Parcelado">Cartão de Crédito (Parcelado)</option><option value="Faturado">Boleto (Faturado)</option>
-                                    </select>
-                                </div>
-                                <div class="input-group" id="divParcelas" style="display:none;">
-                                    <label>Qtd. Parcelas</label>
-                                    <select id="cartParcelas">
-                                        <option value="2x">2x</option><option value="3x">3x</option><option value="4x">4x</option><option value="5x">5x</option><option value="6x">6x</option><option value="7x">7x</option><option value="8x">8x</option><option value="9x">9x</option><option value="10x">10x</option><option value="11x">11x</option><option value="12x">12x</option>
-                                    </select>
-                                </div>
+                            <div class="form-linha">
+                                <div class="input-group"><label>Entrega</label><select id="cartEntrega" onchange="toggleOpcoesEntrega()"><option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option></select></div>
+                                <div class="input-group" id="divFrete" style="display:none;"><label>Frete R$</label><input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalComFrete()"></div>
                             </div>
-
-                            <div class="form-linha" style="margin-bottom:15px;">
-                                <div class="input-group">
-                                    <label>Entrega</label>
-                                    <select id="cartEntrega" onchange="toggleOpcoesEntrega()">
-                                        <option value="Retirada">Retirada na Loja</option>
-                                        <option value="Motoboy">Motoboy / Transp.</option>
-                                    </select>
-                                </div>
-                                <div class="input-group" id="divFrete" style="display:none;">
-                                    <label style="color:var(--cor-principal);">Taxa Frete (R$)</label>
-                                    <input type="number" id="cartFreteValor" value="0.00" step="0.01" oninput="atualizarTotalComFrete()">
-                                </div>
-                            </div>
-
-                            <button class="btn-salvar" style="width:100%; padding:12px;" onclick="enviarPedido()"><i class="fa fa-check"></i> Fechar Pedido</button>
+                            <button class="btn-checkout" onclick="enviarPedido()">Finalizar Pedido</button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="aba-producao" class="aba"><h2>Produção (Em breve)</h2></section>
-            <section id="aba-financeiro" class="aba"><h2>Financeiro (Em breve)</h2></section>
-            
+            <section id="aba-producao" class="aba"><h2>Painel de Produção</h2></section>
+            <section id="aba-financeiro" class="aba"><h2>Fluxo de Caixa</h2></section>
+
             <section id="aba-cadastros" class="aba">
                 <div class="sub-menu">
                     <button onclick="mudarSubAba('sub-cli')" class="sub-ativo" id="btn-sub-cli">Clientes</button>
                     <button onclick="mudarSubAba('sub-cat')" id="btn-sub-cat">Categorias</button>
-                    <button onclick="mudarSubAba('sub-prod')" id="btn-sub-prod">Produtos Base</button>
+                    <button onclick="mudarSubAba('sub-prod')" id="btn-sub-prod">Produtos</button>
                     <button onclick="mudarSubAba('sub-acab')" id="btn-sub-acab">Acabamentos</button>
                 </div>
 
                 <div id="sub-cli" class="sub-aba sub-ativa">
                     <div class="card">
-                        <h3>Cadastro de Cliente</h3>
+                        <h3>Novo Cliente</h3>
                         <div class="form-grid">
                             <input type="hidden" id="cliId">
-                            <div class="input-group"><label>Nome / Razão Social</label><input type="text" id="cliNome"></div>
-                            <div class="input-group"><label>CPF / CNPJ</label><input type="text" id="cliDoc"></div>
-                            <div class="input-group"><label>WhatsApp / Telefone</label><input type="text" id="cliTel"></div>
-                            <div class="input-group"><label>Endereço Completo</label><input type="text" id="cliEnd"></div>
+                            <div class="input-group"><label>Nome</label><input type="text" id="cliNome"></div>
+                            <div class="input-group"><label>CPF/CNPJ</label><input type="text" id="cliDoc"></div>
+                            <div class="input-group"><label>Tel</label><input type="text" id="cliTel"></div>
+                            <div class="input-group"><label>Endereço</label><input type="text" id="cliEnd"></div>
                         </div>
-                        <div style="margin-top:20px;"><button class="btn-salvar" onclick="salvarCliente()">Salvar Cliente</button><button class="btn-limpar" onclick="limparFormCliente()">Limpar</button></div>
+                        <button class="btn-salvar" onclick="salvarCliente()">Salvar</button>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Cliente</th><th>Documento</th><th>Ação</th></tr></thead><tbody id="listaClientes"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Cliente</th><th>Doc</th><th>Ação</th></tr></thead><tbody id="listaClientes"></tbody></table></div>
                 </div>
 
                 <div id="sub-cat" class="sub-aba">
-                    <div class="card">
-                        <h3>Nova Categoria</h3>
-                        <div class="form-linha"><input type="hidden" id="catId"><input type="text" id="catNome" placeholder="Ex: Comunicação Visual"><button class="btn-salvar" onclick="salvarCategoria()">Salvar</button></div>
-                    </div>
+                    <div class="card"><h3>Categorias</h3><div class="form-linha"><input type="hidden" id="catId"><input type="text" id="catNome"><button class="btn-salvar" onclick="salvarCategoria()">Salvar</button></div></div>
                     <div class="card"><table class="tabela-erp"><thead><tr><th>Nome</th><th>Ação</th></tr></thead><tbody id="listaCategorias"></tbody></table></div>
                 </div>
 
                 <div id="sub-prod" class="sub-aba">
                     <div class="card">
-                        <h3>Cadastro de Produto</h3>
+                        <h3>Configurar Produto</h3>
                         <div class="form-grid">
                             <input type="hidden" id="prodId">
-                            <div class="input-group"><label>Tipo de Produto</label><select id="prodTipo" onchange="ajustarCamposProduto()"><option value="grafico">Produto Gráfico</option><option value="visual">Comunicação Visual</option><option value="outros">Outros</option></select></div>
+                            <div class="input-group"><label>Tipo</label><select id="prodTipo" onchange="ajustarCamposProduto()"><option value="grafico">Gráfico</option><option value="visual">Com. Visual</option><option value="outros">Outros</option></select></div>
                             <div class="input-group"><label>Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()"></select></div>
-                            <div class="input-group"><label>Nome do Produto</label><input type="text" id="prodNome"></div>
-                            <div class="input-group"><label>Foto (URL)</label><input type="text" id="prodFoto" placeholder="Deixe em branco se não tiver"></div>
+                            <div class="input-group"><label>Nome</label><input type="text" id="prodNome"></div>
+                            <div class="input-group"><label>URL Foto</label><input type="text" id="prodFoto"></div>
                         </div>
-                        <div class="form-grid" style="margin-top:15px;">
-                            <div class="input-group" id="grp-cor"><label>Cor</label><select id="prodCor"><option value="4x0">4x0</option><option value="4x1">4x1</option><option value="4x4">4x4</option><option value="N/A">Não se aplica</option></select></div>
+                        <div class="form-grid" style="margin-top:10px;">
                             <div class="input-group"><label>Material</label><input type="text" id="prodMaterial"></div>
-                            <div class="input-group" id="grp-tamanho"><label>Tamanho Fixo</label><input type="text" id="prodTamanho" placeholder="Ex: 9x5cm"></div>
-                            <div class="input-group"><label>Prazo Produção (Dias)</label><input type="number" id="prodPrazo"></div>
-                        </div>
-                        <div class="form-grid" style="margin-top:15px; align-items: end;">
-                            <div class="input-group"><label>Forma de Preço (A Matemática)</label><select id="prodRegraPreco" onchange="ajustarCamposProduto()"><option value="unidade">Preço Livre (Multiplica pela Qtd digitada)</option><option value="pacote">Pacotes Fechados (Grade Ex: 100, 500 un)</option><option value="m2">Preço por Metro Quadrado (m²)</option></select></div>
-                            <div class="input-group" id="boxPrecoBase"><label id="labelPreco">Preço Base (R$)</label><input type="number" id="prodPreco" step="0.01"></div>
+                            <div class="input-group"><label>Tam. Fixo</label><input type="text" id="prodTamanho"></div>
+                            <div class="input-group">
+                                <label>Regra Preço</label>
+                                <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
+                                    <option value="unidade">Unitário</option>
+                                    <option value="pacote">Pacotes Fechados</option>
+                                    <option value="progressivo">Desconto Progressivo</option>
+                                    <option value="m2">Por M²</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="boxPrecoBase"><label id="labelPreco">Preço R$</label><input type="number" id="prodPreco" step="0.01"></div>
                         </div>
 
-                        <div id="boxPacotes" style="display:none; background:#FFFBEB; padding:15px; margin-top:15px; border-radius:8px; border: 1px solid #F6E05E;">
-                            <label style="color:#B7791F; font-weight:bold; margin-bottom:10px; display:block;"><i class="fa fa-cubes"></i> Grade de Quantidades e Preços (Pacotes)</label>
+                        <div id="boxPacotes" style="display:none;" class="setup-caixa-pacote">
+                            <label>Grade de Pacotes (Qtd Fixa -> Preço Total)</label>
                             <div id="listaGradePacotes"></div>
-                            <button class="btn-acao-edit" onclick="addLinhaPacote()" style="margin-top:10px;"><i class="fa fa-plus"></i> Adicionar Quantidade</button>
+                            <button class="btn-add-lista" onclick="addLinhaPacote()">+ Add Quantidade</button>
                         </div>
 
-                        <div id="boxMedidas" class="form-grid" style="display:none; background:#f0f7ff; padding:15px; margin-top:15px; border-radius:8px;">
-                            <div class="input-group"><label>Largura Máx Bobina (m)</label><input type="number" id="prodLargMax" value="1.50" step="0.01"></div>
-                            <div class="input-group"><label>Comprimento Máx (m)</label><input type="number" id="prodCompMax" value="100" step="0.01"></div>
+                        <div id="boxProgressivo" style="display:none;" class="setup-caixa-pacote">
+                            <label style="color:#2F855A;"><i class="fa fa-chart-bar"></i> Tabela de Desconto (Qtd Mínima -> Preço Unitário)</label>
+                            <div id="listaGradeProgressivo"></div>
+                            <button class="btn-add-lista" style="background:#C6F6D5; color:#22543D;" onclick="addLinhaProgressivo()">+ Add Faixa de Desconto</button>
                         </div>
 
-                        <div style="margin-top:20px; display:block;">
-                            <label style="color: var(--cor-principal); display:block; margin-bottom:10px; font-weight:bold;"><i class="fa fa-check-square"></i> Acabamentos Permitidos para este Produto</label>
-                            <div id="listaCheckAcabamentos" class="caixa-checkbox"><small style="color:#718096; padding:15px;">Selecione uma categoria primeiro...</small></div>
+                        <div id="boxMedidas" style="display:none;" class="setup-caixa-medida">
+                            <div class="input-group"><label>Largura Bobina (m)</label><input type="number" id="prodLargMax" step="0.01"></div>
+                            <div class="input-group"><label>Comprimento Máx (m)</label><input type="number" id="prodCompMax" step="0.01"></div>
                         </div>
 
-                        <div style="margin-top:20px;"><button class="btn-salvar" onclick="salvarProduto()">Salvar Produto</button><button class="btn-limpar" onclick="limparFormProduto()">Limpar</button></div>
+                        <div class="setup-acabamentos">
+                            <label><i class="fa fa-tags"></i> Acabamentos Disponíveis</label>
+                            <div id="listaCheckAcabamentos" class="mini-lista-acab"></div>
+                        </div>
+
+                        <div style="margin-top:20px;"><button class="btn-salvar" onclick="salvarProduto()">Salvar Produto</button></div>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Tipo</th><th>Preço / Regra</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Regra</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
                 </div>
 
                 <div id="sub-acab" class="sub-aba">
@@ -180,38 +160,45 @@
                         <div class="form-grid">
                             <input type="hidden" id="acabId">
                             <div class="input-group"><label>Nome</label><input type="text" id="acabNome"></div>
-                            <div class="input-group"><label>Grupo Menu (Ex: Fixação)</label><input type="text" id="acabGrupo" placeholder="Para agrupar botões"></div>
+                            <div class="input-group"><label>Grupo (Ex: Fixação)</label><input type="text" id="acabGrupo"></div>
                             <div class="input-group"><label>Categoria</label><select id="acabCategoria"></select></div>
-                            <div class="input-group"><label>Cálculo</label><select id="acabRegra"><option value="unidade">Por Unidade (Multiplica pela Qtd do produto)</option><option value="lote">Taxa Fixa (Cobra 1x no Pedido/Lote)</option><option value="m2">Multiplicar por m²</option></select></div>
+                            <div class="input-group"><label>Cálculo</label><select id="acabRegra"><option value="unidade">Unidade</option><option value="lote">Fixo/Lote</option><option value="m2">M²</option></select></div>
                         </div>
-                        <div class="form-grid" style="margin-top:15px;">
-                            <div class="input-group"><label>Preço de Venda (R$)</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
-                            <div class="input-group"><label>Custo Interno (R$)</label><input type="number" id="acabCusto" step="0.01"></div>
+                        <div class="form-grid" style="margin-top:10px;">
+                            <div class="input-group"><label>Venda R$</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
+                            <div class="input-group"><label>Custo R$</label><input type="number" id="acabCusto" step="0.01"></div>
                         </div>
-                        <div style="margin-top:20px;"><button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button><button class="btn-limpar" onclick="limparFormAcabamento()">Limpar</button></div>
+                        <button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento / Grupo</th><th>Regra</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
                 </div>
             </section>
         </main>
     </div>
 
     <div id="modalW2P" class="modal-fundo" style="display:none;">
-        <div class="modal-conteudo card" style="padding: 0; overflow: hidden; border:none; display:flex; flex-direction:column;">
-            <button class="btn-fechar-modal" onclick="fecharModal()">X</button>
-            <div id="modalHeaderImg" style="width: 100%; height: 220px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #EDF2F7; position: relative;"></div>
+        <div class="modal-conteudo">
+            <button class="modal-fechar-fixo" onclick="fecharModal()">×</button>
+            <div id="modalHeaderImg" class="modal-banner-img"></div>
 
-            <div style="padding: 25px; overflow-y:auto; flex:1;">
-                <h2 id="modalNomeProd" style="margin:0 0 20px 0; color:var(--cor-texto); font-size: 24px;">Nome do Produto</h2>
+            <div class="modal-corpo">
+                <h2 id="modalNomeProd"></h2>
                 <input type="hidden" id="modalProdId"><input type="hidden" id="modalProdRegra"><input type="hidden" id="modalProdPrecoBase">
                 
-                <div id="modalCorpoMedidas" class="form-grid" style="margin-bottom:25px;"></div>
-                <div id="modalCorpoAcabamentos" style="margin-bottom:25px;"></div>
+                <div id="modalCorpoMedidas" class="config-grid"></div>
+                
+                <div class="divisor-config"><span>Configurações & Acabamentos</span></div>
+                <div id="modalCorpoAcabamentos" class="config-acab-grid"></div>
             </div>
 
-            <div class="modal-footer" style="background:#F8FAFC; padding:20px 25px; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
-                <div><span style="display:block; font-size:12px; color:#718096; font-weight:bold;">VALOR TOTAL:</span><span style="font-size:26px; font-weight:900; color:var(--cor-principal);">R$ <span id="modalSubtotal">0.00</span></span></div>
-                <button class="btn-salvar" style="padding: 12px 25px; font-size: 16px;" onclick="confirmarAdicaoCarrinho()"><i class="fa fa-shopping-cart"></i> Add ao Carrinho</button>
+            <div class="modal-footer-fixo">
+                <div class="total-box">
+                    <small>VALOR TOTAL</small>
+                    <b id="modalSubtotal">R$ 0.00</b>
+                </div>
+                <button class="btn-confirmar-cart" onclick="confirmarAdicaoCarrinho()">
+                    <i class="fa fa-cart-plus"></i> Add ao Carrinho
+                </button>
             </div>
         </div>
     </div>
