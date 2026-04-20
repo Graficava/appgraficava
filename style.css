@@ -8,16 +8,13 @@
 
 body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--cor-fundo); color: var(--cor-texto); height: 100%; }
 
-/* --- LOGIN --- */
 .login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--cor-principal); }
 .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; max-width: 320px; text-align: center; }
 .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 .login-box button { width: 100%; padding: 12px; background: var(--cor-principal); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; }
 
-/* --- ESTRUTURA DO SISTEMA --- */
 .app-container { display: flex; height: 100vh; overflow: hidden; }
 
-/* Menu Lateral */
 .sidebar { width: 250px; background: white; border-right: 1px solid var(--cor-borda); display: flex; flex-direction: column; }
 .sidebar-header { padding: 20px; font-size: 20px; font-weight: bold; color: var(--cor-principal); text-align: center; border-bottom: 1px solid var(--cor-borda); }
 .menu { flex: 1; padding: 15px 0; }
@@ -26,13 +23,11 @@ body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
 .menu button.ativo { background: var(--cor-principal); color: white; border-radius: 0 20px 20px 0; width: 90%; }
 .btn-sair { padding: 15px; background: #FFF5F5; color: #C53030; border: none; cursor: pointer; font-weight: bold; }
 
-/* Área Central */
 .main-content { flex: 1; padding: 30px; overflow-y: auto; }
 .aba { display: none; }
 .aba.ativa { display: block; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- COMPONENTES FASE 2: CADASTROS --- */
 .sub-menu { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--cor-borda); padding-bottom: 10px; }
 .sub-menu button { background: none; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; color: #718096; font-size: 15px; }
 .sub-menu button.sub-ativo { color: var(--cor-principal); border-bottom: 3px solid var(--cor-principal); margin-bottom: -12px; }
@@ -42,7 +37,6 @@ body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
 .card { background: white; border: 1px solid var(--cor-borda); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .card h3 { margin-top: 0; color: #1A202C; border-bottom: 1px solid var(--cor-borda); padding-bottom: 10px; font-size: 16px; }
 
-/* Formulários */
 .form-linha { display: flex; gap: 10px; }
 .form-linha input { flex: 1; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
@@ -50,26 +44,21 @@ body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
 input, select { width: 100%; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
 input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 
-/* Botões */
+/* NOVA CAIXA DE CHECKBOXES */
+.caixa-checkbox { border: 1px solid #CBD5E0; border-radius: 6px; padding: 15px; max-height: 200px; overflow-y: auto; background: white; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.caixa-checkbox label { display: flex; align-items: center; font-weight: normal; font-size: 13px; margin: 0; color: #2D3748; cursor: pointer; }
+.caixa-checkbox input[type="checkbox"] { width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; }
+
 .btn-salvar { background: var(--cor-sucesso); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .btn-limpar { background: #EDF2F7; color: #4A5568; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.btn-add-faixa { background: #4A5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .btn-acao-edit { background: #EBF4FF; color: #3182CE; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;}
 .btn-acao-del { background: #FFF5F5; color: #E53E3E; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
 
-/* Tabela de Preços (Faixas) */
-.faixa-preco-row { display: flex; gap: 10px; align-items: flex-end; padding: 10px; background: #F8FAFC; border: 1px solid var(--cor-borda); border-radius: 6px; margin-bottom: 5px; }
-.faixa-preco-row input { width: 120px; }
-.btn-remover-faixa { background: #FFF5F5; color: #E53E3E; border: 1px solid #FEB2B2; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-
-/* Tabela ERP (Listagem) */
 .tabela-erp { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
 .tabela-erp th { background: #EDF2F7; padding: 10px; color: #4A5568; border-bottom: 2px solid #CBD5E0; }
 .tabela-erp td { padding: 10px; border-bottom: 1px solid var(--cor-borda); vertical-align: middle; }
 .tabela-erp tr:hover { background: #F8FAFC; }
-.col-grupo { background: #EDF2F7; color: #718096; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 
-/* RESPONSIVO */
 @media (max-width: 768px) {
     .app-container { flex-direction: column; }
     .sidebar { width: 100%; height: auto; border-bottom: 1px solid var(--cor-borda); border-right: none; }
@@ -80,4 +69,5 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
     .btn-sair { display: none; }
     .main-content { padding: 15px; }
     .form-linha { flex-direction: column; }
+    .caixa-checkbox { grid-template-columns: 1fr; }
 }
