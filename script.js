@@ -57,7 +57,7 @@ function abrirConfigurador(idProduto) {
     const divMedidas = document.getElementById('modalCorpoMedidas');
     const divCores = document.getElementById('modalCorpoCores');
     
-    // 1. RENDERIZADOR DE MEDIDAS / QUANTIDADES
+    // 1. QUANTIDADES E MEDIDAS
     if (p.regraPreco === 'm2') {
         divMedidas.innerHTML = `<div class="input-group"><label>Largura (m)</label><input type="number" id="w2pLargura" value="1.00" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Altura (m)</label><input type="number" id="w2pAltura" value="1.00" oninput="calcularPrecoAoVivo()"></div><div class="input-group"><label>Qtd</label><input type="number" id="w2pQtd" value="1" oninput="calcularPrecoAoVivo()"></div>`;
     } else if (p.regraPreco === 'pacote') {
@@ -65,16 +65,16 @@ function abrirConfigurador(idProduto) {
         divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><select id="w2pPacote" onchange="calcularPrecoAoVivo()">${opts}</select></div>`;
     } else if (p.regraPreco === 'progressivo') {
         let miniTabela = (p.progressivo || []).map(t => `${t.qtd}+ un (R$ ${t.preco.toFixed(2)}/cd)`).join(' | ');
-        divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"><small style="color:#38A169; display:block; margin-top:6px; font-weight:bold;">${miniTabela}</small></div>`;
+        divMedidas.innerHTML = `<div class="input-group"><label>Qtd Impressões</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"><small style="color:#38A169; display:block; margin-top:6px; font-weight:bold;">${miniTabela}</small></div>`;
     } else {
-        divMedidas.innerHTML = `<div class="input-group"><label>Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
+        divMedidas.innerHTML = `<div class="input-group"><label>Qtd Impressões</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()"></div>`;
     }
 
-    // 2. FRENTE E VERSO (NOVIDADE)
-    if (p.impVerso === 'sim') {
-        const taxa = p.taxaVerso || 80;
+    // 2. FRENTE E VERSO (A MATEMÁTICA CORRETA: O MULTIPLICADOR/DESCONTO)
+    if (p.permiteLados === 'sim') {
+        const mult = p.multVerso || 0.80; // O 0.80 que você pediu
         divCores.innerHTML = `
-            <div class="divisor-config" style="margin: 10px 0 20px;"><span>Impressão</span></div>
+            <div class="divisor-config" style="margin: 10px 0 20px;"><span>Formato de Impressão</span></div>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
                 <label class="check-box-custom">
                     <div style="display:flex; align-items:center;">
@@ -84,10 +84,10 @@ function abrirConfigurador(idProduto) {
                 </label>
                 <label class="check-box-custom">
                     <div style="display:flex; align-items:center;">
-                        <input type="radio" name="w2p_lados" value="${1 + (taxa/100)}" onchange="calcularPrecoAoVivo()">
+                        <input type="radio" name="w2p_lados" value="${mult}" data-label="Frente e Verso" onchange="calcularPrecoAoVivo()">
                         <span style="font-weight:bold; color:#2D3748;">Frente e Verso</span>
                     </div>
-                    <span style="color:var(--cor-sucesso); font-weight:bold; font-size:13px;">+ ${taxa}%</span>
+                    <span style="color:var(--cor-sucesso); font-weight:bold; font-size:13px;">(x ${mult})</span>
                 </label>
             </div>
         `;
@@ -98,8 +98,7 @@ function abrirConfigurador(idProduto) {
     // 3. ACABAMENTOS
     const divAcab = document.getElementById('modalCorpoAcabamentos');
     const permitidos = p.acabamentos || [];
-    let htmlAcab = "";
-    let grupos = {};
+    let htmlAcab = ""; let grupos = {};
     
     permitidos.forEach(obj => {
         const a = bdAcabamentos.find(x => x.id === (obj.id || obj));
@@ -125,8 +124,7 @@ function toggleAcabamento(el) {
         document.querySelectorAll(`.btn-acab-escolha[data-grupo="${grupo}"]`).forEach(b => { b.classList.remove('selecionado'); b.querySelector('i').className = 'fa fa-circle-thin'; });
         el.classList.add('selecionado'); el.querySelector('i').className = 'fa fa-check';
     } else {
-        el.classList.toggle('selecionado');
-        el.querySelector('i').className = el.classList.contains('selecionado') ? 'fa fa-check' : 'fa fa-square-o';
+        el.classList.toggle('selecionado'); el.querySelector('i').className = el.classList.contains('selecionado') ? 'fa fa-check' : 'fa fa-square-o';
     }
     calcularPrecoAoVivo();
 }
@@ -135,39 +133,41 @@ function calcularPrecoAoVivo() {
     const idProd = document.getElementById('modalProdId').value;
     const p = bdProdutos.find(x => x.id === idProd);
     const regra = document.getElementById('modalProdRegra').value;
-    const base = parseFloat(document.getElementById('modalProdPrecoBase').value) || 0;
+    const precoBaseFixo = parseFloat(document.getElementById('modalProdPrecoBase').value) || 0;
     
-    let qtd = 1; let totalBase = 0; let m2 = 0;
+    let qtd = 1; let totalBase = 0; let m2 = 0; let precoUnitario = precoBaseFixo;
 
-    // 1. CALCULA A BASE BRUTA
+    // 1. ACHA O PREÇO UNITÁRIO BASEADO NA REGRA (Ex: Desconto Progressivo)
     if(regra === 'm2') {
         const l = parseFloat(document.getElementById('w2pLargura').value) || 0; const a = parseFloat(document.getElementById('w2pAltura').value) || 0;
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
-        m2 = l * a; totalBase = (base * m2) * qtd;
+        m2 = l * a; precoUnitario = precoBaseFixo * m2;
     } else if(regra === 'pacote') {
         const sel = document.getElementById('w2pPacote');
-        qtd = parseInt(sel.value) || 1; totalBase = parseFloat(sel.options[sel.selectedIndex]?.dataset.preco) || 0;
+        qtd = parseInt(sel.value) || 1; precoUnitario = parseFloat(sel.options[sel.selectedIndex]?.dataset.preco) || 0;
+        // No pacote o precoUnitario já é o total do pacote.
     } else if(regra === 'progressivo') {
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
-        let precoUnitario = base;
         if(p && p.progressivo) {
             let faixas = p.progressivo.slice().sort((a,b) => b.qtd - a.qtd);
             let faixaEncontrada = faixas.find(f => qtd >= f.qtd);
             if(faixaEncontrada) precoUnitario = faixaEncontrada.preco;
         }
-        totalBase = precoUnitario * qtd;
     } else {
-        qtd = parseInt(document.getElementById('w2pQtd').value) || 1; totalBase = base * qtd;
+        qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
     }
 
-    // 2. APLICA O MULTIPLICADOR DE FRENTE E VERSO (SE EXISTIR)
+    // 2. APLICA O MULTIPLICADOR (Ex: O 0.80 DO FRENTE E VERSO) NO PREÇO UNITÁRIO!
     const radioLados = document.querySelector('input[name="w2p_lados"]:checked');
-    if (radioLados) {
+    if (radioLados && regra !== 'pacote') {
         let multiplicador = parseFloat(radioLados.value) || 1;
-        totalBase = totalBase * multiplicador;
+        precoUnitario = precoUnitario * multiplicador; 
     }
 
-    // 3. SOMA OS ACABAMENTOS EXTRAS
+    // 3. CALCULA O TOTAL
+    if(regra === 'pacote') { totalBase = precoUnitario; } // Pacote já é o total fechado
+    else { totalBase = precoUnitario * qtd; } // Multiplica o preço unitário (já com o 0.80) pela quantidade!
+
     let totalAcab = 0;
     document.querySelectorAll('.btn-acab-escolha.selecionado').forEach(b => {
         const precoA = parseFloat(b.dataset.preco) || 0; const regA = b.dataset.regra;
@@ -181,18 +181,14 @@ function confirmarAdicaoCarrinho() {
     const p = bdProdutos.find(x => x.id === document.getElementById('modalProdId').value);
     const total = parseFloat(document.getElementById('modalSubtotal').innerText.replace("R$ ",""));
     
-    let info = "";
-    const r = document.getElementById('modalProdRegra').value;
+    let info = ""; const r = document.getElementById('modalProdRegra').value;
     if(r === 'm2') info = `${document.getElementById('w2pQtd').value} un. (${document.getElementById('w2pLargura').value}x${document.getElementById('w2pAltura').value}m)`;
     else if(r === 'pacote') info = `Pacote ${document.getElementById('w2pPacote').value} un.`;
     else info = `${document.getElementById('w2pQtd').value} un.`;
 
     const radioLados = document.querySelector('input[name="w2p_lados"]:checked');
-    if(radioLados && radioLados.value > 1) {
-        info += `<br><b>Impr:</b> Frente e Verso`;
-    } else if (radioLados) {
-        info += `<br><b>Impr:</b> Apenas Frente`;
-    }
+    if(radioLados && radioLados.value < 1) { info += `<br><b>Impr:</b> Frente e Verso (4x4)`; } 
+    else if (radioLados) { info += `<br><b>Impr:</b> Apenas Frente (4x0)`; }
 
     let detalhes = [];
     document.querySelectorAll('.btn-acab-escolha.selecionado').forEach(b => detalhes.push(b.querySelector('b').innerText));
@@ -206,13 +202,9 @@ function renderCarrinho() {
     const div = document.getElementById('listaCarrinho'); let sub = 0;
     div.innerHTML = carrinho.map((c, i) => {
         sub += c.valor;
-        return `<div class="carrinho-item">
-            <div><b>${c.nome}</b><br><span style="font-size:12px;color:#718096;">${c.detalhes}</span></div>
-            <div style="text-align:right;">R$ ${c.valor.toFixed(2)}<br><button onclick="carrinho.splice(${i},1);renderCarrinho()" style="background:none;border:none;color:red;cursor:pointer;font-size:12px;">remover</button></div>
-        </div>`;
+        return `<div class="carrinho-item"><div><b>${c.nome}</b><br><span style="font-size:12px;color:#718096;">${c.detalhes}</span></div><div style="text-align:right;">R$ ${c.valor.toFixed(2)}<br><button onclick="carrinho.splice(${i},1);renderCarrinho()" style="background:none;border:none;color:red;cursor:pointer;font-size:12px;">remover</button></div></div>`;
     }).join("");
-    document.getElementById('totalCarrinho').dataset.subtotal = sub;
-    atualizarTotalComFrete();
+    document.getElementById('totalCarrinho').dataset.subtotal = sub; atualizarTotalComFrete();
 }
 
 function atualizarTotalComFrete() {
@@ -227,14 +219,15 @@ function enviarPedido() { if(carrinho.length===0) return alert('Carrinho vazio!'
 // CADASTROS
 function ajustarCamposProduto() {
     const r = document.getElementById('prodRegraPreco').value;
+    const t = document.getElementById('prodTipo').value;
+    
+    document.getElementById('grp-cor').style.display = t === 'visual' ? 'none' : 'block';
+    document.getElementById('grp-lados-loja').style.display = t === 'visual' ? 'none' : 'block';
+
     document.getElementById('boxPrecoBase').style.display = (r === 'pacote' || r === 'progressivo') ? 'none' : 'block';
     document.getElementById('boxPacotes').style.display = r === 'pacote' ? 'block' : 'none';
     document.getElementById('boxProgressivo').style.display = r === 'progressivo' ? 'block' : 'none';
     document.getElementById('boxMedidas').style.display = r === 'm2' ? 'grid' : 'none';
-
-    // Front/Back logic
-    const impV = document.getElementById('prodImpVerso');
-    if(impV) document.getElementById('boxTaxaVerso').style.display = impV.value === 'sim' ? 'block' : 'none';
 }
 
 function addLinhaPacote(q='', p='') { 
@@ -253,30 +246,25 @@ async function salvarProduto() {
     const id = document.getElementById('prodId').value;
     let acabList = [];
     document.querySelectorAll('.setup-linha-acab').forEach(div => {
-        const chk = div.querySelector('.check-acab-prod');
-        const star = div.querySelector('.star-padrao');
+        const chk = div.querySelector('.check-acab-prod'); const star = div.querySelector('.star-padrao');
         if(chk.checked) acabList.push({ id: chk.value, padrao: star.classList.contains('ativo') });
     });
 
     const regra = document.getElementById('prodRegraPreco').value;
     let pacotes = [], progressivo = [];
     
-    if(regra === 'pacote') {
-        document.querySelectorAll('.linha-pacote-item').forEach(l => pacotes.push({ qtd: parseInt(l.querySelector('.q').value), preco: parseFloat(l.querySelector('.p').value) }));
-    } else if (regra === 'progressivo') {
-        document.querySelectorAll('.linha-prog-item').forEach(l => progressivo.push({ qtd: parseInt(l.querySelector('.q').value), preco: parseFloat(l.querySelector('.p').value) }));
-    }
-
-    const impVerso = document.getElementById('prodImpVerso') ? document.getElementById('prodImpVerso').value : 'nao';
-    const taxaVerso = document.getElementById('prodTaxaVerso') ? parseFloat(document.getElementById('prodTaxaVerso').value) : 80;
+    if(regra === 'pacote') document.querySelectorAll('.linha-pacote-item').forEach(l => pacotes.push({ qtd: parseInt(l.querySelector('.q').value), preco: parseFloat(l.querySelector('.p').value) }));
+    else if (regra === 'progressivo') document.querySelectorAll('.linha-prog-item').forEach(l => progressivo.push({ qtd: parseInt(l.querySelector('.q').value), preco: parseFloat(l.querySelector('.p').value) }));
 
     const dados = {
         nome: document.getElementById('prodNome').value, categoria: document.getElementById('prodCategoria').value,
         tipo: document.getElementById('prodTipo').value, foto: document.getElementById('prodFoto').value,
         material: document.getElementById('prodMaterial').value, tamanho: document.getElementById('prodTamanho').value,
+        cor: document.getElementById('prodCor') ? document.getElementById('prodCor').value : 'N/A',
+        permiteLados: document.getElementById('prodPermiteLados') ? document.getElementById('prodPermiteLados').value : 'nao',
+        multVerso: document.getElementById('prodMultVerso') ? parseFloat(document.getElementById('prodMultVerso').value) : 0.80,
         regraPreco: regra, preco: parseFloat(document.getElementById('prodPreco').value) || 0,
         larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0, compMax: parseFloat(document.getElementById('prodCompMax').value) || 0,
-        impVerso: impVerso, taxaVerso: taxaVerso, // Salvando a nova regra!
         acabamentos: acabList, pacotes: pacotes, progressivo: progressivo
     };
 
@@ -296,16 +284,16 @@ function editProd(id) {
     document.getElementById('prodPreco').value = p.preco || 0; document.getElementById('prodLargMax').value = p.larguraMax || 0;
     document.getElementById('prodCompMax').value = p.compMax || 0;
     
-    if(document.getElementById('prodImpVerso')) document.getElementById('prodImpVerso').value = p.impVerso || 'nao';
-    if(document.getElementById('prodTaxaVerso')) document.getElementById('prodTaxaVerso').value = p.taxaVerso || 80;
+    if(document.getElementById('prodCor')) document.getElementById('prodCor').value = p.cor || 'N/A';
+    if(document.getElementById('prodPermiteLados')) document.getElementById('prodPermiteLados').value = p.permiteLados || 'nao';
+    if(document.getElementById('prodMultVerso')) document.getElementById('prodMultVerso').value = p.multVerso || 0.80;
 
-    document.getElementById('listaGradePacotes').innerHTML = "";
-    if(p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
-    
-    document.getElementById('listaGradeProgressivo').innerHTML = "";
-    if(p.progressivo) p.progressivo.forEach(prg => addLinhaProgressivo(prg.qtd, prg.preco));
+    document.getElementById('listaGradePacotes').innerHTML = ""; if(p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
+    document.getElementById('listaGradeProgressivo').innerHTML = ""; if(p.progressivo) p.progressivo.forEach(prg => addLinhaProgressivo(prg.qtd, prg.preco));
 
-    ajustarCamposProduto(); atualizarListaAcabamentosProduto(p.acabamentos || []); window.scrollTo(0,0);
+    ajustarCamposProduto(); atualizarListaAcabamentosProduto(p.acabamentos || []); 
+    document.getElementById('boxMultVerso').style.display = (p.permiteLados === 'sim') ? 'block' : 'none';
+    window.scrollTo(0,0);
 }
 
 function atualizarListaAcabamentosProduto(salvos = []) {
