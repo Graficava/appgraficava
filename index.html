@@ -59,7 +59,16 @@
                                     <option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Debito">Débito</option>
                                     <option value="Credito_Vista">Crédito à vista</option><option value="Credito_Parcelado">Crédito Parcelado</option>
                                 </select></div>
-                                <div class="input-group" id="divParcelas" style="display:none;"><label>Parcelas</label><select id="cartParcelas"></select></div>
+                                
+                                <div class="input-group" id="divParcelas" style="display:none;">
+                                    <label>Parcelas</label>
+                                    <select id="cartParcelas">
+                                        <option value="2x">2x</option><option value="3x">3x</option><option value="4x">4x</option>
+                                        <option value="5x">5x</option><option value="6x">6x</option><option value="7x">7x</option>
+                                        <option value="8x">8x</option><option value="9x">9x</option><option value="10x">10x</option>
+                                        <option value="11x">11x</option><option value="12x">12x</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-linha">
                                 <div class="input-group"><label>Entrega</label><select id="cartEntrega" onchange="toggleOpcoesEntrega()"><option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option></select></div>
@@ -92,13 +101,13 @@
                             <div class="input-group"><label>Tel</label><input type="text" id="cliTel"></div>
                             <div class="input-group"><label>Endereço</label><input type="text" id="cliEnd"></div>
                         </div>
-                        <button class="btn-salvar" onclick="salvarCliente()">Salvar</button>
+                        <div style="margin-top:15px;"><button class="btn-salvar" onclick="salvarCliente()">Salvar</button> <button class="btn-limpar" style="margin-top:15px; background: #EDF2F7; color: #4A5568; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="limparFormCliente()">Limpar</button></div>
                     </div>
                     <div class="card"><table class="tabela-erp"><thead><tr><th>Cliente</th><th>Doc</th><th>Ação</th></tr></thead><tbody id="listaClientes"></tbody></table></div>
                 </div>
 
                 <div id="sub-cat" class="sub-aba">
-                    <div class="card"><h3>Categorias</h3><div class="form-linha"><input type="hidden" id="catId"><input type="text" id="catNome"><button class="btn-salvar" onclick="salvarCategoria()">Salvar</button></div></div>
+                    <div class="card"><h3>Categorias</h3><div class="form-linha"><input type="hidden" id="catId"><input type="text" id="catNome"><button class="btn-salvar" style="margin-top:0;" onclick="salvarCategoria()">Salvar</button></div></div>
                     <div class="card"><table class="tabela-erp"><thead><tr><th>Nome</th><th>Ação</th></tr></thead><tbody id="listaCategorias"></tbody></table></div>
                 </div>
 
@@ -195,7 +204,7 @@
                             <div class="input-group"><label>Venda R$</label><input type="number" id="acabPrecoVenda" step="0.01"></div>
                             <div class="input-group"><label>Custo R$</label><input type="number" id="acabCusto" step="0.01"></div>
                         </div>
-                        <button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button>
+                        <div style="margin-top:15px;"><button class="btn-salvar" onclick="salvarAcabamento()">Salvar</button> <button class="btn-limpar" style="margin-top:15px; background: #EDF2F7; color: #4A5568; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="limparFormAcabamento()">Limpar</button></div>
                     </div>
                     <div class="card"><table class="tabela-erp"><thead><tr><th>Acabamento</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAcabamentos"></tbody></table></div>
                 </div>
