@@ -71,8 +71,8 @@
                 </div>
             </section>
 
-            <section id="aba-producao" class="aba"><h2>Painel de Produção</h2></section>
-            <section id="aba-financeiro" class="aba"><h2>Fluxo de Caixa</h2></section>
+            <section id="aba-producao" class="aba"><h2>Painel de Produção (Em breve)</h2></section>
+            <section id="aba-financeiro" class="aba"><h2>Fluxo de Caixa (Em breve)</h2></section>
 
             <section id="aba-cadastros" class="aba">
                 <div class="sub-menu">
@@ -114,9 +114,24 @@
                         </div>
                         <div class="form-grid" style="margin-top:10px;">
                             <div class="input-group"><label>Material</label><input type="text" id="prodMaterial"></div>
+                            
+                            <div class="input-group" id="grp-frenteverso">
+                                <label>Permitir Frente e Verso?</label>
+                                <select id="prodImpVerso" onchange="document.getElementById('boxTaxaVerso').style.display = this.value === 'sim' ? 'block' : 'none'">
+                                    <option value="nao">Não (Apenas Frente/Fixo)</option>
+                                    <option value="sim">Sim (Cliente escolhe)</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="boxTaxaVerso" style="display:none;">
+                                <label style="color:#B7791F;">Acréscimo do Verso (%)</label>
+                                <input type="number" id="prodTaxaVerso" value="80" step="1">
+                            </div>
+
                             <div class="input-group"><label>Tam. Fixo</label><input type="text" id="prodTamanho"></div>
+                        </div>
+                        <div class="form-grid" style="margin-top:10px; border-top: 1px dashed #E2E8F0; padding-top: 15px;">
                             <div class="input-group">
-                                <label>Regra Preço</label>
+                                <label>Regra Matemática de Preço</label>
                                 <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
                                     <option value="unidade">Unitário</option>
                                     <option value="pacote">Pacotes Fechados</option>
@@ -187,7 +202,9 @@
                 
                 <div id="modalCorpoMedidas" class="config-grid"></div>
                 
-                <div class="divisor-config"><span>Configurações & Acabamentos</span></div>
+                <div id="modalCorpoCores" style="margin-bottom: 25px;"></div>
+
+                <div class="divisor-config"><span>Configurações Extras</span></div>
                 <div id="modalCorpoAcabamentos" class="config-acab-grid"></div>
             </div>
 
