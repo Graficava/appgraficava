@@ -6,6 +6,7 @@
     <title>GVA Gráfica ERP</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -14,20 +15,24 @@
 
     <div id="telaLogin" class="login-container">
         <div class="login-box">
-            <h2>GVA Balcão</h2>
+            <h2>GVA Sistema</h2>
             <input type="email" id="email" placeholder="E-mail">
             <input type="password" id="senha" placeholder="Senha">
             <button onclick="entrar()">Entrar</button>
+            <p id="msgErro" style="color: red; display: none;">Login inválido!</p>
         </div>
     </div>
 
     <div id="appInterface" class="app-container" style="display: none;">
         <aside class="sidebar">
-            <div class="sidebar-header"><span id="logo-texto">GVA Gráfica</span></div>
+            <div class="sidebar-header">
+                <span id="logo-texto">GVA Gráfica</span>
+            </div>
             <nav class="menu">
-                <button onclick="mudarAba('loja')" class="ativo"><i class="fa fa-store"></i> Loja / Atendimento</button>
-                <button onclick="mudarAba('cadastros')" id="menu-cadastros"><i class="fa fa-database"></i> Cadastros (Admin)</button>
-                <button onclick="mudarAba('financeiro')" id="menu-financeiro"><i class="fa fa-chart-line"></i> Financeiro</button>
+                <button onclick="mudarAba('loja')" class="ativo"><i class="fa fa-store"></i> Loja</button>
+                <button onclick="mudarAba('producao')"><i class="fa fa-tasks"></i> Produção</button>
+                <button onclick="mudarAba('financeiro')"><i class="fa fa-chart-line"></i> Financeiro</button>
+                <button onclick="mudarAba('cadastros')"><i class="fa fa-database"></i> Cadastros</button>
             </nav>
             <button onclick="sair()" class="btn-sair">Sair</button>
         </aside>
@@ -39,25 +44,41 @@
                         <div class="filtro-cat" id="menuFiltroCat"></div>
                         <div class="vitrine-grid" id="gradeProdutos"></div>
                     </div>
+                    
                     <div class="loja-sidebar">
                         <div class="card">
-                            <h3><i class="fa fa-shopping-cart"></i> Carrinho de Venda</h3>
+                            <h3><i class="fa fa-shopping-cart"></i> Carrinho</h3>
                             <div id="listaCarrinho" class="carrinho-itens"></div>
-                            <div class="cart-resumo"><span>Total:</span><b id="totalCarrinho" data-subtotal="0">R$ 0.00</b></div>
+                            <div class="cart-resumo">
+                                <span>Total:</span>
+                                <b id="totalCarrinho" data-subtotal="0">R$ 0.00</b>
+                            </div>
                             <div class="input-group"><label>Cliente</label><select id="cartCliente"></select></div>
                             <div class="form-linha">
-                                <div class="input-group"><label>Pagamento</label><select id="cartPagamento"><option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Cartao">Cartão</option></select></div>
+                                <div class="input-group"><label>Pagamento</label><select id="cartPagamento" onchange="toggleOpcoesPagamento()">
+                                    <option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Debito">Débito</option>
+                                    <option value="Credito_Vista">Crédito à vista</option><option value="Credito_Parcelado">Crédito Parcelado</option>
+                                </select></div>
+                                <div class="input-group" id="divParcelas" style="display:none;"><label>Parcelas</label><select id="cartParcelas"></select></div>
                             </div>
-                            <button class="btn-checkout" onclick="enviarPedido()">Fechar Venda</button>
+                            <div class="form-linha">
+                                <div class="input-group"><label>Entrega</label><select id="cartEntrega" onchange="toggleOpcoesEntrega()"><option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option></select></div>
+                                <div class="input-group" id="divFrete" style="display:none;"><label>Frete R$</label><input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalComFrete()"></div>
+                            </div>
+                            <button class="btn-checkout" onclick="enviarPedido()">Finalizar Pedido</button>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <section id="aba-producao" class="aba"><h2>Painel de Produção</h2></section>
+            <section id="aba-financeiro" class="aba"><h2>Fluxo de Caixa</h2></section>
+
             <section id="aba-cadastros" class="aba">
                 <div class="sub-menu">
                     <button onclick="mudarSubAba('sub-cli')" class="sub-ativo" id="btn-sub-cli">Clientes</button>
-                    <button onclick="mudarSubAba('sub-prod')" id="btn-sub-prod">Produtos / Matriz de Preço</button>
+                    <button onclick="mudarSubAba('sub-cat')" id="btn-sub-cat">Categorias</button>
+                    <button onclick="mudarSubAba('sub-prod')" id="btn-sub-prod">Produtos</button>
                     <button onclick="mudarSubAba('sub-acab')" id="btn-sub-acab">Acabamentos</button>
                 </div>
 
@@ -66,63 +87,66 @@
                         <h3>Novo Cliente</h3>
                         <div class="form-grid">
                             <input type="hidden" id="cliId">
-                            <input type="text" id="cliNome" placeholder="Nome">
-                            <input type="text" id="cliDoc" placeholder="CPF/CNPJ">
-                            <input type="text" id="cliTel" placeholder="WhatsApp">
+                            <div class="input-group"><label>Nome</label><input type="text" id="cliNome"></div>
+                            <div class="input-group"><label>CPF/CNPJ</label><input type="text" id="cliDoc"></div>
+                            <div class="input-group"><label>Tel</label><input type="text" id="cliTel"></div>
+                            <div class="input-group"><label>Endereço</label><input type="text" id="cliEnd"></div>
                         </div>
-                        <button class="btn-salvar" onclick="salvarCliente()">Salvar Cliente</button>
+                        <button class="btn-salvar" onclick="salvarCliente()">Salvar</button>
                     </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Nome</th><th>WhatsApp</th><th>Ação</th></tr></thead><tbody id="listaClientes"></tbody></table></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Cliente</th><th>Doc</th><th>Ação</th></tr></thead><tbody id="listaClientes"></tbody></table></div>
+                </div>
+
+                <div id="sub-cat" class="sub-aba">
+                    <div class="card"><h3>Categorias</h3><div class="form-linha"><input type="hidden" id="catId"><input type="text" id="catNome"><button class="btn-salvar" onclick="salvarCategoria()">Salvar</button></div></div>
+                    <div class="card"><table class="tabela-erp"><thead><tr><th>Nome</th><th>Ação</th></tr></thead><tbody id="listaCategorias"></tbody></table></div>
                 </div>
 
                 <div id="sub-prod" class="sub-aba">
                     <div class="card">
-                        <h3>Configuração de Produto</h3>
+                        <h3>Configurar Produto</h3>
                         <div class="form-grid">
                             <input type="hidden" id="prodId">
-                            <div class="input-group"><label>Tipo de Produto</label><select id="prodTipo" onchange="ajustarCamposProduto()"><option value="grafico">Impressos (Cartão, Panfleto)</option><option value="apostila">Apostila / Impressão Avulsa</option><option value="visual">Comunicação Visual</option></select></div>
-                            <div class="input-group"><label>Categoria</label><select id="prodCategoria"></select></div>
-                            <input type="text" id="prodNome" placeholder="Nome do Produto">
+                            <div class="input-group"><label>Tipo</label><select id="prodTipo" onchange="ajustarCamposProduto()"><option value="grafico">Gráfico</option><option value="visual">Com. Visual</option><option value="outros">Outros</option></select></div>
+                            <div class="input-group"><label>Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()"></select></div>
+                            <div class="input-group"><label>Nome</label><input type="text" id="prodNome"></div>
+                            <div class="input-group"><label>URL Foto</label><input type="text" id="prodFoto"></div>
+                        </div>
+                        <div class="form-grid" style="margin-top:10px;">
+                            <div class="input-group"><label>Material Base</label><input type="text" id="prodMaterial"></div>
+                            <div class="input-group"><label>Tam. Fixo</label><input type="text" id="prodTamanho"></div>
+                            <div class="input-group">
+                                <label>Regra Preço</label>
+                                <select id="prodRegraPreco" onchange="ajustarCamposProduto()">
+                                    <option value="unidade">Unitário</option>
+                                    <option value="pacote">Pacotes Fechados</option>
+                                    <option value="progressivo">Desconto Progressivo</option>
+                                    <option value="m2">Por M²</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="boxPrecoBase"><label id="labelPreco">Preço Base R$</label><input type="number" id="prodPreco" step="0.01"></div>
                         </div>
 
-                        <div id="boxMatrizPreco" class="setup-caixa-pacote" style="margin-top:20px;">
-                            <label><i class="fa fa-table"></i> Grade de Preços por Cor e Qtd</label>
-                            <div id="listaGradeCores"></div>
-                            <button class="btn-add-lista" onclick="addLinhaMatriz()">+ Add Quantidade e Preços</button>
+                        <!-- SEÇÃO DE VARIAÇÕES (PAPEL, CORES ETC) -->
+                        <div id="boxVariacoes" class="setup-caixa-pacote" style="background: #EBF8FF; border-color: #90CDF4; margin-top: 15px;">
+                            <label style="color:#2B6CB0; font-weight: bold;"><i class="fa fa-list-ul"></i> Atributos e Variações (Papel, Gramatura, Cores...)</label>
+                            <p style="font-size: 11px; color: #4A5568; margin-bottom: 10px;">Crie opções que o cliente pode escolher e que somam ao preço base.</p>
+                            <div id="listaAtributos"></div>
+                            <button class="btn-add-lista" style="background:#BEE3F8; color:#2A4365; border:none;" onclick="addAtributo()">+ Novo Atributo</button>
+                        </div>
+
+                        <div id="boxPacotes" style="display:none;" class="setup-caixa-pacote">
+                            <label>Grade de Pacotes (Qtd Fixa -> Preço Total)</label>
+                            <div id="listaGradePacotes"></div>
+                            <button class="btn-add-lista" onclick="addLinhaPacote()">+ Add Quantidade</button>
                         </div>
 
                         <div id="boxProgressivo" style="display:none;" class="setup-caixa-pacote">
-                            <label>Preço por Folha (Progressivo)</label>
+                            <label style="color:#2F855A;"><i class="fa fa-chart-bar"></i> Tabela de Desconto (Qtd Mínima -> Preço Unitário)</label>
                             <div id="listaGradeProgressivo"></div>
-                            <button class="btn-add-lista" onclick="addLinhaProgressivo()">+ Add Faixa</button>
+                            <button class="btn-add-lista" style="background:#C6F6D5; color:#22543D;" onclick="addLinhaProgressivo()">+ Add Faixa de Desconto</button>
                         </div>
 
-                        <div class="setup-acabamentos">
-                            <label>Acabamentos Permitidos</label>
-                            <div id="listaCheckAcabamentos" class="mini-lista-acab"></div>
-                        </div>
-                        <button class="btn-salvar" onclick="salvarProduto()">Salvar Produto</button>
-                    </div>
-                    <div class="card"><table class="tabela-erp"><thead><tr><th>Produto</th><th>Ação</th></tr></thead><tbody id="listaProdutos"></tbody></table></div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <div id="modalW2P" class="modal-fundo" style="display:none;">
-        <div class="modal-conteudo">
-            <button class="modal-fechar-fixo" onclick="fecharModal()">×</button>
-            <div class="modal-corpo">
-                <h2 id="modalNomeProd"></h2>
-                <div id="modalOpcoesConfig"></div> <div id="modalCorpoAcabamentos" class="config-acab-grid"></div>
-            </div>
-            <div class="modal-footer-fixo">
-                <div class="total-box"><small>TOTAL</small><b id="modalSubtotal">R$ 0.00</b></div>
-                <button class="btn-confirmar-cart" onclick="confirmarAdicaoCarrinho()">+ Adicionar</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-</html>
+                        <div id="boxMedidas" style="display:none;" class="setup-caixa-medida">
+                            <div class="input-group"><label>Largura Bobina (m)</label><input type="number" id="prodLargMax" step="0.01"></div>
+                            <div class="input-group"
