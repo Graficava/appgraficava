@@ -14,44 +14,59 @@ const db = firebase.firestore();
 let bdCategorias = [], bdProdutos = [], bdAcabamentos = [], bdClientes = [];
 let carrinho = [];
 
+// Auth State
 auth.onAuthStateChanged(user => {
-    if (user) { 
-        document.getElementById('telaLogin').style.display = 'none'; 
-        document.getElementById('appInterface').style.display = 'flex'; 
-        iniciarLeitura(); 
-    } else { 
-        document.getElementById('telaLogin').style.display = 'flex'; 
-        document.getElementById('appInterface').style.display = 'none'; 
-    }
+    document.getElementById('telaLogin').classList.toggle('hidden', !!user);
+    document.getElementById('appInterface').classList.toggle('hidden', !user);
+    if (user) iniciarLeitura();
 });
 
-function iniciarLeitura() {
-    db.collection("categorias").onSnapshot(s => { bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()})); renderCat(); });
-    db.collection("produtos").onSnapshot(s => { bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()})); renderVitrine(); renderProd(); });
-    db.collection("acabamentos").onSnapshot(s => { bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()})); renderAcab(); });
-    db.collection("clientes").orderBy("nome").onSnapshot(s => { bdClientes = s.docs.map(d => ({id: d.id, ...d.data()})); renderCli(); });
+function entrar() {
+    const e = document.getElementById('email').value;
+    const s = document.getElementById('senha').value;
+    auth.signInWithEmailAndPassword(e, s).catch(err => {
+        document.getElementById('msgErro').classList.remove('hidden');
+    });
 }
 
-// --- CADASTRO PRODUTOS ---
-function addAtributo(nomeAtrib = '', opcoes = []) {
+function sair() { auth.signOut(); }
+
+function iniciarLeitura() {
+    db.collection("categorias").onSnapshot(s => { 
+        bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderCadastrosFiltros();
+    });
+    db.collection("produtos").onSnapshot(s => { 
+        bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderVitrine();
+        renderListaProdutosCad();
+    });
+}
+
+// --- CADASTRO DE PRODUTOS ---
+function addAtributo(nome = '', opcoes = []) {
     const div = document.createElement('div');
-    div.className = 'caixa-atributo';
+    div.className = "bg-white p-4 rounded-lg shadow-sm border border-blue-200 caixa-atributo";
     div.innerHTML = `
-        <div class="form-linha">
-            <input type="text" class="atrib-nome" placeholder="Ex: Papel" value="${nomeAtrib}">
-            <button onclick="this.parentElement.parentElement.remove()">x</button>
+        <div class="flex gap-2 mb-2">
+            <input type="text" placeholder="Nome (Ex: Papel)" value="${nome}" class="atrib-nome flex-1 font-bold p-1 border-b">
+            <button onclick="this.parentElement.parentElement.remove()" class="text-red-500">×</button>
         </div>
-        <div class="lista-opcoes"></div>
-        <button onclick="addOpcaoAtrib(this)">+ Opção</button>
+        <div class="lista-opcoes space-y-1"></div>
+        <button onclick="addOpcaoAtrib(this)" class="text-xs font-bold text-blue-500 mt-2">+ Add Valor Extra</button>
     `;
     document.getElementById('listaAtributos').appendChild(div);
-    if(opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(div.querySelector('button'), o.nome, o.preco));
+    if(opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(div.querySelector('.text-xs'), o.nome, o.preco));
 }
 
 function addOpcaoAtrib(btn, n = '', p = '') {
     const div = document.createElement('div');
-    div.className = 'form-linha';
-    div.innerHTML = `<input type="text" class="op-nome" placeholder="Nome" value="${n}"><input type="number" class="op-preco" placeholder="R$ Extra" value="${p}"><button onclick="this.parentElement.remove()">x</button>`;
+    div.className = "flex gap-2 item-opcao";
+    div.innerHTML = `
+        <input type="text" placeholder="Ex: Couché" value="${n}" class="op-nome flex-1 text-sm p-1 border rounded">
+        <input type="number" placeholder="R$ extra" value="${p}" class="op-preco w-20 text-sm p-1 border rounded">
+        <button onclick="this.parentElement.remove()">×</button>
+    `;
     btn.previousElementSibling.appendChild(div);
 }
 
@@ -60,7 +75,7 @@ async function salvarProduto() {
     let atributos = [];
     document.querySelectorAll('.caixa-atributo').forEach(caixa => {
         let ops = [];
-        caixa.querySelectorAll('.lista-opcoes .form-linha').forEach(l => {
+        caixa.querySelectorAll('.item-opcao').forEach(l => {
             ops.push({ nome: l.querySelector('.op-nome').value, preco: parseFloat(l.querySelector('.op-preco').value) || 0 });
         });
         atributos.push({ nome: caixa.querySelector('.atrib-nome').value, opcoes: ops });
@@ -70,23 +85,36 @@ async function salvarProduto() {
         nome: document.getElementById('prodNome').value,
         categoria: document.getElementById('prodCategoria').value,
         preco: parseFloat(document.getElementById('prodPreco').value) || 0,
-        regraPreco: document.getElementById('prodRegraPreco').value,
         foto: document.getElementById('prodFoto').value,
         atributos: atributos
     };
 
-    if(id) await db.collection("produtos").doc(id).update(dados); else await db.collection("produtos").add(dados);
-    alert("Salvo!"); location.reload();
+    if(id) await db.collection("produtos").doc(id).update(dados); 
+    else await db.collection("produtos").add(dados);
+    
+    alert("Produto Salvo!");
+    limparFormProd();
+}
+
+function renderListaProdutosCad() {
+    document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => `
+        <tr class="border-b hover:bg-gray-50">
+            <td class="p-4 font-semibold">${p.nome}</td>
+            <td class="p-4 text-center">
+                <button onclick="editProd('${p.id}')" class="text-blue-600 mr-2">Editar</button>
+                <button onclick="db.collection('produtos').doc('${p.id}').delete()" class="text-red-600">X</button>
+            </td>
+        </tr>
+    `).join('');
 }
 
 // --- LOJA ---
 function renderVitrine() {
-    const grid = document.getElementById('gradeProdutos');
-    grid.innerHTML = bdProdutos.map(p => `
-        <div class="produto-card" onclick="abrirConfigurador('${p.id}')">
-            <div class="img-vitrine" style="background-image:url('${p.foto}')"></div>
-            <h4>${p.nome}</h4>
-            <p>R$ ${p.preco.toFixed(2)}</p>
+    document.getElementById('gradeProdutos').innerHTML = bdProdutos.map(p => `
+        <div onclick="abrirConfigurador('${p.id}')" class="bg-white p-4 rounded-xl border hover:shadow-md cursor-pointer transition">
+            <div class="h-32 bg-gray-100 rounded-lg mb-3 bg-cover bg-center" style="background-image:url('${p.foto}')"></div>
+            <h4 class="font-bold text-sm truncate">${p.nome}</h4>
+            <p class="text-indigo-600 font-black text-lg">R$ ${p.preco.toFixed(2)}</p>
         </div>
     `).join('');
 }
@@ -96,33 +124,50 @@ function abrirConfigurador(id) {
     document.getElementById('modalNomeProd').innerText = p.nome;
     document.getElementById('modalProdId').value = p.id;
     document.getElementById('modalProdPrecoBase').value = p.preco;
+    document.getElementById('modalHeaderImg').style.backgroundImage = `url('${p.foto}')`;
     
-    // Variacoes
-    const divVar = document.getElementById('modalCorpoVariacoes');
-    divVar.innerHTML = (p.atributos || []).map(a => `
-        <div class="input-group">
-            <label>${a.nome}</label>
-            <select class="sel-var" onchange="calcularPrecoAoVivo()">
+    document.getElementById('modalCorpoVariacoes').innerHTML = (p.atributos || []).map(a => `
+        <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-400 uppercase">${a.nome}</label>
+            <select class="sel-var w-full p-3 border rounded-xl bg-gray-50" onchange="calcularPrecoAoVivo()">
                 ${a.opcoes.map(o => `<option value="${o.preco}">${o.nome} (+R$ ${o.preco})</option>`).join('')}
             </select>
         </div>
     `).join('');
 
-    document.getElementById('modalW2P').style.display = 'flex';
+    document.getElementById('modalW2P').classList.remove('hidden');
     calcularPrecoAoVivo();
 }
 
 function calcularPrecoAoVivo() {
-    let total = parseFloat(document.getElementById('modalProdPrecoBase').value) || 0;
-    document.querySelectorAll('.sel-var').forEach(s => total += parseFloat(s.value));
+    let base = parseFloat(document.getElementById('modalProdPrecoBase').value) || 0;
+    let extra = 0;
+    document.querySelectorAll('.sel-var').forEach(s => extra += parseFloat(s.value));
+    let qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
+    let total = (base + extra) * qtd;
     document.getElementById('modalSubtotal').innerText = "R$ " + total.toFixed(2);
 }
 
-// --- AUXILIARES ---
-function mudarAba(a) { document.querySelectorAll('.aba').forEach(x => x.classList.remove('ativa')); document.getElementById('aba-'+a).classList.add('ativa'); }
-function mudarSubAba(s) { document.querySelectorAll('.sub-aba').forEach(x => x.classList.remove('sub-ativa')); document.getElementById(s).classList.add('sub-ativa'); }
-function fecharModal() { document.getElementById('modalW2P').style.display = 'none'; }
-function entrar() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('senha').value); }
-function sair() { auth.signOut(); }
-function renderCat() { document.getElementById('prodCategoria').innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); }
-function renderProd() { document.getElementById('listaProdutos').innerHTML = bdProdutos.map(p => `<tr><td>${p.nome}</td><td>${p.regraPreco}</td><td><button onclick="db.collection('produtos').doc('${p.id}').delete()">x</button></td></tr>`).join(''); }
+// --- NAVEGAÇÃO ---
+function mudarAba(aba) {
+    document.querySelectorAll('.aba-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('aba-'+aba).classList.remove('hidden');
+    document.querySelectorAll('.aba-btn').forEach(btn => btn.classList.remove('bg-indigo-50', 'text-indigo-700'));
+    event.currentTarget.classList.add('bg-indigo-50', 'text-indigo-700');
+}
+
+function mudarSubAba(sub) {
+    document.querySelectorAll('.sub-aba-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById(sub).classList.remove('hidden');
+}
+
+function fecharModal() { document.getElementById('modalW2P').classList.add('hidden'); }
+function renderCadastrosFiltros() {
+    document.getElementById('prodCategoria').innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+}
+function limparFormProd() {
+    document.getElementById('prodId').value = '';
+    document.getElementById('prodNome').value = '';
+    document.getElementById('prodPreco').value = '';
+    document.getElementById('listaAtributos').innerHTML = '';
+}
