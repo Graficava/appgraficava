@@ -44,6 +44,11 @@ body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
 input, select { width: 100%; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
 input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 
+/* LINHAS DE PACOTE (NOVO) */
+.linha-pacote { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.linha-pacote input { flex: 1; padding: 8px; }
+.btn-rem-pacote { background: #FFF5F5; color: #E53E3E; border: 1px solid #FEB2B2; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+
 .caixa-checkbox { border: 1px solid #CBD5E0; border-radius: 6px; padding: 15px; max-height: 200px; overflow-y: auto; background: white; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 .caixa-checkbox label { display: flex; align-items: center; font-weight: normal; font-size: 13px; margin: 0; color: #2D3748; cursor: pointer; }
 .caixa-checkbox input[type="checkbox"] { width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; }
@@ -59,7 +64,6 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 .tabela-erp td { padding: 10px; border-bottom: 1px solid var(--cor-borda); vertical-align: middle; }
 .tabela-erp tr:hover { background: #F8FAFC; }
 
-/* FASE 3: LOJA E MODAL */
 .loja-layout { display: flex; gap: 25px; align-items: flex-start; }
 .loja-vitrine { flex: 2; }
 .loja-sidebar { flex: 1; position: sticky; top: 0; }
@@ -69,15 +73,15 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 .filtro-cat button.ativo { background: var(--cor-principal); color: white; border-color: var(--cor-principal); }
 
 .vitrine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-
-/* CORES PASTÉIS DOS CARDS - SOLICITAÇÃO NOVA */
 .produto-card { border: 1px solid var(--cor-borda); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; background: white; }
-.bg-grafico { background-color: #EBF8FF; border-color: #90CDF4; } /* Azul Claro Pastel */
-.bg-visual { background-color: #FEFCBF; border-color: #F6E05E; } /* Amarelo Claro Pastel */
-.bg-outros { background-color: #F0FFF4; border-color: #9AE6B4; } /* Verde Claro Pastel */
+.bg-grafico { background-color: #EBF8FF; border-color: #90CDF4; } 
+.bg-visual { background-color: #FEFCBF; border-color: #F6E05E; } 
+.bg-outros { background-color: #F0FFF4; border-color: #9AE6B4; } 
 
 .produto-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); filter: brightness(0.98); }
-.produto-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; background: rgba(255,255,255,0.5); }
+/* CAIXA DE IMAGEM BLINDADA (Fim do Pisca Pisca) */
+.img-vitrine { width: 100%; height: 150px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #E2E8F0; color: #718096; font-weight: bold; font-size: 12px; background-size: cover; background-position: center; }
+
 .produto-card h4 { margin: 0 0 5px 0; color: #2D3748; font-size: 16px; }
 .produto-card p { margin: 0 0 15px 0; color: #4A5568; font-weight: bold; font-size: 14px; }
 
