@@ -44,7 +44,6 @@ body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
 input, select { width: 100%; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
 input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 
-/* LINHAS DE PACOTE (NOVO) */
 .linha-pacote { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
 .linha-pacote input { flex: 1; padding: 8px; }
 .btn-rem-pacote { background: #FFF5F5; color: #E53E3E; border: 1px solid #FEB2B2; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
@@ -77,20 +76,29 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
 .bg-grafico { background-color: #EBF8FF; border-color: #90CDF4; } 
 .bg-visual { background-color: #FEFCBF; border-color: #F6E05E; } 
 .bg-outros { background-color: #F0FFF4; border-color: #9AE6B4; } 
-
 .produto-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); filter: brightness(0.98); }
-/* CAIXA DE IMAGEM BLINDADA (Fim do Pisca Pisca) */
 .img-vitrine { width: 100%; height: 150px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #E2E8F0; color: #718096; font-weight: bold; font-size: 12px; background-size: cover; background-position: center; }
-
 .produto-card h4 { margin: 0 0 5px 0; color: #2D3748; font-size: 16px; }
 .produto-card p { margin: 0 0 15px 0; color: #4A5568; font-weight: bold; font-size: 14px; }
 
-.modal-fundo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
-.modal-conteudo { width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); margin: 0; }
-.lista-acabamentos-modal { display: flex; flex-direction: column; gap: 10px; }
-.check-box-custom { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border: 1px solid #E2E8F0; border-radius: 6px; background: #F8FAFC; cursor: pointer; transition: 0.2s; }
-.check-box-custom:has(input:checked) { border-color: var(--cor-principal); background: #EBF4FF; }
-.check-box-custom input { margin: 0 10px 0 0; transform: scale(1.2); }
+/* MODAL E ACABAMENTOS CHARMOSOS */
+.modal-fundo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+.modal-conteudo { width: 90%; max-width: 650px; max-height: 95vh; overflow-y: auto; }
+.lista-acabamentos-modal { display: flex; flex-direction: column; gap: 12px; }
+
+.check-box-custom { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 15px; border: 2px solid #E2E8F0; border-radius: 10px; 
+    background: #FFF; cursor: pointer; transition: all 0.2s ease; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.check-box-custom:hover { border-color: #CBD5E0; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+.check-box-custom:has(input:checked) { 
+    border-color: var(--cor-principal); 
+    background: #F0F4FF; 
+    box-shadow: 0 4px 12px rgba(62, 59, 159, 0.15); 
+}
+.check-box-custom input[type="checkbox"] { transform: scale(1.4); margin-right: 15px; accent-color: var(--cor-principal); cursor: pointer; }
 
 .carrinho-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #EDF2F7; }
 .btn-remover-item { background: none; border: none; color: #E53E3E; cursor: pointer; font-size: 14px; }
@@ -106,4 +114,5 @@ input:focus, select:focus { outline: none; border-color: var(--cor-principal); }
     .loja-layout { flex-direction: column; }
     .loja-sidebar { width: 100%; position: relative; }
     .caixa-checkbox { grid-template-columns: 1fr; }
+    #modalHeaderImg { height: 150px; } /* Menor no celular */
 }
