@@ -12,7 +12,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let bdCategorias = [];
-let bdProdutos = [];
+let bdProdutos =[];
 let bdClientes = [];
 let bdPedidos = [];
 let bdAcabamentos =[];
@@ -189,6 +189,7 @@ async function salvarProduto() {
         larguraBobina: parseFloat(document.getElementById('prodLargBobina').value) || 0,
         larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0,
         compMax: parseFloat(document.getElementById('prodCompMax').value) || 0,
+        obs: document.getElementById('prodObs').value || '',
         atributos: atributos,
         acabamentos: acabList,
         pacotes: pacotes,
@@ -222,6 +223,7 @@ function editProd(id) {
     document.getElementById('prodLargBobina').value = p.larguraBobina || 0;
     document.getElementById('prodLargMax').value = p.larguraMax || 0;
     document.getElementById('prodCompMax').value = p.compMax || 0;
+    document.getElementById('prodObs').value = p.obs || '';
     
     document.getElementById('listaAtributos').innerHTML = '';
     if (p.atributos) p.atributos.forEach(a => addAtributo(a.nome, a.opcoes));
@@ -264,10 +266,18 @@ function abrirConfigurador(id) {
     document.getElementById('modalProdRegra').value = p.regraPreco;
     document.getElementById('modalHeaderImg').style.backgroundImage = `url('${p.foto || 'https://via.placeholder.com/400'}')`;
     
+    // Observações
+    const divObs = document.getElementById('modalObs');
+    if (p.obs && p.obs.trim() !== '') {
+        divObs.innerHTML = `<strong>Aviso:</strong> ${p.obs}`;
+        divObs.classList.remove('hidden');
+    } else {
+        divObs.classList.add('hidden');
+    }
+
     const divMedidas = document.getElementById('modalCorpoMedidas');
     const regra = p.regraPreco;
 
-    // Layout ajustado para o novo modal horizontal (campos menores e mais limpos)
     if (regra === 'm2') {
         divMedidas.innerHTML = `
             <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Largura (m)</label><input type="number" id="w2pLargura" value="1.00" step="0.01" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
@@ -281,22 +291,41 @@ function abrirConfigurador(id) {
         divMedidas.innerHTML = `<div class="col-span-2 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>`;
     }
 
-    document.getElementById('modalCorpoVariacoes').innerHTML = (p.atributos ||[]).map(a => `
-        <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-400 uppercase">${a.nome}</label>
-            <select class="sel-var w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-500" onchange="calcularPrecoAoVivo()">
-                ${a.opcoes.map(o => `<option value="${o.preco}">${o.nome} (+ R$ ${o.preco.toFixed(2)})</option>`).join('')}
-            </select>
-        </div>
-    `).join('');
+    // Variações (Oculta o título se não houver)
+    const divVariacoes = document.getElementById('modalCorpoVariacoes');
+    const tituloVariacoes = document.getElementById('tituloVariacoes');
+    if (p.atributos && p.atributos.length > 0) {
+        tituloVariacoes.classList.remove('hidden');
+        divVariacoes.innerHTML = p.atributos.map(a => `
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">${a.nome}</label>
+                <select class="sel-var w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-500" onchange="calcularPrecoAoVivo()">
+                    ${a.opcoes.map(o => `<option value="${o.preco}">${o.nome} (+ R$ ${o.preco.toFixed(2)})</option>`).join('')}
+                </select>
+            </div>
+        `).join('');
+    } else {
+        tituloVariacoes.classList.add('hidden');
+        divVariacoes.innerHTML = '';
+    }
 
+    // Acabamentos (Oculta o título se não houver)
+    const divAcabamentos = document.getElementById('modalCorpoAcabamentos');
+    const tituloAcabamentos = document.getElementById('tituloAcabamentos');
     const acabPermitidos = p.acabamentos ||[];
-    document.getElementById('modalCorpoAcabamentos').innerHTML = acabPermitidos.map(obj => {
-        const a = bdAcabamentos.find(x => x.id === (obj.id || obj));
-        if (!a) return '';
-        const sel = obj.padrao ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200';
-        return `<button type="button" onclick="this.classList.toggle('bg-indigo-600'); this.classList.toggle('text-white'); this.classList.toggle('border-indigo-600'); this.classList.toggle('bg-white'); this.classList.toggle('text-slate-600'); this.classList.toggle('border-slate-200'); calcularPrecoAoVivo()" data-id="${a.id}" data-preco="${a.venda}" data-regra="${a.regra}" class="acab-btn-modal px-3 py-2 rounded border font-bold text-[10px] uppercase transition-all ${sel}">${a.nome} (+ R$ ${a.venda.toFixed(2)})</button>`;
-    }).join('');
+    
+    if (acabPermitidos.length > 0) {
+        tituloAcabamentos.classList.remove('hidden');
+        divAcabamentos.innerHTML = acabPermitidos.map(obj => {
+            const a = bdAcabamentos.find(x => x.id === (obj.id || obj));
+            if (!a) return '';
+            const sel = obj.padrao ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200';
+            return `<button type="button" onclick="this.classList.toggle('bg-indigo-600'); this.classList.toggle('text-white'); this.classList.toggle('border-indigo-600'); this.classList.toggle('bg-white'); this.classList.toggle('text-slate-600'); this.classList.toggle('border-slate-200'); calcularPrecoAoVivo()" data-id="${a.id}" data-preco="${a.venda}" data-regra="${a.regra}" class="acab-btn-modal px-3 py-2 rounded border font-bold text-[10px] uppercase transition-all ${sel}">${a.nome} (+ R$ ${a.venda.toFixed(2)})</button>`;
+        }).join('');
+    } else {
+        tituloAcabamentos.classList.add('hidden');
+        divAcabamentos.innerHTML = '';
+    }
 
     document.getElementById('modalW2P').classList.remove('hidden');
     calcularPrecoAoVivo();
@@ -338,7 +367,7 @@ function calcularPrecoAoVivo() {
         qtd = parseInt(document.getElementById('w2pQtd')?.value) || 1;
         let precoUnit = base;
         if (p && p.progressivo) {
-            let faixas = [...p.progressivo].sort((a,b) => b.q - a.q);
+            let faixas =[...p.progressivo].sort((a,b) => b.q - a.q);
             let faixa = faixas.find(f => qtd >= f.q);
             if (faixa) precoUnit = faixa.p;
         }
