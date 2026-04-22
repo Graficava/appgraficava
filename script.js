@@ -53,7 +53,6 @@ function iniciarLeitura() {
     db.collection("acabamentos").onSnapshot(s => {
         bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
         renderAcabTable();
-        atualizarListaAcabamentosProduto();
     });
     db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => {
         bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()}));
@@ -133,6 +132,7 @@ function addLinhaProgressivo(q='', p='') {
     document.getElementById('listaGradeProgressivo').appendChild(div);
 }
 
+// FUNÇÃO CORRIGIDA PARA CARREGAR OPÇÕES NA EDIÇÃO
 function addAtributo(nome = '', opcoes = []) {
     const div = document.createElement('div');
     div.className = "bg-white p-5 rounded-2xl border border-slate-100 shadow-sm item-atrib";
@@ -145,15 +145,33 @@ function addAtributo(nome = '', opcoes = []) {
         <button onclick="addOpcaoAtrib(this)" class="mt-4 text-[10px] font-bold uppercase text-indigo-400">+ Add Opção</button>
     `;
     document.getElementById('listaAtributos').appendChild(div);
-    if(opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(div.querySelector('button:last-child'), o.nome, o.preco));
-    else addOpcaoAtrib(div.querySelector('button:last-child'));
+    
+    const containerOpcoes = div.querySelector('.lista-opcoes');
+    if(opcoes.length > 0) {
+        opcoes.forEach(o => addOpcaoAtrib(containerOpcoes, o.nome, o.preco));
+    } else {
+        addOpcaoAtrib(containerOpcoes);
+    }
 }
 
-function addOpcaoAtrib(btn, n = '', p = '') {
+function addOpcaoAtrib(alvo, n = '', p = '') {
+    let container;
+    // Se o alvo for o botão "+ Add Opção", pega o elemento anterior (a div lista-opcoes)
+    if (alvo.tagName === 'BUTTON') {
+        container = alvo.previousElementSibling;
+    } else {
+        // Se o alvo já for o container (usado no carregamento da edição)
+        container = alvo;
+    }
+    
     const div = document.createElement('div');
     div.className = "flex gap-2 item-opcao";
-    div.innerHTML = `<input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border rounded-lg bg-slate-50"><input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border rounded-lg bg-slate-50 font-bold"><button onclick="this.parentElement.remove()" class="text-slate-300">✕</button>`;
-    btn.previousElementSibling.appendChild(div);
+    div.innerHTML = `
+        <input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border rounded-lg bg-slate-50">
+        <input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border rounded-lg bg-slate-50 font-bold">
+        <button onclick="this.parentElement.remove()" class="text-slate-300">✕</button>
+    `;
+    container.appendChild(div);
 }
 
 async function salvarProduto() {
@@ -320,16 +338,6 @@ function calcularPrecoAoVivo() {
         const sel = document.getElementById('w2pPacote');
         qtd = parseInt(sel.value) || 1;
         totalBase = (parseFloat(sel.options[sel.selectedIndex]?.dataset.preco) || 0) + (extraVar * qtd);
-    } else if(regra === 'progressivo') {
-        qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
-        const p = bdProdutos.find(x => x.id === document.getElementById('modalProdId').value);
-        let precoUnit = base;
-        if(p.progressivo) {
-            let faixas = [...p.progressivo].sort((a,b) => b.q - a.q);
-            let faixa = faixas.find(f => qtd >= f.q);
-            if(faixa) precoUnit = faixa.p;
-        }
-        totalBase = (precoUnit + extraVar) * qtd;
     } else {
         qtd = parseInt(document.getElementById('w2pQtd').value) || 1;
         totalBase = (base + extraVar) * qtd;
