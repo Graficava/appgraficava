@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -19,22 +20,23 @@
 </head>
 <body class="bg-[#F8FAFC] text-slate-700 font-sans">
 
-    <!-- LOGIN -->
+    <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-indigo-950 px-4">
         <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-3xl font-extrabold text-indigo-950 mb-8 italic tracking-tight">GVA Sistema</h2>
+            <h2 class="text-3xl font-extrabold text-indigo-950 mb-8 italic">GVA Sistema</h2>
             <div class="space-y-4">
-                <input type="email" id="email" placeholder="E-mail" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                <input type="password" id="senha" placeholder="Senha" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                <input type="email" id="email" placeholder="E-mail" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="password" id="senha" placeholder="Senha" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
                 <button onclick="entrar()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg">Entrar</button>
-                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Erro ao acessar.</p>
+                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Erro ao acessar. Verifique os dados.</p>
             </div>
         </div>
     </div>
 
-    <!-- INTERFACE -->
+    <!-- INTERFACE PRINCIPAL -->
     <div id="appInterface" class="hidden min-h-screen flex flex-col md:flex-row">
         
+        <!-- SIDEBAR -->
         <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen z-20">
             <div class="p-8"><span class="text-2xl font-black text-indigo-900 italic uppercase tracking-tighter">GVA Gráfica</span></div>
             <nav class="flex-1 px-4 space-y-1">
@@ -46,7 +48,8 @@
             <div class="p-6 border-t"><button onclick="sair()" class="w-full text-red-500 font-bold py-3 hover:bg-red-50 rounded-xl transition text-sm">Sair</button></div>
         </aside>
 
-        <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
+        <!-- CONTEUDO -->
+        <main class="flex-1 p-8 overflow-y-auto">
 
             <!-- ABA LOJA -->
             <section id="aba-loja" class="aba-content block">
@@ -56,12 +59,13 @@
                         <div id="gradeProdutos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"></div>
                     </div>
 
+                    <!-- CARRINHO -->
                     <div class="w-full lg:w-[380px] bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl h-fit sticky top-8">
                         <h3 class="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800"><i class="fa fa-shopping-cart text-indigo-500"></i> Carrinho</h3>
                         
                         <!-- CLIENTE EM PRIMEIRO -->
                         <div class="mb-6 space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between tracking-widest">Cliente <span id="labelCreditoCli" class="text-emerald-500">Saldo: R$ 0.00</span></label>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">Cliente <span id="labelCreditoCli" class="text-emerald-500 font-bold">Saldo: R$ 0.00</span></label>
                             <select id="cartCliente" onchange="atualizarInfoCreditoCarrinho()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none"></select>
                         </div>
 
@@ -70,7 +74,7 @@
                         <div class="border-t border-slate-100 pt-6 space-y-4">
                             <div class="grid grid-cols-2 gap-2">
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pagamento</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Pagamento</label>
                                     <select id="cartPagamento" onchange="toggleOpcoesPagamento()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                         <option value="Pix">Pix</option>
                                         <option value="Dinheiro">Dinheiro</option>
@@ -81,7 +85,7 @@
                                     </select>
                                 </div>
                                 <div class="space-y-1" id="divParcelas" style="display:none;">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parcelas</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Parcelas</label>
                                     <select id="cartParcelas" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                         <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="6">6x</option><option value="12">12x</option>
                                     </select>
@@ -91,24 +95,24 @@
                             <!-- SINAL / VALOR PAGO -->
                             <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Valor Pago (Sinal)</label>
+                                    <label class="text-[10px] font-bold text-indigo-500 uppercase">Valor Pago (Sinal)</label>
                                     <input type="number" id="cartValorPago" value="0" oninput="atualizarTotalFinal()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-black outline-none">
                                 </div>
                                 <div class="space-y-1 text-right">
-                                    <label class="text-[10px] font-bold text-red-400 uppercase tracking-widest">Saldo Restante</label>
+                                    <label class="text-[10px] font-bold text-red-400 uppercase">Saldo Restante</label>
                                     <div id="cartSaldoDevedor" class="text-sm font-black text-red-500 p-2">R$ 0.00</div>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-2">
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Entrega</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Entrega</label>
                                     <select id="cartEntrega" onchange="toggleOpcoesEntrega()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                         <option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option>
                                     </select>
                                 </div>
                                 <div class="space-y-1" id="divFrete" style="display:none;">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Valor Frete</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Valor Frete</label>
                                     <input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalFinal()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                 </div>
                             </div>
