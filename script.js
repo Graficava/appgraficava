@@ -23,7 +23,7 @@ auth.onAuthStateChanged(user => {
 function entrar() {
     const e = document.getElementById('email').value;
     const s = document.getElementById('senha').value;
-    auth.signInWithEmailAndPassword(e, s).catch(() => alert("Erro ao entrar"));
+    auth.signInWithEmailAndPassword(e, s).catch(() => alert("Erro ao acessar."));
 }
 
 function sair() { auth.signOut(); }
@@ -43,7 +43,7 @@ function iniciarLeitura() {
     });
 }
 
-// --- CLIENTES (COM EDIÇÃO E CRÉDITO) ---
+// --- CLIENTES (EDIÇÃO E CRÉDITO) ---
 async function salvarCliente() {
     const id = document.getElementById('cliId').value;
     const d = {
@@ -53,12 +53,9 @@ async function salvarCliente() {
         endereco: document.getElementById('cliEnd').value,
         credito: parseFloat(document.getElementById('cliCredito').value) || 0
     };
-    if(!d.nome) return alert("Nome é obrigatório");
-    
+    if(!d.nome) return alert("Nome obrigatório");
     if(id) await db.collection("clientes").doc(id).update(d);
     else await db.collection("clientes").add(d);
-    
-    alert("Cliente salvo com sucesso!");
     limparFormCli();
 }
 
@@ -70,17 +67,14 @@ function editCli(id) {
     document.getElementById('cliTel').value = c.telefone || '';
     document.getElementById('cliEnd').value = c.endereco || '';
     document.getElementById('cliCredito').value = c.credito || 0;
-    
-    document.getElementById('tituloCliForm').innerText = "Editar Cliente";
-    document.getElementById('btnSalvarCli').innerText = "Atualizar Cadastro";
+    document.getElementById('tituloCliForm').innerText = "Editar Cadastro";
+    document.getElementById('btnSalvarCli').innerText = "Atualizar";
     document.getElementById('btnCancelarCli').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function limparFormCli() {
     document.querySelectorAll('#sub-cli input').forEach(i => i.value = '');
     document.getElementById('cliId').value = '';
-    document.getElementById('cliCredito').value = 0;
     document.getElementById('tituloCliForm').innerText = "Novo Cliente";
     document.getElementById('btnSalvarCli').innerText = "Salvar Cliente";
     document.getElementById('btnCancelarCli').classList.add('hidden');
@@ -88,26 +82,24 @@ function limparFormCli() {
 
 function renderCliTable() {
     document.getElementById('listaClientesTab').innerHTML = bdClientes.map(c => `
-        <tr class="border-b border-slate-50 hover:bg-slate-50">
-            <td class="p-5">${c.nome}</td>
+        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+            <td class="p-5 font-semibold text-slate-700">${c.nome}</td>
             <td class="p-5 font-bold text-emerald-600">R$ ${(c.credito || 0).toFixed(2)}</td>
             <td class="p-5 text-center">
                 <button onclick="editCli('${c.id}')" class="text-indigo-500 mr-3">Editar</button>
-                <button onclick="db.collection('clientes').doc('${c.id}').delete()" class="text-red-300 hover:text-red-500">Excluir</button>
+                <button onclick="db.collection('clientes').doc('${c.id}').delete()" class="text-red-300">✕</button>
             </td>
         </tr>
     `).join('');
 }
 
-// --- CATEGORIAS (COM EDIÇÃO) ---
+// --- CATEGORIAS ---
 async function salvarCategoria() {
     const id = document.getElementById('catId').value;
     const nome = document.getElementById('catNome').value;
     if(!nome) return;
-    
     if(id) await db.collection("categorias").doc(id).update({nome: nome});
     else await db.collection("categorias").add({nome: nome});
-    
     document.getElementById('catId').value = '';
     document.getElementById('catNome').value = '';
     document.getElementById('btnSalvarCat').innerText = "Salvar";
@@ -123,40 +115,40 @@ function editCat(id) {
 function renderCat() {
     document.getElementById('listaCategoriasTab').innerHTML = bdCategorias.map(c => `
         <tr class="border-b border-slate-50">
-            <td class="p-4">${c.nome}</td>
+            <td class="p-4 font-bold text-slate-600">${c.nome}</td>
             <td class="p-4 text-right">
                 <button onclick="editCat('${c.id}')" class="text-indigo-500 mr-3">Editar</button>
-                <button onclick="db.collection('categorias').doc('${c.id}').delete()" class="text-red-400">✕</button>
+                <button onclick="db.collection('categorias').doc('${c.id}').delete()" class="text-red-300">✕</button>
             </td>
         </tr>
     `).join('');
     document.getElementById('prodCategoria').innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
 }
 
-// --- PRODUTOS E VARIAÇÕES ---
+// --- PRODUTOS ---
 function addAtributo(nome = '', opcoes = []) {
     const div = document.createElement('div');
-    div.className = "bg-white p-5 rounded-2xl border border-slate-100 shadow-sm item-atrib";
+    div.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm item-atrib";
     div.innerHTML = `
         <div class="flex gap-2 mb-4">
-            <input type="text" placeholder="Papel, Tamanho..." value="${nome}" class="atrib-nome flex-1 font-bold p-2 border-b-2 border-indigo-50 outline-none focus:border-indigo-500">
+            <input type="text" placeholder="Papel, Cores..." value="${nome}" class="atrib-nome flex-1 font-bold p-2 border-b-2 border-indigo-50 outline-none">
             <button onclick="this.parentElement.parentElement.remove()" class="text-red-300">✕</button>
         </div>
         <div class="lista-opcoes space-y-2"></div>
-        <button onclick="addOpcaoAtrib(this)" class="mt-4 text-[10px] font-bold uppercase text-indigo-400">+ Adicionar Opção</button>
+        <button onclick="addOpcaoAtrib(this)" class="mt-4 text-[10px] font-bold text-indigo-400 uppercase tracking-widest">+ Adicionar Opção</button>
     `;
     document.getElementById('listaAtributos').appendChild(div);
-    if(opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(div.querySelector('.mt-4'), o.nome, o.preco));
-    else addOpcaoAtrib(div.querySelector('.mt-4'));
+    if(opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(div.querySelector('button:last-child'), o.nome, o.preco));
+    else addOpcaoAtrib(div.querySelector('button:last-child'));
 }
 
 function addOpcaoAtrib(btn, n = '', p = '') {
     const div = document.createElement('div');
     div.className = "flex gap-2 item-opcao";
     div.innerHTML = `
-        <input type="text" placeholder="Nome" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-100 rounded-lg bg-slate-50">
+        <input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-100 rounded-lg bg-slate-50">
         <input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border border-slate-100 rounded-lg bg-slate-50 font-bold">
-        <button onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500">✕</button>
+        <button onclick="this.parentElement.remove()" class="text-slate-300">✕</button>
     `;
     btn.previousElementSibling.appendChild(div);
 }
@@ -178,17 +170,18 @@ async function salvarProduto() {
         foto: document.getElementById('prodFoto').value,
         atributos: atributos
     };
-    if(id) await db.collection("produtos").doc(id).update(d); else await db.collection("produtos").add(d);
-    alert("Produto salvo!"); location.reload();
+    if(id) await db.collection("produtos").doc(id).update(d);
+    else await db.collection("produtos").add(d);
+    location.reload();
 }
 
 function renderProdTable() {
     document.getElementById('listaProdutosTab').innerHTML = bdProdutos.map(p => `
-        <tr class="border-b border-slate-50 hover:bg-slate-50">
+        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
             <td class="p-5 font-bold">${p.nome}</td>
             <td class="p-5 text-slate-400 text-[10px] uppercase">${p.categoria}</td>
             <td class="p-5 text-center">
-                <button onclick="editProd('${p.id}')" class="text-indigo-500 mr-4 font-bold text-xs">EDITAR</button>
+                <button onclick="editProd('${p.id}')" class="text-indigo-500 mr-4 font-bold text-xs uppercase">Editar</button>
                 <button onclick="db.collection('produtos').doc('${p.id}').delete()" class="text-red-300 font-bold text-xs">X</button>
             </td>
         </tr>
@@ -207,11 +200,11 @@ function editProd(id) {
     mudarSubAba('sub-prod', document.querySelectorAll('.sub-aba-btn')[1]);
 }
 
-// --- LOJA E PDV ---
+// --- PDV ---
 function renderFiltrosVitrine() {
     const div = document.getElementById('menuFiltroCat');
-    div.innerHTML = `<button onclick="renderVitrine('Todos')" class="px-5 py-2 bg-white border border-slate-100 rounded-full font-bold text-xs hover:bg-indigo-600 hover:text-white transition">Todos</button>` + 
-        bdCategorias.map(c => `<button onclick="renderVitrine('${c.nome}')" class="px-5 py-2 bg-white border border-slate-100 rounded-full font-bold text-xs hover:bg-indigo-600 hover:text-white transition">${c.nome}</button>`).join('');
+    div.innerHTML = `<button onclick="renderVitrine('Todos')" class="px-5 py-2 bg-white border border-slate-100 rounded-full font-bold text-xs hover:bg-indigo-600 hover:text-white transition shadow-sm">Todos</button>` + 
+        bdCategorias.map(c => `<button onclick="renderVitrine('${c.nome}')" class="px-5 py-2 bg-white border border-slate-100 rounded-full font-bold text-xs hover:bg-indigo-600 hover:text-white transition shadow-sm">${c.nome}</button>`).join('');
 }
 
 function renderVitrine(filtro = 'Todos') {
@@ -219,9 +212,9 @@ function renderVitrine(filtro = 'Todos') {
     let prods = filtro === 'Todos' ? bdProdutos : bdProdutos.filter(p => p.categoria === filtro);
     grid.innerHTML = prods.map(p => `
         <div onclick="abrirConfigurador('${p.id}')" class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 cursor-pointer transition-all group">
-            <div class="h-44 bg-slate-50 rounded-2xl mb-5 bg-contain bg-no-repeat bg-center group-hover:scale-105 transition" style="background-image:url('${p.foto || 'https://via.placeholder.com/200'}')"></div>
+            <div class="h-44 bg-slate-50 rounded-2xl mb-5 bg-contain bg-no-repeat bg-center transition group-hover:scale-105" style="background-image:url('${p.foto || 'https://via.placeholder.com/200'}')"></div>
             <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">${p.nome}</h4>
-            <p class="text-[10px] font-bold text-slate-300 uppercase mb-4">${p.categoria}</p>
+            <p class="text-[10px] font-bold text-slate-300 uppercase mb-4 tracking-tighter">${p.categoria}</p>
             <p class="text-xl font-black text-indigo-600">R$ ${p.preco.toFixed(2)}</p>
         </div>
     `).join('');
@@ -235,8 +228,8 @@ function abrirConfigurador(id) {
     document.getElementById('modalHeaderImg').style.backgroundImage = `url('${p.foto || 'https://via.placeholder.com/400'}')`;
     document.getElementById('modalCorpoVariacoes').innerHTML = (p.atributos || []).map(a => `
         <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${a.nome}</label>
-            <select class="sel-var w-full p-4 border border-slate-100 rounded-2xl bg-slate-50 font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500" onchange="calcularPrecoAoVivo()">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">${a.nome}</label>
+            <select class="sel-var w-full p-4 border border-slate-100 rounded-2xl bg-slate-50 font-bold text-sm outline-none focus:bg-white" onchange="calcularPrecoAoVivo()">
                 ${a.opcoes.map(o => `<option value="${o.preco}">${o.nome} (+ R$ ${o.preco.toFixed(2)})</option>`).join('')}
             </select>
         </div>
@@ -265,7 +258,7 @@ function confirmarAdicaoCarrinho() {
     fecharModal(); renderCarrinho();
 }
 
-// --- CARRINHO E FINANCEIRO ---
+// --- CARRINHO ---
 function renderCarrinho() {
     const div = document.getElementById('listaCarrinho');
     let sub = 0;
@@ -279,7 +272,7 @@ function renderCarrinho() {
                 </div>
                 <div class="text-right">
                     <p class="font-black text-indigo-600 text-sm">R$ ${item.valor.toFixed(2)}</p>
-                    <button onclick="carrinho.splice(${i},1);renderCarrinho()" class="text-[9px] font-bold text-red-400 hover:text-red-600 uppercase">Remover</button>
+                    <button onclick="carrinho.splice(${i},1);renderCarrinho()" class="text-[9px] font-bold text-red-400 uppercase">Remover</button>
                 </div>
             </div>
         `;
@@ -323,7 +316,7 @@ function renderCliSelectCart() {
 
 function enviarPedido() {
     if(carrinho.length === 0) return alert("Carrinho vazio!");
-    alert(`PEDIDO FINALIZADO!`);
+    alert("PEDIDO FINALIZADO!");
     carrinho = []; renderCarrinho();
 }
 
