@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GVA Gráfica ERP | Sistograf Style</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -18,36 +18,28 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         input::-webkit-outer-spin-button, 
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        /* Altura customizada para o Kanban não quebrar a tela */
-        .kanban-col { max-height: calc(100vh - 180px); }
     </style>
 </head>
-<body class="bg-[#f4f4f2] text-slate-700 font-sans overflow-hidden">
+<body class="bg-[#f4f4f2] text-slate-700 font-sans">
 
     <!-- TELA DE LOGIN -->
-    <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-[#0f172a] px-4 absolute inset-0 z-[100]">
+    <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
         <div class="bg-white p-10 rounded-lg shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-2xl font-bold text-slate-900 mb-8 uppercase tracking-widest italic">GVA Sistema</h2>
             <div class="space-y-4">
-                <div class="text-left space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
-                    <input type="email" id="email" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500" />
-                </div>
-                <div class="text-left space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Senha</label>
-                    <input type="password" id="senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500" />
-                </div>
-                <button type="button" onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg mt-2">Entrar</button>
+                <input type="email" id="email" placeholder="E-mail" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
+                <input type="password" id="senha" placeholder="Senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
+                <button type="button" onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg">Entrar</button>
                 <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Acesso negado. Verifique os dados.</p>
             </div>
         </div>
     </div>
 
     <!-- INTERFACE PRINCIPAL -->
-    <div id="appInterface" class="hidden h-screen flex flex-col">
+    <div id="appInterface" class="hidden min-h-screen flex flex-col">
         
         <!-- HEADER -->
-        <header class="h-16 bg-[#0f172a] flex items-center justify-between px-6 shadow-md shrink-0">
+        <header class="h-16 bg-[#0f172a] flex items-center justify-between px-6 sticky top-0 z-50 shadow-md">
             <div class="flex items-center gap-4">
                 <span class="text-white font-black text-xl italic tracking-tighter">GVA Gráfica</span>
                 <nav class="hidden md:flex gap-6 ml-10 text-slate-400 text-[11px] font-bold uppercase">
@@ -63,39 +55,39 @@
             </div>
         </header>
 
-        <div class="flex flex-1 overflow-hidden">
+        <div class="flex flex-1">
             <!-- SIDEBAR -->
-            <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col shrink-0">
+            <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col sticky top-16 h-[calc(100vh-64px)]">
                 <div class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menu Principal</div>
-                <nav class="flex-1 space-y-1 overflow-y-auto">
+                <nav class="flex-1 space-y-1">
                     <button type="button" onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba">
-                        <i class="fa fa-shopping-cart w-5"></i> Loja PDV
+                        <i class="fa fa-shopping-cart"></i> Loja PDV
                     </button>
                     <button type="button" onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
-                        <i class="fa fa-tasks w-5"></i> Produção
+                        <i class="fa fa-tasks"></i> Produção
                     </button>
                     <button type="button" onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
-                        <i class="fa fa-chart-line w-5"></i> Financeiro
+                        <i class="fa fa-chart-line"></i> Financeiro
                     </button>
                     <button type="button" onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
-                        <i class="fa fa-database w-5"></i> Cadastros
+                        <i class="fa fa-database"></i> Cadastros
                     </button>
                 </nav>
             </aside>
 
             <!-- CONTEUDO -->
-            <main class="flex-1 p-6 overflow-y-auto bg-[#f4f4f2]">
+            <main class="flex-1 p-6 overflow-y-auto">
 
                 <!-- ABA LOJA -->
                 <section id="aba-loja" class="aba-content block">
                     <div class="flex flex-col lg:flex-row gap-6">
                         <div class="flex-1">
-                            <div id="menuFiltroCat" class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar"></div>
+                            <div id="menuFiltroCat" class="flex gap-2 mb-6 overflow-x-auto pb-2"></div>
                             <div id="gradeProdutos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
                         </div>
 
                         <!-- CARRINHO -->
-                        <div class="w-full lg:w-[350px] bg-white p-6 rounded shadow-sm border border-slate-200 h-fit sticky top-0">
+                        <div class="w-full lg:w-[350px] bg-white p-6 rounded shadow-sm border border-slate-200 h-fit sticky top-6">
                             <h3 class="text-lg font-bold mb-6 border-b pb-2 text-slate-800">Carrinho de Venda</h3>
                             
                             <div class="mb-6 space-y-1">
@@ -131,7 +123,7 @@
                                 <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded border border-slate-100">
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-500 uppercase">Valor Pago</label>
-                                        <input type="number" id="cartValorPago" value="0" oninput="atualizarTotalFinal()" class="w-full p-1 bg-white border border-slate-200 rounded text-sm font-bold outline-none" />
+                                        <input type="number" id="cartValorPago" value="0" oninput="atualizarTotalFinal()" class="w-full p-1 bg-white border border-slate-200 rounded text-sm font-bold outline-none">
                                     </div>
                                     <div class="space-y-1 text-right">
                                         <label class="text-[10px] font-bold text-red-400 uppercase">Restante</label>
@@ -143,13 +135,12 @@
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Entrega</label>
                                         <select id="cartEntrega" onchange="toggleOpcoesEntrega()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="Retirada">Retirada</option>
-                                            <option value="Motoboy">Motoboy</option>
+                                            <option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option>
                                         </select>
                                     </div>
                                     <div class="space-y-1" id="divFrete" style="display:none;">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Frete R$</label>
-                                        <input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalFinal()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none" />
+                                        <input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalFinal()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
                                     </div>
                                 </div>
 
@@ -169,19 +160,78 @@
                     </div>
                 </section>
 
-                <!-- ABA PRODUÇÃO (KANBAN) -->
-                <section id="aba-producao" class="aba-content hidden h-full flex flex-col">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Painel de Produção</h2>
+                <!-- ABA FINANCEIRO (NOVO DASHBOARD) -->
+                <section id="aba-financeiro" class="aba-content hidden">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Financeiro & Relatórios</h2>
                     
-                    <!-- Container do Kanban com Scroll Horizontal -->
-                    <div id="kanbanContainer" class="flex-1 overflow-x-auto flex gap-4 pb-4 items-start no-scrollbar">
-                        <!-- As colunas serão injetadas aqui pelo JavaScript -->
+                    <!-- Cards de Resumo -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vendas Hoje</p>
+                            <p id="finVendasHoje" class="text-2xl font-black text-blue-600 mt-1">R$ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Entradas Mês</p>
+                            <p id="finEntradasMes" class="text-2xl font-black text-emerald-600 mt-1">R$ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-red-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saídas Mês</p>
+                            <p id="finSaidasMes" class="text-2xl font-black text-red-600 mt-1">R$ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-indigo-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saldo Mês</p>
+                            <p id="finSaldoMes" class="text-2xl font-black text-indigo-600 mt-1">R$ 0.00</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Lançamento Manual -->
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 h-fit">
+                            <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Nova Movimentação</h3>
+                            <div class="space-y-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Tipo</label>
+                                    <select id="finTipo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
+                                        <option value="entrada">Entrada (Receita)</option>
+                                        <option value="saida">Saída (Despesa)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Descrição</label>
+                                    <input type="text" id="finDesc" placeholder="Ex: Conta de Luz, Compra de Lona..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Valor R$</label>
+                                    <input type="number" id="finValor" step="0.01" class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <button type="button" onclick="salvarMovimentacao()" class="w-full bg-slate-800 text-white py-3 rounded font-bold text-xs hover:bg-slate-700 transition uppercase tracking-widest mt-2">Lançar no Caixa</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabela de Extrato -->
+                        <div class="lg:col-span-2 bg-white rounded shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50">
+                                <h3 class="font-bold text-slate-800 uppercase text-xs tracking-widest">Extrato Recente</h3>
+                            </div>
+                            <div class="flex-1 overflow-y-auto">
+                                <table class="w-full text-left text-xs font-bold">
+                                    <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider sticky top-0 shadow-sm">
+                                        <tr>
+                                            <th class="p-4">Data</th>
+                                            <th class="p-4">Descrição</th>
+                                            <th class="p-4 text-right">Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="listaExtratoTab"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
                 <!-- ABA CADASTROS -->
                 <section id="aba-cadastros" class="aba-content hidden">
-                    <div class="flex gap-8 border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar">
+                    <div class="flex gap-8 border-b border-slate-200 mb-8 overflow-x-auto">
                         <button type="button" onclick="mudarSubAba('sub-cli', this)" class="sub-aba-btn pb-4 font-bold text-slate-400 active-sub">Clientes</button>
                         <button type="button" onclick="mudarSubAba('sub-prod', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Produtos</button>
                         <button type="button" onclick="mudarSubAba('sub-cat', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Categorias</button>
@@ -193,12 +243,12 @@
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 mb-8">
                             <h3 id="tituloCliForm" class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Informações do Cliente</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                                <input type="hidden" id="cliId" />
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome</label><input type="text" id="cliNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">CPF/CNPJ</label><input type="text" id="cliDoc" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">WhatsApp</label><input type="text" id="cliTel" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Endereço</label><input type="text" id="cliEnd" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-emerald-600 uppercase">Crédito R$</label><input type="number" id="cliCredito" value="0" step="0.01" class="w-full p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" /></div>
+                                <input type="hidden" id="cliId">
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome</label><input type="text" id="cliNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">CPF/CNPJ</label><input type="text" id="cliDoc" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">WhatsApp</label><input type="text" id="cliTel" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Endereço</label><input type="text" id="cliEnd" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-emerald-600 uppercase">Crédito R$</label><input type="number" id="cliCredito" value="0" step="0.01" class="w-full p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500"></div>
                             </div>
                             <div class="flex gap-2">
                                 <button type="button" id="btnSalvarCli" onclick="salvarCliente()" class="bg-slate-800 text-white px-8 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Cliente</button>
@@ -219,28 +269,26 @@
                     <div id="sub-prod" class="sub-aba-content hidden">
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 mb-8">
                             <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Informações do Produto</h3>
-                            
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <input type="hidden" id="prodId" />
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome do Produto</label><input type="text" id="prodNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
+                                <input type="hidden" id="prodId">
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome do Produto</label><input type="text" id="prodNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
                                 <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></select></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Referência NCM</label><input type="text" id="prodRef" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Tipo de Preço</label><select id="prodRegraPreco" onchange="ajustarCamposProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500"><option value="unidade">Unitário</option><option value="m2">Por M²</option><option value="pacote">Pacotes Fechados</option><option value="progressivo">Desconto Progressivo</option></select></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Referência</label><input type="text" id="prodRef" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Tipo de Produto</label><select id="prodRegraPreco" onchange="ajustarCamposProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500"><option value="unidade">Unitário</option><option value="m2">Por M²</option><option value="pacote">Pacotes Fechados</option><option value="progressivo">Desconto Progressivo</option></select></div>
                             </div>
-
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Material Base</label><input type="text" id="prodMaterial" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Gramatura</label><input type="text" id="prodGramatura" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Prazo (Dias)</label><input type="number" id="prodPrazo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1" id="boxPrecoBase"><label class="text-[10px] font-bold text-indigo-600 uppercase">Preço Base R$</label><input type="number" id="prodPreco" class="w-full p-2 bg-indigo-50 border border-indigo-200 rounded outline-none font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500" /></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Material</label><input type="text" id="prodMaterial" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Gramatura</label><input type="text" id="prodGramatura" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Prazo (Dias)</label><input type="number" id="prodPrazo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1" id="boxPrecoBase"><label class="text-[10px] font-bold text-slate-400 uppercase">Preço Base R$</label><input type="number" id="prodPreco" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500"></div>
                             </div>
 
                             <div id="boxMedidas" style="display:none;" class="bg-blue-50 p-4 rounded border border-blue-100 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Largura Bobina (m)</label><input type="number" id="prodLargBobina" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none font-bold focus:ring-2 focus:ring-blue-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Largura Máx (m)</label><input type="number" id="prodLargMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Comprimento Máx (m)</label><input type="number" id="prodCompMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Largura Bobina (m)</label><input type="number" id="prodLargBobina" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none font-bold focus:ring-2 focus:ring-blue-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Largura Máx (m)</label><input type="number" id="prodLargMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Comprimento Máx (m)</label><input type="number" id="prodCompMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-500"></div>
                             </div>
-                            
+
                             <div id="boxPacotes" style="display:none;" class="bg-amber-50 p-4 rounded border border-amber-100 mb-6">
                                 <h4 class="font-bold text-amber-800 mb-4 text-[10px] uppercase tracking-widest">Grade de Pacotes</h4>
                                 <div id="listaGradePacotes" class="space-y-2"></div>
@@ -266,7 +314,7 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">URL da Foto</label><input type="text" id="prodFoto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">URL da Foto</label><input type="text" id="prodFoto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
                                 <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Observações (Avisos, Prazos extras...)</label><textarea id="prodObs" rows="1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></textarea></div>
                             </div>
                             
@@ -286,12 +334,12 @@
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 max-w-md mb-6">
                             <h3 class="font-bold text-slate-800 mb-4 uppercase text-xs tracking-widest">Categorias</h3>
                             <div class="flex items-end gap-2">
-                                <input type="hidden" id="catId" />
+                                <input type="hidden" id="catId">
                                 <div class="space-y-1 flex-1">
                                     <label class="text-[10px] font-bold text-slate-400 uppercase">Nome da Categoria</label>
-                                    <input type="text" id="catNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500" />
+                                    <input type="text" id="catNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
                                 </div>
-                                <button type="button" onclick="salvarCategoria()" class="bg-slate-800 text-white px-6 py-2 h-[34px] rounded font-bold text-xs hover:bg-slate-700 transition">Salvar</button>
+                                <button type="button" onclick="salvarCategoria()" class="bg-slate-800 text-white px-6 py-2 h-[38px] rounded font-bold text-xs hover:bg-slate-700 transition">Salvar</button>
                             </div>
                         </div>
                         <div class="bg-white rounded shadow-sm border border-slate-200 max-w-md overflow-hidden">
@@ -304,9 +352,9 @@
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 mb-8">
                             <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Novo Acabamento</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <input type="hidden" id="acabId" />
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome</label><input type="text" id="acabNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Grupo</label><input type="text" id="acabGrupo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
+                                <input type="hidden" id="acabId">
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome</label><input type="text" id="acabNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Grupo</label><input type="text" id="acabGrupo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
                                 <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Categoria</label><select id="acabCategoria" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></select></div>
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-slate-400 uppercase">Regra</label>
@@ -316,8 +364,8 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4 max-w-md mb-6">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-emerald-600 uppercase">Preço Venda R$</label><input type="number" id="acabPrecoVenda" class="w-full p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" /></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Custo R$</label><input type="number" id="acabCusto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" /></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-emerald-600 uppercase">Preço Venda R$</label><input type="number" id="acabPrecoVenda" class="w-full p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500"></div>
+                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Custo R$</label><input type="number" id="acabCusto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
                             </div>
                             <button type="button" onclick="salvarAcabamento()" class="bg-slate-800 text-white px-10 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Acabamento</button>
                         </div>
@@ -330,18 +378,12 @@
                     </div>
                 </section>
 
-                <!-- ABA FINANCEIRO -->
-                <section id="aba-financeiro" class="aba-content hidden">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic">Histórico de Pedidos</h2>
-                    <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
-                        <table class="w-full text-left text-xs font-bold">
-                            <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider">
-                                <tr><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Valor</th><th class="p-4 text-center">Status</th></tr>
-                            </thead>
-                            <tbody id="listaPedidosTab"></tbody>
-                        </table>
-                    </div>
+                <!-- ABA PRODUÇÃO -->
+                <section id="aba-producao" class="aba-content hidden">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic">Painel de Produção</h2>
+                    <div class="bg-white p-12 rounded shadow-sm border border-slate-200 text-center text-slate-300 font-bold italic">Aguardando pedidos...</div>
                 </section>
+
             </main>
         </div>
     </div>
@@ -369,9 +411,9 @@
                 </div>
 
                 <div class="w-full md:w-3/5 p-8 overflow-y-auto">
-                    <input type="hidden" id="modalProdId" />
-                    <input type="hidden" id="modalProdPrecoBase" />
-                    <input type="hidden" id="modalProdRegra" />
+                    <input type="hidden" id="modalProdId">
+                    <input type="hidden" id="modalProdPrecoBase">
+                    <input type="hidden" id="modalProdRegra">
                     
                     <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Medidas e Quantidade</h4>
                     <div id="modalCorpoMedidas" class="grid grid-cols-2 gap-4 mb-8"></div>
