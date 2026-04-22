@@ -11,10 +11,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let bdCategorias =[];
+let bdCategorias = [];
 let bdProdutos = [];
 let bdClientes = [];
-let bdPedidos =[];
+let bdPedidos = [];
 let bdAcabamentos =[];
 let carrinho =[];
 
@@ -267,23 +267,24 @@ function abrirConfigurador(id) {
     const divMedidas = document.getElementById('modalCorpoMedidas');
     const regra = p.regraPreco;
 
+    // Layout ajustado para o novo modal horizontal (campos menores e mais limpos)
     if (regra === 'm2') {
         divMedidas.innerHTML = `
-            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Largura (m)</label><input type="number" id="w2pLargura" value="1.00" step="0.01" oninput="calcularPrecoAoVivo()" class="w-full p-4 border rounded bg-slate-50 font-black"></div>
-            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Altura (m)</label><input type="number" id="w2pAltura" value="1.00" step="0.01" oninput="calcularPrecoAoVivo()" class="w-full p-4 border rounded bg-slate-50 font-black"></div>
-            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Quantidade</label><input type="number" id="w2pQtd" value="1" oninput="calcularPrecoAoVivo()" class="w-full p-4 border rounded bg-slate-50 font-black"></div>
+            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Largura (m)</label><input type="number" id="w2pLargura" value="1.00" step="0.01" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
+            <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Altura (m)</label><input type="number" id="w2pAltura" value="1.00" step="0.01" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
+            <div class="space-y-1 col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Quantidade</label><input type="number" id="w2pQtd" value="1" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
         `;
     } else if (regra === 'pacote') {
         let opts = (p.pacotes ||[]).map(pct => `<option value="${pct.qtd}" data-preco="${pct.preco}">${pct.qtd} un - R$ ${pct.preco.toFixed(2)}</option>`).join('');
-        divMedidas.innerHTML = `<div class="col-span-2 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Escolha o Pacote</label><select id="w2pPacote" onchange="calcularPrecoAoVivo()" class="w-full p-4 border rounded bg-slate-50 font-black">${opts}</select></div>`;
+        divMedidas.innerHTML = `<div class="col-span-2 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Escolha o Pacote</label><select id="w2pPacote" onchange="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500">${opts}</select></div>`;
     } else {
-        divMedidas.innerHTML = `<div class="col-span-2 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()" class="w-full p-4 border rounded bg-slate-50 font-black"></div>`;
+        divMedidas.innerHTML = `<div class="col-span-2 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>`;
     }
 
     document.getElementById('modalCorpoVariacoes').innerHTML = (p.atributos ||[]).map(a => `
         <div class="space-y-1">
             <label class="text-[10px] font-bold text-slate-400 uppercase">${a.nome}</label>
-            <select class="sel-var w-full p-4 border rounded bg-slate-50 font-bold text-sm" onchange="calcularPrecoAoVivo()">
+            <select class="sel-var w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-500" onchange="calcularPrecoAoVivo()">
                 ${a.opcoes.map(o => `<option value="${o.preco}">${o.nome} (+ R$ ${o.preco.toFixed(2)})</option>`).join('')}
             </select>
         </div>
@@ -293,8 +294,8 @@ function abrirConfigurador(id) {
     document.getElementById('modalCorpoAcabamentos').innerHTML = acabPermitidos.map(obj => {
         const a = bdAcabamentos.find(x => x.id === (obj.id || obj));
         if (!a) return '';
-        const sel = obj.padrao ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-100';
-        return `<button type="button" onclick="this.classList.toggle('bg-indigo-600'); this.classList.toggle('text-white'); calcularPrecoAoVivo()" data-id="${a.id}" data-preco="${a.venda}" data-regra="${a.regra}" class="acab-btn-modal p-3 rounded border font-bold text-xs transition-all ${sel}">${a.nome} (+ R$ ${a.venda.toFixed(2)})</button>`;
+        const sel = obj.padrao ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200';
+        return `<button type="button" onclick="this.classList.toggle('bg-indigo-600'); this.classList.toggle('text-white'); this.classList.toggle('border-indigo-600'); this.classList.toggle('bg-white'); this.classList.toggle('text-slate-600'); this.classList.toggle('border-slate-200'); calcularPrecoAoVivo()" data-id="${a.id}" data-preco="${a.venda}" data-regra="${a.regra}" class="acab-btn-modal px-3 py-2 rounded border font-bold text-[10px] uppercase transition-all ${sel}">${a.nome} (+ R$ ${a.venda.toFixed(2)})</button>`;
     }).join('');
 
     document.getElementById('modalW2P').classList.remove('hidden');
