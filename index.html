@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -15,6 +14,7 @@
     <style>
         .active-aba { background-color: #F5F7FF; color: #4F46E5; border-right: 4px solid #4F46E5; }
         .active-sub { color: #4F46E5; border-bottom: 2px solid #4F46E5; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
@@ -23,10 +23,10 @@
     <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-indigo-950 px-4">
         <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-3xl font-extrabold text-indigo-950 mb-8 italic">GVA Sistema</h2>
+            <h2 class="text-3xl font-extrabold text-indigo-950 mb-8 italic tracking-tight">GVA Sistema</h2>
             <div class="space-y-4">
-                <input type="email" id="email" placeholder="E-mail" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="password" id="senha" placeholder="Senha" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="email" id="email" placeholder="E-mail" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                <input type="password" id="senha" placeholder="Senha" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                 <button onclick="entrar()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg">Entrar</button>
                 <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Erro ao acessar. Verifique os dados.</p>
             </div>
@@ -49,13 +49,13 @@
         </aside>
 
         <!-- CONTEUDO -->
-        <main class="flex-1 p-8 overflow-y-auto">
+        <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
 
             <!-- ABA LOJA -->
             <section id="aba-loja" class="aba-content block">
                 <div class="flex flex-col lg:flex-row gap-10">
                     <div class="flex-1">
-                        <div id="menuFiltroCat" class="flex gap-3 mb-8 overflow-x-auto pb-2"></div>
+                        <div id="menuFiltroCat" class="flex gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar"></div>
                         <div id="gradeProdutos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"></div>
                     </div>
 
@@ -63,7 +63,6 @@
                     <div class="w-full lg:w-[380px] bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl h-fit sticky top-8">
                         <h3 class="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800"><i class="fa fa-shopping-cart text-indigo-500"></i> Carrinho</h3>
                         
-                        <!-- CLIENTE EM PRIMEIRO -->
                         <div class="mb-6 space-y-1">
                             <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">Cliente <span id="labelCreditoCli" class="text-emerald-500 font-bold">Saldo: R$ 0.00</span></label>
                             <select id="cartCliente" onchange="atualizarInfoCreditoCarrinho()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none"></select>
@@ -92,7 +91,6 @@
                                 </div>
                             </div>
 
-                            <!-- SINAL / VALOR PAGO -->
                             <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-indigo-500 uppercase">Valor Pago (Sinal)</label>
