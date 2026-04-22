@@ -16,7 +16,16 @@ let bdProdutos =[];
 let bdClientes = [];
 let bdPedidos = [];
 let bdAcabamentos =[];
-let carrinho =[];
+let carrinho = [];
+
+const STATUSES =[
+    "Aguardando pagamento",
+    "Em produção",
+    "Acabamento",
+    "Pronto para Retirada",
+    "Entregue",
+    "Cancelado / Estorno"
+];
 
 auth.onAuthStateChanged(user => {
     const telaLogin = document.getElementById('telaLogin');
@@ -40,44 +49,103 @@ function entrar() {
     });
 }
 
-function sair() { 
-    auth.signOut(); 
-}
+function sair() { auth.signOut(); }
 
 function iniciarLeitura() {
     db.collection("categorias").onSnapshot(s => { 
         bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderCat(); 
-        renderFiltrosVitrine();
+        renderCat(); renderFiltrosVitrine();
     });
     db.collection("produtos").onSnapshot(s => { 
         bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderVitrine(); 
-        renderProdTable();
+        renderVitrine(); renderProdTable();
     });
     db.collection("clientes").orderBy("nome").onSnapshot(s => { 
         bdClientes = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderCliTable(); 
-        renderCliSelectCart();
+        renderCliTable(); renderCliSelectCart();
     });
     db.collection("acabamentos").onSnapshot(s => {
         bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderAcabTable(); 
-        atualizarListaAcabamentosProduto();
+        renderAcabTable(); atualizarListaAcabamentosProduto();
     });
-    db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => {
+    db.collection("pedidos").orderBy("data", "desc").onSnapshot(s => {
         bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()}));
         renderPedidosFinanceiro();
+        renderKanbanProducao();
     });
 }
 
-// --- LÓGICA DE ATRIBUTOS ---
+// --- KANBAN DE PRODUÇÃO ---
+function renderKanbanProducao() {
+    const container = document.getElementById('kanbanContainer');
+    if(!container) return;
+
+    let html = '';
+    STATUSES.forEach(status => {
+        const pedidosDoStatus = bdPedidos.filter(p => p.status === status);
+        
+        html += `
+            <div class="bg-slate-100 rounded-xl p-4 w-80 flex-shrink-0 flex flex-col kanban-col border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">${status}</h3>
+                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${pedidosDoStatus.length}</span>
+                </div>
+                <div class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar">
+                    ${pedidosDoStatus.map(p => gerarCardPedido(p)).join('')}
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function gerarCardPedido(p) {
+    const dataFormatada = p.data.toDate().toLocaleDateString('pt-BR') + ' ' + p.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    let options = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
+
+    let corBorda = 'border-l-slate-400';
+    if(p.status === 'Aguardando pagamento') corBorda = 'border-l-amber-400';
+    if(p.status === 'Em produção') corBorda = 'border-l-blue-500';
+    if(p.status === 'Acabamento') corBorda = 'border-l-indigo-500';
+    if(p.status === 'Pronto para Retirada') corBorda = 'border-l-emerald-400';
+    if(p.status === 'Entregue') corBorda = 'border-l-emerald-600';
+    if(p.status === 'Cancelado / Estorno') corBorda = 'border-l-red-500';
+
+    return `
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${corBorda}">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-[9px] font-bold text-slate-400">${dataFormatada}</span>
+                <span class="text-[10px] font-black text-indigo-600">R$ ${p.total.toFixed(2)}</span>
+            </div>
+            <h4 class="font-bold text-slate-800 text-xs mb-2">${p.clienteNome}</h4>
+            <div class="text-[9px] text-slate-500 mb-3 space-y-1">
+                ${p.itens.map(i => `<p>• ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-100">
+                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    ${options}
+                </select>
+            </div>
+        </div>
+    `;
+}
+
+async function mudarStatusPedido(id, novoStatus) {
+    try {
+        await db.collection("pedidos").doc(id).update({ status: novoStatus });
+    } catch(e) {
+        console.error(e);
+        alert("Erro ao atualizar status.");
+    }
+}
+
+// --- ATRIBUTOS E PRODUTOS ---
 function addOpcaoAtrib(container, n = '', p = '') {
     const div = document.createElement('div');
     div.className = "flex gap-2 item-opcao";
     div.innerHTML = `
-        <input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border rounded bg-slate-50">
-        <input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border rounded bg-slate-50 font-bold">
+        <input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-200 rounded bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+        <input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border border-slate-200 rounded bg-slate-50 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
         <button type="button" onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500">✕</button>
     `;
     container.appendChild(div);
@@ -85,32 +153,24 @@ function addOpcaoAtrib(container, n = '', p = '') {
 
 function addAtributo(nome = '', opcoes =[]) {
     const div = document.createElement('div');
-    div.className = "bg-white p-5 rounded border border-slate-100 shadow-sm item-atrib";
+    div.className = "bg-white p-4 rounded border border-slate-100 shadow-sm item-atrib";
     div.innerHTML = `
-        <div class="flex gap-2 mb-4">
-            <input type="text" placeholder="Atributo" value="${nome}" class="atrib-nome flex-1 font-bold p-2 border-b-2 border-indigo-50 outline-none">
+        <div class="flex gap-2 mb-3">
+            <input type="text" placeholder="Grupo (ex: Papel)" value="${nome}" class="atrib-nome flex-1 font-bold text-sm p-2 border-b-2 border-indigo-50 outline-none focus:border-indigo-500">
             <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-300">✕</button>
         </div>
         <div class="lista-opcoes space-y-2"></div>
-        <button type="button" class="btn-add-op mt-4 text-[10px] font-bold uppercase text-indigo-400">+ Add Opção</button>
+        <button type="button" class="btn-add-op mt-3 text-[10px] font-bold uppercase text-indigo-400 hover:text-indigo-600">+ Add Opção</button>
     `;
     document.getElementById('listaAtributos').appendChild(div);
-    
     const containerOpcoes = div.querySelector('.lista-opcoes');
     div.querySelector('.btn-add-op').onclick = () => addOpcaoAtrib(containerOpcoes);
-    
-    if (opcoes && opcoes.length > 0) {
-        opcoes.forEach(o => addOpcaoAtrib(containerOpcoes, o.nome, o.preco));
-    } else {
-        addOpcaoAtrib(containerOpcoes);
-    }
+    if (opcoes && opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(containerOpcoes, o.nome, o.preco));
+    else addOpcaoAtrib(containerOpcoes);
 }
 
-function addAtributoManual() { 
-    addAtributo('',[]); 
-}
+function addAtributoManual() { addAtributo('',[]); }
 
-// --- PRODUTOS ---
 function ajustarCamposProduto() {
     const r = document.getElementById('prodRegraPreco').value;
     document.getElementById('boxPrecoBase').style.display = (r === 'pacote' || r === 'progressivo') ? 'none' : 'block';
@@ -123,8 +183,8 @@ function addLinhaPacote(q='', p='') {
     const div = document.createElement('div');
     div.className = "flex gap-2";
     div.innerHTML = `
-        <input type="number" placeholder="Qtd" value="${q}" class="q w-full p-2 border rounded text-xs">
-        <input type="number" placeholder="Total R$" value="${p}" class="p w-full p-2 border rounded font-bold text-amber-600 text-xs">
+        <input type="number" placeholder="Qtd" value="${q}" class="q w-full p-2 border border-slate-200 rounded text-xs outline-none focus:ring-2 focus:ring-amber-500">
+        <input type="number" placeholder="Total R$" value="${p}" class="p w-full p-2 border border-slate-200 rounded font-bold text-amber-600 text-xs outline-none focus:ring-2 focus:ring-amber-500">
         <button type="button" onclick="this.parentElement.remove()" class="text-red-300">✕</button>
     `;
     document.getElementById('listaGradePacotes').appendChild(div);
@@ -134,11 +194,32 @@ function addLinhaProgressivo(q='', p='') {
     const div = document.createElement('div');
     div.className = "flex gap-2";
     div.innerHTML = `
-        <input type="number" placeholder="Qtd Mín" value="${q}" class="q w-full p-2 border rounded text-xs">
-        <input type="number" placeholder="Unit R$" value="${p}" class="p w-full p-2 border rounded font-bold text-emerald-600 text-xs">
+        <input type="number" placeholder="Qtd Mín" value="${q}" class="q w-full p-2 border border-slate-200 rounded text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+        <input type="number" placeholder="Unit R$" value="${p}" class="p w-full p-2 border border-slate-200 rounded font-bold text-emerald-600 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
         <button type="button" onclick="this.parentElement.remove()" class="text-red-300">✕</button>
     `;
     document.getElementById('listaGradeProgressivo').appendChild(div);
+}
+
+function atualizarListaAcabamentosProduto(salvos =[]) {
+    const container = document.getElementById('listaCheckAcabamentos');
+    const catSelect = document.getElementById('prodCategoria');
+    if(!container || !catSelect) return;
+    const cat = catSelect.value;
+    const filtrados = bdAcabamentos.filter(a => a.categoria === cat || a.categoria === "Geral");
+    container.innerHTML = filtrados.map(a => {
+        const obj = salvos.find(s => (s.id || s) === a.id);
+        const checked = obj ? 'checked' : '';
+        const starAtiva = (obj && obj.padrao) ? 'text-amber-400' : 'text-slate-200';
+        return `
+            <div class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded">
+                <label class="text-[10px] font-bold flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="check-acab-prod" value="${a.id}" ${checked}> ${a.nome}
+                </label>
+                <i class="fa fa-star cursor-pointer star-padrao ${starAtiva}" onclick="this.classList.toggle('text-amber-400'); this.classList.toggle('text-slate-200')"></i>
+            </div>
+        `;
+    }).join('');
 }
 
 async function salvarProduto() {
@@ -198,11 +279,8 @@ async function salvarProduto() {
 
     if (!d.nome) return alert("Nome obrigatório!");
     
-    if (id) {
-        await db.collection("produtos").doc(id).update(d);
-    } else {
-        await db.collection("produtos").add(d);
-    }
+    if (id) await db.collection("produtos").doc(id).update(d);
+    else await db.collection("produtos").add(d);
     location.reload();
 }
 
@@ -367,7 +445,7 @@ function calcularPrecoAoVivo() {
         qtd = parseInt(document.getElementById('w2pQtd')?.value) || 1;
         let precoUnit = base;
         if (p && p.progressivo) {
-            let faixas =[...p.progressivo].sort((a,b) => b.q - a.q);
+            let faixas = [...p.progressivo].sort((a,b) => b.q - a.q);
             let faixa = faixas.find(f => qtd >= f.q);
             if (faixa) precoUnit = faixa.p;
         }
@@ -455,6 +533,9 @@ async function enviarPedido() {
     const pago = parseFloat(document.getElementById('cartValorPago').value) || 0;
     const saldo = total - pago;
     
+    // Lógica do Kanban: Se tem saldo devedor, aguarda pagamento. Se pagou tudo, vai pra produção.
+    const statusInicial = saldo > 0 ? "Aguardando pagamento" : "Em produção";
+
     const pedido = {
         clienteId: idCli || "Consumidor Final",
         clienteNome: idCli ? bdClientes.find(x => x.id === idCli).nome : "Consumidor Final",
@@ -463,7 +544,7 @@ async function enviarPedido() {
         valorPago: pago,
         saldoDevedor: saldo,
         data: new Date(),
-        status: saldo <= 0 ? "Pago" : "Pagamento Parcial"
+        status: statusInicial
     };
     
     await db.collection("pedidos").add(pedido);
@@ -626,6 +707,38 @@ function renderCliTable() {
             </td>
         </tr>
     `).join(''); 
+}
+
+async function salvarCliente() { 
+    const id = document.getElementById('cliId').value; 
+    const d = { 
+        nome: document.getElementById('cliNome').value, 
+        documento: document.getElementById('cliDoc').value, 
+        telefone: document.getElementById('cliTel').value, 
+        endereco: document.getElementById('cliEnd').value, 
+        credito: parseFloat(document.getElementById('cliCredito').value) || 0 
+    }; 
+    if(!d.nome) return alert("Nome obrigatório"); 
+    if(id) await db.collection("clientes").doc(id).update(d); 
+    else await db.collection("clientes").add(d); 
+    limparFormCli(); 
+}
+
+function editCli(id) { 
+    const c = bdClientes.find(x => x.id === id); 
+    document.getElementById('cliId').value = c.id; 
+    document.getElementById('cliNome').value = c.nome; 
+    document.getElementById('cliDoc').value = c.documento || ''; 
+    document.getElementById('cliTel').value = c.telefone || ''; 
+    document.getElementById('cliEnd').value = c.endereco || ''; 
+    document.getElementById('cliCredito').value = c.credito || 0; 
+    document.getElementById('tituloCliForm').innerText = "Editar Cadastro"; 
+}
+
+function limparFormCli() { 
+    document.querySelectorAll('#sub-cli input').forEach(i => i.value = ''); 
+    document.getElementById('cliId').value = ''; 
+    document.getElementById('tituloCliForm').innerText = "Novo Cliente"; 
 }
 
 async function salvarCategoria() { 
