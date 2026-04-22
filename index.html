@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -20,7 +21,7 @@
 </head>
 <body class="bg-[#F8FAFC] text-slate-700 font-sans">
 
-    <!-- LOGIN -->
+    <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-indigo-950 px-4">
         <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-3xl font-extrabold text-indigo-950 mb-8 italic tracking-tight">GVA Sistema</h2>
@@ -28,27 +29,38 @@
                 <input type="email" id="email" placeholder="E-mail" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                 <input type="password" id="senha" placeholder="Senha" class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                 <button onclick="entrar()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg">Entrar</button>
+                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Usuário ou senha inválidos.</p>
             </div>
         </div>
     </div>
 
-    <!-- INTERFACE -->
+    <!-- INTERFACE PRINCIPAL -->
     <div id="appInterface" class="hidden min-h-screen flex flex-col md:flex-row">
         
+        <!-- SIDEBAR -->
         <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen z-20">
             <div class="p-8"><span class="text-2xl font-black text-indigo-900 italic uppercase tracking-tighter">GVA Gráfica</span></div>
             <nav class="flex-1 px-4 space-y-1">
-                <button onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 active-aba"><i class="fa fa-shopping-bag"></i> Loja PDV</button>
-                <button onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 transition"><i class="fa fa-tasks"></i> Produção</button>
-                <button onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 transition"><i class="fa fa-chart-pie"></i> Financeiro</button>
-                <button onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 transition"><i class="fa fa-layer-group"></i> Cadastros</button>
+                <button onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 active-aba">
+                    <i class="fa fa-shopping-bag"></i> Loja PDV
+                </button>
+                <button onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 transition">
+                    <i class="fa fa-tasks"></i> Produção
+                </button>
+                <button onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 transition">
+                    <i class="fa fa-chart-pie"></i> Financeiro
+                </button>
+                <button onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 rounded-2xl font-semibold text-slate-500 hover:bg-slate-50 transition">
+                    <i class="fa fa-layer-group"></i> Cadastros
+                </button>
             </nav>
             <div class="p-6 border-t"><button onclick="sair()" class="w-full text-red-500 font-bold py-3 hover:bg-red-50 rounded-xl transition text-sm">Sair</button></div>
         </aside>
 
+        <!-- CONTEUDO -->
         <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
 
-            <!-- LOJA -->
+            <!-- ABA LOJA -->
             <section id="aba-loja" class="aba-content block">
                 <div class="flex flex-col lg:flex-row gap-10">
                     <div class="flex-1">
@@ -63,18 +75,18 @@
                         <div class="border-t border-slate-100 pt-6 space-y-4">
                             <div class="grid grid-cols-2 gap-2">
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pagamento</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Pagamento</label>
                                     <select id="cartPagamento" onchange="toggleOpcoesPagamento()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                         <option value="Pix">Pix</option>
                                         <option value="Dinheiro">Dinheiro</option>
                                         <option value="Debito">Débito</option>
                                         <option value="Credito_Vista">Crédito à Vista</option>
                                         <option value="Credito_Parcelado">Crédito Parcelado</option>
-                                        <option value="Saldo_Cliente">Saldo de Crédito (Loja)</option>
+                                        <option value="Saldo_Cliente">Saldo de Crédito</option>
                                     </select>
                                 </div>
                                 <div class="space-y-1" id="divParcelas" style="display:none;">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parcelas</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Parcelas</label>
                                     <select id="cartParcelas" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                         <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="6">6x</option><option value="12">12x</option>
                                     </select>
@@ -82,18 +94,18 @@
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Entrega</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Entrega</label>
                                     <select id="cartEntrega" onchange="toggleOpcoesEntrega()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                         <option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option>
                                     </select>
                                 </div>
                                 <div class="space-y-1" id="divFrete" style="display:none;">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Valor Frete</label>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Valor Frete</label>
                                     <input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalFinal()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none">
                                 </div>
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between tracking-widest">Cliente <span id="labelCreditoCli" class="text-emerald-500">Saldo: R$ 0.00</span></label>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">Cliente <span id="labelCreditoCli" class="text-emerald-500">Saldo: R$ 0.00</span></label>
                                 <select id="cartCliente" onchange="atualizarInfoCreditoCarrinho()" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none"></select>
                             </div>
                             <div class="pt-4 border-t border-dashed border-slate-200">
@@ -101,12 +113,31 @@
                                 <div class="flex justify-between text-2xl font-black text-indigo-950 mt-1"><span>Total:</span><span id="totalCarrinho">R$ 0.00</span></div>
                             </div>
                         </div>
-                        <button onclick="enviarPedido()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-bold text-lg mt-8 hover:bg-emerald-600 transition shadow-lg shadow-emerald-100">Finalizar e Salvar Pedido</button>
+                        <button onclick="enviarPedido()" class="w-full bg-emerald-500 text-white py-5 rounded-2xl font-bold text-lg mt-8 hover:bg-emerald-600 transition shadow-lg">Finalizar Pedido</button>
                     </div>
                 </div>
             </section>
 
-            <!-- CADASTROS -->
+            <!-- ABA PRODUÇÃO -->
+            <section id="aba-producao" class="aba-content hidden">
+                <h2 class="text-2xl font-bold text-indigo-950 mb-6 uppercase italic">Painel de Produção</h2>
+                <div class="bg-white p-12 rounded-3xl border border-slate-100 text-center text-slate-300 font-bold italic">Aguardando pedidos...</div>
+            </section>
+
+            <!-- ABA FINANCEIRO -->
+            <section id="aba-financeiro" class="aba-content hidden">
+                <h2 class="text-2xl font-bold text-indigo-950 mb-6 uppercase italic">Histórico de Pedidos</h2>
+                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 font-bold uppercase text-[10px] text-slate-400">
+                            <tr><th class="p-5">Data</th><th class="p-5">Cliente</th><th class="p-5">Valor</th><th class="p-5">Status</th></tr>
+                        </thead>
+                        <tbody id="listaPedidosTab"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ABA CADASTROS -->
             <section id="aba-cadastros" class="aba-content hidden">
                 <div class="flex gap-8 border-b border-slate-200 mb-10 overflow-x-auto no-scrollbar">
                     <button onclick="mudarSubAba('sub-cli', this)" class="sub-aba-btn pb-4 font-bold text-slate-400 active-sub">Clientes</button>
@@ -114,6 +145,7 @@
                     <button onclick="mudarSubAba('sub-cat', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Categorias</button>
                 </div>
 
+                <!-- Sub-aba Clientes -->
                 <div id="sub-cli" class="sub-aba-content block">
                     <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10">
                         <h3 id="tituloCliForm" class="font-bold text-slate-800 mb-6 uppercase text-sm tracking-widest">Novo Cliente</h3>
@@ -132,50 +164,96 @@
                     </div>
                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                         <table class="w-full text-left">
-                            <thead class="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 tracking-wider"><tr><th class="p-5">Nome</th><th class="p-5">Crédito Atual</th><th class="p-5 text-center">Ações</th></tr></thead>
+                            <thead class="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                <tr><th class="p-5">Nome</th><th class="p-5">Crédito</th><th class="p-5 text-center">Ações</th></tr>
+                            </thead>
                             <tbody id="listaClientesTab" class="text-sm"></tbody>
                         </table>
                     </div>
                 </div>
-                
-                <!-- Mantém Categorias e Produtos (Mesma lógica anterior) -->
-                <div id="sub-cat" class="sub-aba-content hidden">
-                    <!-- Conteúdo de categorias igual ao anterior -->
-                </div>
-                <div id="sub-prod" class="sub-aba-content hidden">
-                    <!-- Conteúdo de produtos igual ao anterior -->
-                </div>
-            </section>
 
-            <!-- ABA FINANCEIRO (HISTÓRICO) -->
-            <section id="aba-financeiro" class="aba-content hidden">
-                <h2 class="text-2xl font-bold text-indigo-950 mb-6 uppercase italic tracking-tighter">Histórico Geral de Pedidos</h2>
-                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 font-bold uppercase text-[10px] text-slate-400">
-                            <tr><th class="p-5">Data</th><th class="p-5">Cliente</th><th class="p-5">Valor</th><th class="p-5">Status</th></tr>
-                        </thead>
-                        <tbody id="listaPedidosTab"></tbody>
-                    </table>
+                <!-- Sub-aba Produtos -->
+                <div id="sub-prod" class="sub-aba-content hidden">
+                    <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10">
+                        <h3 class="font-bold text-slate-800 mb-6 uppercase text-sm tracking-widest italic">Configurar Produto</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <input type="hidden" id="prodId">
+                            <input type="text" id="prodNome" placeholder="Nome" class="p-3 bg-slate-50 rounded-xl border border-slate-100 outline-none">
+                            <select id="prodCategoria" class="p-3 bg-slate-50 rounded-xl border border-slate-100 outline-none"></select>
+                            <input type="number" id="prodPreco" placeholder="Preço Base R$" class="p-3 bg-indigo-50 rounded-xl border border-indigo-100 outline-none font-bold">
+                            <input type="text" id="prodFoto" placeholder="URL Imagem" class="p-3 bg-slate-50 rounded-xl border border-slate-100 outline-none">
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8">
+                            <h4 class="font-bold text-slate-400 mb-4 text-[10px] uppercase tracking-widest">Variações e Adicionais</h4>
+                            <div id="listaAtributos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                            <button onclick="addAtributo()" class="mt-6 bg-white text-indigo-600 border border-slate-200 px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition">+ Novo Grupo</button>
+                        </div>
+                        <button onclick="salvarProduto()" class="bg-indigo-600 text-white px-12 py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">Salvar Produto</button>
+                    </div>
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                        <table class="w-full text-left text-sm font-bold text-slate-600">
+                            <thead class="bg-slate-50 text-[10px] font-bold uppercase text-slate-400">
+                                <tr><th class="p-5">Produto</th><th class="p-5">Categoria</th><th class="p-5 text-center">Ações</th></tr>
+                            </thead>
+                            <tbody id="listaProdutosTab"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sub-aba Categorias -->
+                <div id="sub-cat" class="sub-aba-content hidden">
+                    <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm max-w-md">
+                        <h3 id="tituloCatForm" class="font-bold text-slate-800 mb-4 uppercase text-xs">Categorias</h3>
+                        <div class="flex gap-2">
+                            <input type="hidden" id="catId">
+                            <input type="text" id="catNome" class="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-100 outline-none font-bold" placeholder="Nome">
+                            <button id="btnSalvarCat" onclick="salvarCategoria()" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">Salvar</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm max-w-md mt-6 overflow-hidden">
+                        <table class="w-full text-left text-sm font-bold text-slate-600"><tbody id="listaCategoriasTab"></tbody></table>
+                    </div>
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- MODAL PDV -->
+    <div id="modalW2P" class="fixed inset-0 bg-slate-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-white w-full max-w-3xl max-h-[90vh] rounded-[40px] overflow-hidden flex flex-col shadow-2xl">
+            <div id="modalHeaderImg" class="h-64 bg-slate-100 bg-contain bg-no-repeat bg-center p-6 relative">
+                <button onclick="fecharModal()" class="absolute top-6 right-6 bg-white w-12 h-12 rounded-full font-bold shadow-xl flex items-center justify-center hover:bg-slate-50 transition">✕</button>
+            </div>
+            <div class="p-10 flex-1 overflow-y-auto">
+                <h2 id="modalNomeProd" class="text-3xl font-black text-slate-900 mb-8 italic uppercase tracking-tight"></h2>
+                <input type="hidden" id="modalProdId"><input type="hidden" id="modalProdPrecoBase">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quantidade</label>
+                        <input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()" class="w-full p-5 border border-slate-200 rounded-[24px] text-3xl font-black bg-slate-50 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div id="modalCorpoVariacoes" class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-slate-100"></div>
+                </div>
+            </div>
+            <div class="p-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center bg-slate-50 gap-6">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Investimento</p>
+                    <p id="modalSubtotal" class="text-4xl font-black text-indigo-600">R$ 0.00</p>
+                </div>
+                <button onclick="confirmarAdicaoCarrinho()" class="w-full md:w-auto bg-indigo-600 text-white px-14 py-5 rounded-3xl font-bold text-xl shadow-2xl hover:scale-[1.02] transition-all">Adicionar</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL HISTÓRICO CLIENTE -->
     <div id="modalHistoricoCli" class="fixed inset-0 bg-slate-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-white w-full max-w-2xl max-h-[80vh] rounded-[40px] shadow-2xl flex flex-col p-10 overflow-hidden">
             <div class="flex justify-between items-center mb-6">
-                <h3 id="histNomeCli" class="text-2xl font-black text-indigo-900 uppercase">Histórico do Cliente</h3>
+                <h3 id="histNomeCli" class="text-2xl font-black text-indigo-900 uppercase tracking-tighter">Histórico</h3>
                 <button onclick="document.getElementById('modalHistoricoCli').classList.add('hidden')" class="text-slate-300 hover:text-red-500 font-bold">✕ FECHAR</button>
             </div>
             <div id="corpoHistoricoCli" class="overflow-y-auto space-y-4"></div>
         </div>
-    </div>
-
-    <!-- MODAL PDV (Igual ao anterior) -->
-    <div id="modalW2P" class="fixed inset-0 bg-slate-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-md">
-        <!-- ... Conteúdo igual ao anterior ... -->
     </div>
 
     <script src="script.js"></script>
