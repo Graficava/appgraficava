@@ -16,16 +16,8 @@ let bdProdutos =[];
 let bdClientes = [];
 let bdPedidos = [];
 let bdAcabamentos =[];
-let carrinho = [];
-
-const STATUSES =[
-    "Aguardando pagamento",
-    "Em produção",
-    "Acabamento",
-    "Pronto para Retirada",
-    "Entregue",
-    "Cancelado / Estorno"
-];
+let bdTransacoes = [];
+let carrinho =[];
 
 auth.onAuthStateChanged(user => {
     const telaLogin = document.getElementById('telaLogin');
@@ -49,97 +41,127 @@ function entrar() {
     });
 }
 
-function sair() { auth.signOut(); }
+function sair() { 
+    auth.signOut(); 
+}
 
 function iniciarLeitura() {
     db.collection("categorias").onSnapshot(s => { 
         bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderCat(); renderFiltrosVitrine();
+        renderCat(); 
+        renderFiltrosVitrine();
     });
     db.collection("produtos").onSnapshot(s => { 
         bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderVitrine(); renderProdTable();
+        renderVitrine(); 
+        renderProdTable();
     });
     db.collection("clientes").orderBy("nome").onSnapshot(s => { 
         bdClientes = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderCliTable(); renderCliSelectCart();
+        renderCliTable(); 
+        renderCliSelectCart();
     });
     db.collection("acabamentos").onSnapshot(s => {
         bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderAcabTable(); atualizarListaAcabamentosProduto();
+        renderAcabTable(); 
+        atualizarListaAcabamentosProduto();
     });
-    db.collection("pedidos").orderBy("data", "desc").onSnapshot(s => {
+    db.collection("pedidos").orderBy("data", "desc").limit(100).onSnapshot(s => {
         bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderPedidosFinanceiro();
-        renderKanbanProducao();
+        renderFinanceiro();
+    });
+    db.collection("transacoes").orderBy("data", "desc").limit(100).onSnapshot(s => {
+        bdTransacoes = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderFinanceiro();
     });
 }
 
-// --- KANBAN DE PRODUÇÃO ---
-function renderKanbanProducao() {
-    const container = document.getElementById('kanbanContainer');
-    if(!container) return;
+// --- FINANCEIRO ---
+async function salvarMovimentacao() {
+    const tipo = document.getElementById('finTipo').value;
+    const desc = document.getElementById('finDesc').value;
+    const valor = parseFloat(document.getElementById('finValor').value);
 
-    let html = '';
-    STATUSES.forEach(status => {
-        const pedidosDoStatus = bdPedidos.filter(p => p.status === status);
-        
-        html += `
-            <div class="bg-slate-100 rounded-xl p-4 w-80 flex-shrink-0 flex flex-col kanban-col border border-slate-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">${status}</h3>
-                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${pedidosDoStatus.length}</span>
-                </div>
-                <div class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar">
-                    ${pedidosDoStatus.map(p => gerarCardPedido(p)).join('')}
-                </div>
-            </div>
+    if(!desc || !valor) return alert("Preencha descrição e valor!");
+
+    await db.collection("transacoes").add({
+        tipo: tipo,
+        descricao: desc,
+        valor: valor,
+        data: new Date()
+    });
+
+    document.getElementById('finDesc').value = '';
+    document.getElementById('finValor').value = '';
+    alert("Movimentação lançada!");
+}
+
+function renderFinanceiro() {
+    const tab = document.getElementById('listaExtratoTab');
+    if(!tab) return;
+
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+    let vendasHoje = 0;
+    let entradasMes = 0;
+    let saidasMes = 0;
+    let extrato =[];
+
+    bdPedidos.forEach(p => {
+        const dataPed = p.data.toDate();
+        const valorPago = p.valorPago || 0; 
+        const total = p.total || 0;
+
+        if(dataPed >= hoje) vendasHoje += total; 
+        if(dataPed >= inicioMes) entradasMes += valorPago; 
+
+        if(valorPago > 0) {
+            extrato.push({
+                data: dataPed,
+                desc: `Venda: ${p.clienteNome}`,
+                valor: valorPago,
+                tipo: 'entrada'
+            });
+        }
+    });
+
+    bdTransacoes.forEach(t => {
+        const dataT = t.data.toDate();
+        if(dataT >= inicioMes) {
+            if(t.tipo === 'entrada') entradasMes += t.valor;
+            else saidasMes += t.valor;
+        }
+        extrato.push({
+            data: dataT,
+            desc: t.descricao,
+            valor: t.valor,
+            tipo: t.tipo
+        });
+    });
+
+    document.getElementById('finVendasHoje').innerText = "R$ " + vendasHoje.toFixed(2);
+    document.getElementById('finEntradasMes').innerText = "R$ " + entradasMes.toFixed(2);
+    document.getElementById('finSaidasMes').innerText = "R$ " + saidasMes.toFixed(2);
+    document.getElementById('finSaldoMes').innerText = "R$ " + (entradasMes - saidasMes).toFixed(2);
+
+    extrato.sort((a,b) => b.data - a.data);
+
+    tab.innerHTML = extrato.map(item => {
+        const corValor = item.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500';
+        const sinal = item.tipo === 'entrada' ? '+' : '-';
+        return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td class="p-4 text-slate-400 font-medium">${item.data.toLocaleDateString('pt-BR')} ${item.data.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</td>
+                <td class="p-4 font-bold text-slate-700">${item.desc}</td>
+                <td class="p-4 text-right font-black ${corValor}">${sinal} R$ ${item.valor.toFixed(2)}</td>
+            </tr>
         `;
-    });
-    container.innerHTML = html;
+    }).join('');
 }
 
-function gerarCardPedido(p) {
-    const dataFormatada = p.data.toDate().toLocaleDateString('pt-BR') + ' ' + p.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-    let options = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
-
-    let corBorda = 'border-l-slate-400';
-    if(p.status === 'Aguardando pagamento') corBorda = 'border-l-amber-400';
-    if(p.status === 'Em produção') corBorda = 'border-l-blue-500';
-    if(p.status === 'Acabamento') corBorda = 'border-l-indigo-500';
-    if(p.status === 'Pronto para Retirada') corBorda = 'border-l-emerald-400';
-    if(p.status === 'Entregue') corBorda = 'border-l-emerald-600';
-    if(p.status === 'Cancelado / Estorno') corBorda = 'border-l-red-500';
-
-    return `
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${corBorda}">
-            <div class="flex justify-between items-start mb-2">
-                <span class="text-[9px] font-bold text-slate-400">${dataFormatada}</span>
-                <span class="text-[10px] font-black text-indigo-600">R$ ${p.total.toFixed(2)}</span>
-            </div>
-            <h4 class="font-bold text-slate-800 text-xs mb-2">${p.clienteNome}</h4>
-            <div class="text-[9px] text-slate-500 mb-3 space-y-1">
-                ${p.itens.map(i => `<p>• ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}
-            </div>
-            <div class="mt-3 pt-3 border-t border-slate-100">
-                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    ${options}
-                </select>
-            </div>
-        </div>
-    `;
-}
-
-async function mudarStatusPedido(id, novoStatus) {
-    try {
-        await db.collection("pedidos").doc(id).update({ status: novoStatus });
-    } catch(e) {
-        console.error(e);
-        alert("Erro ao atualizar status.");
-    }
-}
-
-// --- ATRIBUTOS E PRODUTOS ---
+// --- LÓGICA DE ATRIBUTOS ---
 function addOpcaoAtrib(container, n = '', p = '') {
     const div = document.createElement('div');
     div.className = "flex gap-2 item-opcao";
@@ -279,8 +301,11 @@ async function salvarProduto() {
 
     if (!d.nome) return alert("Nome obrigatório!");
     
-    if (id) await db.collection("produtos").doc(id).update(d);
-    else await db.collection("produtos").add(d);
+    if (id) {
+        await db.collection("produtos").doc(id).update(d);
+    } else {
+        await db.collection("produtos").add(d);
+    }
     location.reload();
 }
 
@@ -344,7 +369,6 @@ function abrirConfigurador(id) {
     document.getElementById('modalProdRegra').value = p.regraPreco;
     document.getElementById('modalHeaderImg').style.backgroundImage = `url('${p.foto || 'https://via.placeholder.com/400'}')`;
     
-    // Observações
     const divObs = document.getElementById('modalObs');
     if (p.obs && p.obs.trim() !== '') {
         divObs.innerHTML = `<strong>Aviso:</strong> ${p.obs}`;
@@ -369,7 +393,6 @@ function abrirConfigurador(id) {
         divMedidas.innerHTML = `<div class="col-span-2 space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Quantidade</label><input type="number" id="w2pQtd" value="1" min="1" oninput="calcularPrecoAoVivo()" class="w-full p-3 border border-slate-200 rounded bg-slate-50 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>`;
     }
 
-    // Variações (Oculta o título se não houver)
     const divVariacoes = document.getElementById('modalCorpoVariacoes');
     const tituloVariacoes = document.getElementById('tituloVariacoes');
     if (p.atributos && p.atributos.length > 0) {
@@ -387,7 +410,6 @@ function abrirConfigurador(id) {
         divVariacoes.innerHTML = '';
     }
 
-    // Acabamentos (Oculta o título se não houver)
     const divAcabamentos = document.getElementById('modalCorpoAcabamentos');
     const tituloAcabamentos = document.getElementById('tituloAcabamentos');
     const acabPermitidos = p.acabamentos ||[];
@@ -533,9 +555,6 @@ async function enviarPedido() {
     const pago = parseFloat(document.getElementById('cartValorPago').value) || 0;
     const saldo = total - pago;
     
-    // Lógica do Kanban: Se tem saldo devedor, aguarda pagamento. Se pagou tudo, vai pra produção.
-    const statusInicial = saldo > 0 ? "Aguardando pagamento" : "Em produção";
-
     const pedido = {
         clienteId: idCli || "Consumidor Final",
         clienteNome: idCli ? bdClientes.find(x => x.id === idCli).nome : "Consumidor Final",
@@ -544,7 +563,7 @@ async function enviarPedido() {
         valorPago: pago,
         saldoDevedor: saldo,
         data: new Date(),
-        status: statusInicial
+        status: saldo <= 0 ? "Pago" : "Pagamento Parcial"
     };
     
     await db.collection("pedidos").add(pedido);
@@ -636,19 +655,6 @@ function renderFiltrosVitrine() {
     if(!div) return; 
     div.innerHTML = `<button type="button" onclick="renderVitrine('Todos')" class="px-5 py-2 bg-white border border-slate-200 rounded font-bold text-xs hover:bg-slate-800 hover:text-white transition shadow-sm">Todos</button>` + 
     bdCategorias.map(c => `<button type="button" onclick="renderVitrine('${c.nome}')" class="px-5 py-2 bg-white border border-slate-200 rounded font-bold text-xs hover:bg-slate-800 hover:text-white transition shadow-sm">${c.nome}</button>`).join(''); 
-}
-
-function renderPedidosFinanceiro() { 
-    const tab = document.getElementById('listaPedidosTab'); 
-    if(!tab) return; 
-    tab.innerHTML = bdPedidos.map(p => `
-        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-            <td class="p-4 text-slate-400 font-medium">${p.data.toDate().toLocaleDateString('pt-BR')}</td>
-            <td class="p-4 font-bold text-slate-700">${p.clienteNome}</td>
-            <td class="p-4 font-black text-indigo-600">R$ ${p.total.toFixed(2)}</td>
-            <td class="p-4 text-center"><span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span></td>
-        </tr>
-    `).join(''); 
 }
 
 async function salvarAcabamento() { 
