@@ -12,12 +12,20 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let bdCategorias = [];
-let bdProdutos =[];
-let bdClientes = [];
+let bdProdutos = [];
+let bdClientes =[];
 let bdPedidos = [];
-let bdAcabamentos =[];
-let bdTransacoes = [];
-let carrinho =[];
+let bdAcabamentos = [];
+let carrinho = [];
+
+const STATUSES =[
+    "Aguardando pagamento",
+    "Em produção",
+    "Acabamento",
+    "Pronto para Retirada",
+    "Entregue",
+    "Cancelado / Estorno"
+];
 
 auth.onAuthStateChanged(user => {
     const telaLogin = document.getElementById('telaLogin');
@@ -66,99 +74,119 @@ function iniciarLeitura() {
         renderAcabTable(); 
         atualizarListaAcabamentosProduto();
     });
-    db.collection("pedidos").orderBy("data", "desc").limit(100).onSnapshot(s => {
+    db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => {
         bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderFinanceiro();
-    });
-    db.collection("transacoes").orderBy("data", "desc").limit(100).onSnapshot(s => {
-        bdTransacoes = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderFinanceiro();
+        renderPedidosFinanceiro();
+        renderKanbanProducao();
     });
 }
 
-// --- FINANCEIRO ---
-async function salvarMovimentacao() {
-    const tipo = document.getElementById('finTipo').value;
-    const desc = document.getElementById('finDesc').value;
-    const valor = parseFloat(document.getElementById('finValor').value);
+// --- KANBAN DE PRODUÇÃO ---
+function renderKanbanProducao() {
+    const container = document.getElementById('kanbanContainer');
+    if(!container) return;
 
-    if(!desc || !valor) return alert("Preencha descrição e valor!");
-
-    await db.collection("transacoes").add({
-        tipo: tipo,
-        descricao: desc,
-        valor: valor,
-        data: new Date()
-    });
-
-    document.getElementById('finDesc').value = '';
-    document.getElementById('finValor').value = '';
-    alert("Movimentação lançada!");
-}
-
-function renderFinanceiro() {
-    const tab = document.getElementById('listaExtratoTab');
-    if(!tab) return;
-
-    const hoje = new Date();
-    hoje.setHours(0,0,0,0);
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-
-    let vendasHoje = 0;
-    let entradasMes = 0;
-    let saidasMes = 0;
-    let extrato =[];
-
-    bdPedidos.forEach(p => {
-        const dataPed = p.data.toDate();
-        const valorPago = p.valorPago || 0; 
-        const total = p.total || 0;
-
-        if(dataPed >= hoje) vendasHoje += total; 
-        if(dataPed >= inicioMes) entradasMes += valorPago; 
-
-        if(valorPago > 0) {
-            extrato.push({
-                data: dataPed,
-                desc: `Venda: ${p.clienteNome}`,
-                valor: valorPago,
-                tipo: 'entrada'
-            });
-        }
-    });
-
-    bdTransacoes.forEach(t => {
-        const dataT = t.data.toDate();
-        if(dataT >= inicioMes) {
-            if(t.tipo === 'entrada') entradasMes += t.valor;
-            else saidasMes += t.valor;
-        }
-        extrato.push({
-            data: dataT,
-            desc: t.descricao,
-            valor: t.valor,
-            tipo: t.tipo
-        });
-    });
-
-    document.getElementById('finVendasHoje').innerText = "R$ " + vendasHoje.toFixed(2);
-    document.getElementById('finEntradasMes').innerText = "R$ " + entradasMes.toFixed(2);
-    document.getElementById('finSaidasMes').innerText = "R$ " + saidasMes.toFixed(2);
-    document.getElementById('finSaldoMes').innerText = "R$ " + (entradasMes - saidasMes).toFixed(2);
-
-    extrato.sort((a,b) => b.data - a.data);
-
-    tab.innerHTML = extrato.map(item => {
-        const corValor = item.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500';
-        const sinal = item.tipo === 'entrada' ? '+' : '-';
-        return `
-            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                <td class="p-4 text-slate-400 font-medium">${item.data.toLocaleDateString('pt-BR')} ${item.data.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</td>
-                <td class="p-4 font-bold text-slate-700">${item.desc}</td>
-                <td class="p-4 text-right font-black ${corValor}">${sinal} R$ ${item.valor.toFixed(2)}</td>
-            </tr>
+    let html = '';
+    STATUSES.forEach(status => {
+        const pedidosDoStatus = bdPedidos.filter(p => p.status === status);
+        
+        html += `
+            <div class="bg-slate-100 rounded-xl p-4 w-80 flex-shrink-0 flex flex-col kanban-col border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">${status}</h3>
+                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${pedidosDoStatus.length}</span>
+                </div>
+                <div class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar">
+                    ${pedidosDoStatus.map(p => gerarCardPedido(p)).join('')}
+                </div>
+            </div>
         `;
-    }).join('');
+    });
+    container.innerHTML = html;
+}
+
+function gerarCardPedido(p) {
+    const dataFormatada = p.data.toDate().toLocaleDateString('pt-BR') + ' ' + p.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    let options = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
+
+    let corBorda = 'border-l-slate-400';
+    if(p.status === 'Aguardando pagamento') corBorda = 'border-l-amber-400';
+    if(p.status === 'Em produção') corBorda = 'border-l-blue-500';
+    if(p.status === 'Acabamento') corBorda = 'border-l-indigo-500';
+    if(p.status === 'Pronto para Retirada') corBorda = 'border-l-emerald-400';
+    if(p.status === 'Entregue') corBorda = 'border-l-emerald-600';
+    if(p.status === 'Cancelado / Estorno') corBorda = 'border-l-red-500';
+
+    return `
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${corBorda}">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-[9px] font-bold text-slate-400">${dataFormatada}</span>
+                <span class="text-[10px] font-black text-indigo-600">R$ ${p.total.toFixed(2)}</span>
+            </div>
+            <h4 class="font-bold text-slate-800 text-xs mb-2">${p.clienteNome}</h4>
+            <div class="text-[9px] text-slate-500 mb-3 space-y-1">
+                ${p.itens.map(i => `<p>• ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
+                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    ${options}
+                </select>
+                <button type="button" onclick="imprimirRecibo('${p.id}')" class="bg-slate-800 text-white px-3 rounded hover:bg-slate-700 transition" title="Imprimir Recibo"><i class="fa fa-print"></i></button>
+            </div>
+        </div>
+    `;
+}
+
+async function mudarStatusPedido(id, novoStatus) {
+    try {
+        await db.collection("pedidos").doc(id).update({ status: novoStatus });
+    } catch(e) {
+        console.error(e);
+        alert("Erro ao atualizar status.");
+    }
+}
+
+// --- IMPRESSÃO DE RECIBO (TÉRMICA 80MM) ---
+function imprimirRecibo(idPedido) {
+    const p = bdPedidos.find(x => x.id === idPedido);
+    if(!p) return;
+    
+    const janela = window.open('', '', 'width=300,height=600');
+    let html = `
+        <html><head><style>
+            body { font-family: monospace; width: 80mm; margin: 0; padding: 10px; color: #000; }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .linha { border-bottom: 1px dashed #000; margin: 10px 0; }
+            table { width: 100%; font-size: 12px; }
+            th, td { text-align: left; padding: 2px 0; }
+            .right { text-align: right; }
+            img.logo { max-width: 180px; margin: 0 auto 10px auto; display: block; }
+        </style></head><body>
+        
+        <!-- LOGO PRETO PARA IMPRESSÃO -->
+        <img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" />
+        
+        <div class="center bold" style="font-size: 14px;">Pedido: ${p.id.substring(0,6).toUpperCase()}</div>
+        <div class="center">Data: ${p.data.toDate().toLocaleDateString('pt-BR')} ${p.data.toDate().toLocaleTimeString('pt-BR')}</div>
+        <div class="linha"></div>
+        <div>Cliente: ${p.clienteNome}</div>
+        <div class="linha"></div>
+        <table>
+            <tr><th>Qtd/Item</th><th class="right">Valor</th></tr>
+            ${p.itens.map(i => `<tr><td>${i.nome}<br><small>${i.desc}</small></td><td class="right">R$ ${i.valor.toFixed(2)}</td></tr>`).join('')}
+        </table>
+        <div class="linha"></div>
+        <div class="right bold">Total: R$ ${p.total.toFixed(2)}</div>
+        <div class="right">Valor Pago: R$ ${(p.valorPago || 0).toFixed(2)}</div>
+        <div class="right bold">Saldo: R$ ${(p.saldoDevedor || 0).toFixed(2)}</div>
+        <div class="linha"></div>
+        <div class="center">Obrigado pela preferência!</div>
+        <script>window.print(); window.close();</script>
+        </body></html>
+    `;
+    janela.document.write(html);
+    janela.document.close();
 }
 
 // --- LÓGICA DE ATRIBUTOS ---
@@ -555,6 +583,8 @@ async function enviarPedido() {
     const pago = parseFloat(document.getElementById('cartValorPago').value) || 0;
     const saldo = total - pago;
     
+    const statusInicial = saldo > 0 ? "Aguardando pagamento" : "Em produção";
+
     const pedido = {
         clienteId: idCli || "Consumidor Final",
         clienteNome: idCli ? bdClientes.find(x => x.id === idCli).nome : "Consumidor Final",
@@ -563,7 +593,7 @@ async function enviarPedido() {
         valorPago: pago,
         saldoDevedor: saldo,
         data: new Date(),
-        status: saldo <= 0 ? "Pago" : "Pagamento Parcial"
+        status: statusInicial
     };
     
     await db.collection("pedidos").add(pedido);
@@ -657,6 +687,22 @@ function renderFiltrosVitrine() {
     bdCategorias.map(c => `<button type="button" onclick="renderVitrine('${c.nome}')" class="px-5 py-2 bg-white border border-slate-200 rounded font-bold text-xs hover:bg-slate-800 hover:text-white transition shadow-sm">${c.nome}</button>`).join(''); 
 }
 
+function renderPedidosFinanceiro() { 
+    const tab = document.getElementById('listaPedidosTab'); 
+    if(!tab) return; 
+    tab.innerHTML = bdPedidos.map(p => `
+        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+            <td class="p-4 text-slate-400 font-medium">${p.data.toDate().toLocaleDateString('pt-BR')}</td>
+            <td class="p-4 font-bold text-slate-700">${p.clienteNome}</td>
+            <td class="p-4 font-black text-indigo-600">R$ ${p.total.toFixed(2)}</td>
+            <td class="p-4 text-center">
+                <span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span>
+                <button type="button" onclick="imprimirRecibo('${p.id}')" class="ml-2 text-slate-400 hover:text-indigo-600" title="Imprimir Recibo"><i class="fa fa-print"></i></button>
+            </td>
+        </tr>
+    `).join(''); 
+}
+
 async function salvarAcabamento() { 
     const d = { 
         nome: document.getElementById('acabNome')?.value, 
@@ -715,38 +761,6 @@ function renderCliTable() {
     `).join(''); 
 }
 
-async function salvarCliente() { 
-    const id = document.getElementById('cliId').value; 
-    const d = { 
-        nome: document.getElementById('cliNome').value, 
-        documento: document.getElementById('cliDoc').value, 
-        telefone: document.getElementById('cliTel').value, 
-        endereco: document.getElementById('cliEnd').value, 
-        credito: parseFloat(document.getElementById('cliCredito').value) || 0 
-    }; 
-    if(!d.nome) return alert("Nome obrigatório"); 
-    if(id) await db.collection("clientes").doc(id).update(d); 
-    else await db.collection("clientes").add(d); 
-    limparFormCli(); 
-}
-
-function editCli(id) { 
-    const c = bdClientes.find(x => x.id === id); 
-    document.getElementById('cliId').value = c.id; 
-    document.getElementById('cliNome').value = c.nome; 
-    document.getElementById('cliDoc').value = c.documento || ''; 
-    document.getElementById('cliTel').value = c.telefone || ''; 
-    document.getElementById('cliEnd').value = c.endereco || ''; 
-    document.getElementById('cliCredito').value = c.credito || 0; 
-    document.getElementById('tituloCliForm').innerText = "Editar Cadastro"; 
-}
-
-function limparFormCli() { 
-    document.querySelectorAll('#sub-cli input').forEach(i => i.value = ''); 
-    document.getElementById('cliId').value = ''; 
-    document.getElementById('tituloCliForm').innerText = "Novo Cliente"; 
-}
-
 async function salvarCategoria() { 
     const id = document.getElementById('catId').value; 
     const nome = document.getElementById('catNome').value; 
@@ -775,7 +789,8 @@ function verHistoricoCliente(idCli) {
                 <span>${p.data.toDate().toLocaleDateString('pt-BR')}</span>
                 <span>R$ ${p.total.toFixed(2)}</span>
             </div>
-            <div class="text-xs text-slate-500">${p.itens.map(i => `• ${i.nome}`).join('<br>')}</div>
+            <div class="text-xs text-slate-500 mb-2">${p.itens.map(i => `• ${i.nome}`).join('<br>')}</div>
+            <button type="button" onclick="imprimirRecibo('${p.id}')" class="text-[10px] font-bold text-indigo-500 uppercase hover:underline"><i class="fa fa-print"></i> Imprimir Recibo</button>
         </div>
     `).join(''); 
     document.getElementById('modalHistoricoCli').classList.remove('hidden'); 
