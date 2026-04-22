@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GVA Gráfica ERP | Sistograf Style</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -15,7 +16,8 @@
         .active-aba { background-color: #f1f5f9; color: #0f172a; border-left: 4px solid #1e293b; }
         .active-sub { color: #1e293b; border-bottom: 3px solid #1e293b; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input::-webkit-outer-spin-button, 
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="bg-[#f4f4f2] text-slate-700 font-sans">
@@ -25,10 +27,16 @@
         <div class="bg-white p-10 rounded-lg shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-2xl font-bold text-slate-900 mb-8 uppercase tracking-widest italic">GVA Sistema</h2>
             <div class="space-y-4">
-                <input type="email" id="email" placeholder="E-mail" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
-                <input type="password" id="senha" placeholder="Senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
-                <button onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg">Entrar</button>
-                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Acesso negado.</p>
+                <div class="text-left space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
+                    <input type="email" id="email" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500" />
+                </div>
+                <div class="text-left space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Senha</label>
+                    <input type="password" id="senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500" />
+                </div>
+                <button type="button" onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg mt-2">Entrar</button>
+                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Acesso negado. Verifique os dados.</p>
             </div>
         </div>
     </div>
@@ -41,15 +49,15 @@
             <div class="flex items-center gap-4">
                 <span class="text-white font-black text-xl italic tracking-tighter">GVA Gráfica</span>
                 <nav class="hidden md:flex gap-6 ml-10 text-slate-400 text-[11px] font-bold uppercase">
-                    <button onclick="mudarAba('loja', this)" class="hover:text-white transition">Vendas</button>
-                    <button onclick="mudarAba('producao', this)" class="hover:text-white transition">Produção</button>
-                    <button onclick="mudarAba('financeiro', this)" class="hover:text-white transition">Financeiro</button>
-                    <button onclick="mudarAba('cadastros', this)" class="hover:text-white transition">Cadastros</button>
+                    <button type="button" onclick="mudarAba('loja', this)" class="hover:text-white transition">Vendas</button>
+                    <button type="button" onclick="mudarAba('producao', this)" class="hover:text-white transition">Produção</button>
+                    <button type="button" onclick="mudarAba('financeiro', this)" class="hover:text-white transition">Financeiro</button>
+                    <button type="button" onclick="mudarAba('cadastros', this)" class="hover:text-white transition">Cadastros</button>
                 </nav>
             </div>
             <div class="flex items-center gap-4 text-white">
                 <span class="text-[10px] font-bold opacity-50 uppercase">Sistograf v1.0</span>
-                <button onclick="sair()" class="bg-red-600 px-3 py-1 rounded text-[10px] font-bold uppercase">Sair</button>
+                <button type="button" onclick="sair()" class="bg-red-600 px-3 py-1 rounded text-[10px] font-bold uppercase hover:bg-red-700 transition">Sair</button>
             </div>
         </header>
 
@@ -58,10 +66,18 @@
             <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col sticky top-16 h-[calc(100vh-64px)]">
                 <div class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menu Principal</div>
                 <nav class="flex-1 space-y-1">
-                    <button onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba"><i class="fa fa-shopping-cart"></i> Loja PDV</button>
-                    <button onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50"><i class="fa fa-tasks"></i> Produção</button>
-                    <button onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50"><i class="fa fa-chart-line"></i> Financeiro</button>
-                    <button onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50"><i class="fa fa-database"></i> Cadastros</button>
+                    <button type="button" onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba">
+                        <i class="fa fa-shopping-cart"></i> Loja PDV
+                    </button>
+                    <button type="button" onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
+                        <i class="fa fa-tasks"></i> Produção
+                    </button>
+                    <button type="button" onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
+                        <i class="fa fa-chart-line"></i> Financeiro
+                    </button>
+                    <button type="button" onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
+                        <i class="fa fa-database"></i> Cadastros
+                    </button>
                 </nav>
             </aside>
 
@@ -81,7 +97,9 @@
                             <h3 class="text-lg font-bold mb-6 border-b pb-2 text-slate-800">Carrinho de Venda</h3>
                             
                             <div class="mb-6 space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">Cliente <span id="labelCreditoCli" class="text-emerald-600 font-bold">Saldo: R$ 0.00</span></label>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">
+                                    Cliente <span id="labelCreditoCli" class="text-emerald-600 font-bold">Saldo: R$ 0.00</span>
+                                </label>
                                 <select id="cartCliente" onchange="atualizarInfoCreditoCarrinho()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none"></select>
                             </div>
 
@@ -103,18 +121,22 @@
                                     <div class="space-y-1" id="divParcelas" style="display:none;">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Parcelas</label>
                                         <select id="cartParcelas" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="6">6x</option><option value="12">12x</option>
+                                            <option value="2">2x</option>
+                                            <option value="3">3x</option>
+                                            <option value="4">4x</option>
+                                            <option value="6">6x</option>
+                                            <option value="12">12x</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded border border-slate-100">
                                     <div class="space-y-1">
-                                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Valor Pago (Sinal)</label>
-                                        <input type="number" id="cartValorPago" value="0" oninput="atualizarTotalFinal()" class="w-full p-1 bg-white border border-slate-200 rounded text-sm font-bold outline-none">
+                                        <label class="text-[10px] font-bold text-slate-500 uppercase">Valor Pago</label>
+                                        <input type="number" id="cartValorPago" value="0" oninput="atualizarTotalFinal()" class="w-full p-1 bg-white border border-slate-200 rounded text-sm font-bold outline-none" />
                                     </div>
                                     <div class="space-y-1 text-right">
-                                        <label class="text-[10px] font-bold text-red-400 uppercase tracking-tighter">Restante</label>
+                                        <label class="text-[10px] font-bold text-red-400 uppercase">Restante</label>
                                         <div id="cartSaldoDevedor" class="text-sm font-black text-red-500">R$ 0.00</div>
                                     </div>
                                 </div>
@@ -123,21 +145,28 @@
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Entrega</label>
                                         <select id="cartEntrega" onchange="toggleOpcoesEntrega()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option>
+                                            <option value="Retirada">Retirada</option>
+                                            <option value="Motoboy">Motoboy</option>
                                         </select>
                                     </div>
                                     <div class="space-y-1" id="divFrete" style="display:none;">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Frete R$</label>
-                                        <input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalFinal()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
+                                        <input type="number" id="cartFreteValor" value="0" oninput="atualizarTotalFinal()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none" />
                                     </div>
                                 </div>
 
                                 <div class="pt-4 border-t border-dashed border-slate-200">
-                                    <div class="flex justify-between text-slate-400 font-bold text-xs"><span>Total Pedido:</span><span id="subtotalCart">R$ 0.00</span></div>
-                                    <div class="flex justify-between text-xl font-black text-slate-900 mt-1"><span>A Pagar:</span><span id="totalCarrinho">R$ 0.00</span></div>
+                                    <div class="flex justify-between text-slate-400 font-bold text-xs">
+                                        <span>Total Pedido:</span>
+                                        <span id="subtotalCart">R$ 0.00</span>
+                                    </div>
+                                    <div class="flex justify-between text-xl font-black text-slate-900 mt-1">
+                                        <span>A Pagar:</span>
+                                        <span id="totalCarrinho">R$ 0.00</span>
+                                    </div>
                                 </div>
                             </div>
-                            <button onclick="enviarPedido()" class="w-full bg-emerald-600 text-white py-4 rounded font-bold text-sm mt-6 hover:bg-emerald-700 transition shadow-md uppercase tracking-widest">Finalizar Pedido</button>
+                            <button type="button" onclick="enviarPedido()" class="w-full bg-emerald-600 text-white py-4 rounded font-bold text-sm mt-6 hover:bg-emerald-700 transition shadow-md uppercase tracking-widest">Finalizar Pedido</button>
                         </div>
                     </div>
                 </section>
@@ -145,10 +174,10 @@
                 <!-- ABA CADASTROS -->
                 <section id="aba-cadastros" class="aba-content hidden">
                     <div class="flex gap-8 border-b border-slate-200 mb-8 overflow-x-auto">
-                        <button onclick="mudarSubAba('sub-cli', this)" class="sub-aba-btn pb-4 font-bold text-slate-400 active-sub">Clientes</button>
-                        <button onclick="mudarSubAba('sub-prod', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Produtos</button>
-                        <button onclick="mudarSubAba('sub-cat', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Categorias</button>
-                        <button onclick="mudarSubAba('sub-acab', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Acabamentos</button>
+                        <button type="button" onclick="mudarSubAba('sub-cli', this)" class="sub-aba-btn pb-4 font-bold text-slate-400 active-sub">Clientes</button>
+                        <button type="button" onclick="mudarSubAba('sub-prod', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Produtos</button>
+                        <button type="button" onclick="mudarSubAba('sub-cat', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Categorias</button>
+                        <button type="button" onclick="mudarSubAba('sub-acab', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Acabamentos</button>
                     </div>
 
                     <!-- CLIENTES -->
@@ -156,21 +185,42 @@
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 mb-8">
                             <h3 id="tituloCliForm" class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Informações do Cliente</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                                <input type="hidden" id="cliId">
-                                <input type="text" id="cliNome" placeholder="Nome" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                <input type="text" id="cliDoc" placeholder="CPF/CNPJ" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                <input type="text" id="cliTel" placeholder="WhatsApp" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                <input type="text" id="cliEnd" placeholder="Endereço" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                <input type="number" id="cliCredito" value="0" step="0.01" class="p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none">
+                                <input type="hidden" id="cliId" />
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nome</label>
+                                    <input type="text" id="cliNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">CPF/CNPJ</label>
+                                    <input type="text" id="cliDoc" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">WhatsApp</label>
+                                    <input type="text" id="cliTel" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Endereço</label>
+                                    <input type="text" id="cliEnd" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-emerald-600 uppercase">Crédito R$</label>
+                                    <input type="number" id="cliCredito" value="0" step="0.01" class="w-full p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" />
+                                </div>
                             </div>
                             <div class="flex gap-2">
-                                <button id="btnSalvarCli" onclick="salvarCliente()" class="bg-slate-800 text-white px-8 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Cliente</button>
-                                <button onclick="limparFormCli()" class="bg-slate-100 text-slate-400 px-6 py-2 rounded font-bold text-xs">Limpar</button>
+                                <button type="button" id="btnSalvarCli" onclick="salvarCliente()" class="bg-slate-800 text-white px-8 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Cliente</button>
+                                <button type="button" onclick="limparFormCli()" class="bg-slate-100 text-slate-400 px-6 py-2 rounded font-bold text-xs hover:bg-slate-200 transition">Limpar</button>
                             </div>
                         </div>
                         <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
                             <table class="w-full text-left text-xs font-bold">
-                                <thead class="bg-slate-50 text-slate-400 uppercase"><tr><th class="p-4">Nome</th><th class="p-4">Crédito</th><th class="p-4 text-center">Ações</th></tr></thead>
+                                <thead class="bg-slate-50 text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="p-4">Nome</th>
+                                        <th class="p-4">Crédito</th>
+                                        <th class="p-4 text-center">Ações</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="listaClientesTab"></tbody>
                             </table>
                         </div>
@@ -181,54 +231,104 @@
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 mb-8">
                             <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Informações do Produto</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <input type="hidden" id="prodId">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Nome do Produto</label><input type="text" id="prodNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Categoria</label><select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></select></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Referência</label><input type="text" id="prodRef" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Regra Preço</label><select id="prodRegraPreco" onchange="ajustarCamposProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold"><option value="unidade">Unitário</option><option value="m2">Por M²</option><option value="pacote">Pacotes Fechados</option><option value="progressivo">Desconto Progressivo</option></select></div>
+                                <input type="hidden" id="prodId" />
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nome do Produto</label>
+                                    <input type="text" id="prodNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Categoria</label>
+                                    <select id="prodCategoria" onchange="atualizarListaAcabamentosProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Referência</label>
+                                    <input type="text" id="prodRef" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Tipo de Produto</label>
+                                    <select id="prodRegraPreco" onchange="ajustarCamposProduto()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
+                                        <option value="unidade">Unitário</option>
+                                        <option value="m2">Por M²</option>
+                                        <option value="pacote">Pacotes Fechados</option>
+                                        <option value="progressivo">Desconto Progressivo</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Material</label><input type="text" id="prodMaterial" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Gramatura</label><input type="text" id="prodGramatura" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Prazo (Dias)</label><input type="number" id="prodPrazo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></div>
-                                <div class="space-y-1" id="boxPrecoBase"><label class="text-[10px] font-bold text-slate-400 uppercase">Preço Base R$</label><input type="number" id="prodPreco" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold text-indigo-600"></div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Material</label>
+                                    <input type="text" id="prodMaterial" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Gramatura</label>
+                                    <input type="text" id="prodGramatura" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Prazo (Dias)</label>
+                                    <input type="number" id="prodPrazo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1" id="boxPrecoBase">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Preço Base R$</label>
+                                    <input type="number" id="prodPreco" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500" />
+                                </div>
                             </div>
 
-                            <!-- REGRAS ESPECÍFICAS -->
                             <div id="boxMedidas" style="display:none;" class="bg-blue-50 p-4 rounded border border-blue-100 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Largura Bobina (m)</label><input type="number" id="prodLargBobina" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none font-bold"></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Largura Máx (m)</label><input type="number" id="prodLargMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none"></div>
-                                <div class="space-y-1"><label class="text-[10px] font-bold text-blue-800 uppercase">Comprimento Máx (m)</label><input type="number" id="prodCompMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none"></div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-blue-800 uppercase">Largura Bobina (m)</label>
+                                    <input type="number" id="prodLargBobina" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none font-bold focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-blue-800 uppercase">Largura Máx (m)</label>
+                                    <input type="number" id="prodLargMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-blue-800 uppercase">Comprimento Máx (m)</label>
+                                    <input type="number" id="prodCompMax" step="0.01" class="w-full p-2 bg-white border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
                             </div>
+
                             <div id="boxPacotes" style="display:none;" class="bg-amber-50 p-4 rounded border border-amber-100 mb-6">
                                 <h4 class="font-bold text-amber-800 mb-4 text-[10px] uppercase tracking-widest">Grade de Pacotes</h4>
                                 <div id="listaGradePacotes" class="space-y-2"></div>
-                                <button onclick="addLinhaPacote()" class="mt-4 bg-white text-amber-600 border border-amber-200 px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">+ Add Quantidade</button>
+                                <button type="button" onclick="addLinhaPacote()" class="mt-4 bg-white text-amber-600 border border-amber-200 px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">+ Add Quantidade</button>
                             </div>
+
                             <div id="boxProgressivo" style="display:none;" class="bg-emerald-50 p-4 rounded border border-emerald-100 mb-6">
                                 <h4 class="font-bold text-emerald-800 mb-4 text-[10px] uppercase tracking-widest">Tabela Progressiva</h4>
                                 <div id="listaGradeProgressivo" class="space-y-2"></div>
-                                <button onclick="addLinhaProgressivo()" class="mt-4 bg-white text-emerald-600 border border-emerald-200 px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">+ Add Faixa</button>
+                                <button type="button" onclick="addLinhaProgressivo()" class="mt-4 bg-white text-emerald-600 border border-emerald-200 px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">+ Add Faixa</button>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div class="bg-slate-50 p-4 rounded border border-slate-100">
                                     <h4 class="font-bold text-slate-400 mb-4 text-[10px] uppercase tracking-widest">Variações (Papel, Cor...)</h4>
                                     <div id="listaAtributos" class="space-y-3"></div>
-                                    <button onclick="addAtributoManual()" class="mt-4 bg-white text-slate-600 border border-slate-200 px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">+ Novo Grupo</button>
+                                    <button type="button" onclick="addAtributoManual()" class="mt-4 bg-white text-slate-600 border border-slate-200 px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">+ Novo Grupo</button>
                                 </div>
                                 <div class="bg-slate-50 p-4 rounded border border-slate-100">
                                     <h4 class="font-bold text-slate-400 mb-4 text-[10px] uppercase tracking-widest">Acabamentos Disponíveis</h4>
                                     <div id="listaCheckAcabamentos" class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1"></div>
                                 </div>
                             </div>
-                            <div class="space-y-1 mb-6"><label class="text-[10px] font-bold text-slate-400 uppercase">URL da Foto</label><input type="text" id="prodFoto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none"></div>
+
+                            <div class="space-y-1 mb-6">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase">URL da Foto</label>
+                                <input type="text" id="prodFoto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </div>
                             
-                            <button onclick="salvarProduto()" class="bg-slate-800 text-white px-12 py-3 rounded font-bold text-xs hover:bg-slate-700 transition shadow-md uppercase tracking-widest">Salvar Produto</button>
+                            <button type="button" onclick="salvarProduto()" class="bg-slate-800 text-white px-12 py-3 rounded font-bold text-xs hover:bg-slate-700 transition shadow-md uppercase tracking-widest">Salvar Produto</button>
                         </div>
+
                         <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
                             <table class="w-full text-left text-xs font-bold">
-                                <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider"><tr><th class="p-4">Produto</th><th class="p-4">Regra</th><th class="p-4 text-center">Ações</th></tr></thead>
+                                <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-4">Produto</th>
+                                        <th class="p-4">Regra</th>
+                                        <th class="p-4 text-center">Ações</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="listaProdutosTab"></tbody>
                             </table>
                         </div>
@@ -238,14 +338,19 @@
                     <div id="sub-cat" class="sub-aba-content hidden">
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 max-w-md mb-6">
                             <h3 class="font-bold text-slate-800 mb-4 uppercase text-xs tracking-widest">Categorias</h3>
-                            <div class="flex gap-2">
-                                <input type="hidden" id="catId">
-                                <input type="text" id="catNome" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold" placeholder="Nome">
-                                <button onclick="salvarCategoria()" class="bg-slate-800 text-white px-6 rounded font-bold text-xs">Salvar</button>
+                            <div class="flex items-end gap-2">
+                                <input type="hidden" id="catId" />
+                                <div class="space-y-1 flex-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nome da Categoria</label>
+                                    <input type="text" id="catNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <button type="button" onclick="salvarCategoria()" class="bg-slate-800 text-white px-6 py-2 h-[38px] rounded font-bold text-xs hover:bg-slate-700 transition">Salvar</button>
                             </div>
                         </div>
                         <div class="bg-white rounded shadow-sm border border-slate-200 max-w-md overflow-hidden">
-                            <table class="w-full text-left text-xs font-bold"><tbody id="listaCategoriasTab"></tbody></table>
+                            <table class="w-full text-left text-xs font-bold">
+                                <tbody id="listaCategoriasTab"></tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -254,23 +359,48 @@
                         <div class="bg-white p-6 rounded shadow-sm border border-slate-200 mb-8">
                             <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Novo Acabamento</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <input type="hidden" id="acabId">
-                                <input type="text" id="acabNome" placeholder="Nome" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                <input type="text" id="acabGrupo" placeholder="Grupo" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                <select id="acabCategoria" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none"></select>
-                                <select id="acabRegra" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
-                                    <option value="unidade">Por Unidade</option><option value="lote">Fixo por Lote</option><option value="m2">Por M²</option>
-                                </select>
+                                <input type="hidden" id="acabId" />
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nome</label>
+                                    <input type="text" id="acabNome" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Grupo</label>
+                                    <input type="text" id="acabGrupo" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Categoria</label>
+                                    <select id="acabCategoria" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Regra</label>
+                                    <select id="acabRegra" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="unidade">Por Unidade</option>
+                                        <option value="lote">Fixo por Lote</option>
+                                        <option value="m2">Por M²</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4 max-w-md mb-6">
-                                <input type="number" id="acabPrecoVenda" placeholder="Preço Venda R$" class="p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none">
-                                <input type="number" id="acabCusto" placeholder="Custo R$" class="p-2 bg-slate-50 border border-slate-200 rounded outline-none">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-emerald-600 uppercase">Preço Venda R$</label>
+                                    <input type="number" id="acabPrecoVenda" class="w-full p-2 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Custo R$</label>
+                                    <input type="number" id="acabCusto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
                             </div>
-                            <button onclick="salvarAcabamento()" class="bg-slate-800 text-white px-10 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Acabamento</button>
+                            <button type="button" onclick="salvarAcabamento()" class="bg-slate-800 text-white px-10 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Acabamento</button>
                         </div>
                         <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
                             <table class="w-full text-left text-xs font-bold">
-                                <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider"><tr><th class="p-4">Acabamento</th><th class="p-4 text-center">Ações</th></tr></thead>
+                                <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-4">Acabamento</th>
+                                        <th class="p-4 text-center">Ações</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="listaAcabamentosTab"></tbody>
                             </table>
                         </div>
@@ -289,7 +419,12 @@
                     <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
                         <table class="w-full text-left text-xs font-bold">
                             <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider">
-                                <tr><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Valor</th><th class="p-4 text-center">Status</th></tr>
+                                <tr>
+                                    <th class="p-4">Data</th>
+                                    <th class="p-4">Cliente</th>
+                                    <th class="p-4">Valor</th>
+                                    <th class="p-4 text-center">Status</th>
+                                </tr>
                             </thead>
                             <tbody id="listaPedidosTab"></tbody>
                         </table>
@@ -303,18 +438,19 @@
     <div id="modalW2P" class="fixed inset-0 bg-slate-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-white w-full max-w-3xl max-h-[90vh] rounded-lg overflow-hidden flex flex-col shadow-2xl">
             <div id="modalHeaderImg" class="h-56 bg-slate-100 bg-contain bg-no-repeat bg-center p-6 relative">
-                <button onclick="fecharModal()" class="absolute top-6 right-6 bg-white/80 w-10 h-10 rounded-full font-bold shadow-xl flex items-center justify-center hover:bg-white transition">✕</button>
+                <button type="button" onclick="fecharModal()" class="absolute top-6 right-6 bg-white/80 w-10 h-10 rounded-full font-bold shadow-xl flex items-center justify-center hover:bg-white transition">✕</button>
             </div>
             <div class="p-10 flex-1 overflow-y-auto">
                 <h2 id="modalNomeProd" class="text-3xl font-black text-slate-900 mb-8 italic uppercase tracking-tight"></h2>
-                <input type="hidden" id="modalProdId">
-                <input type="hidden" id="modalProdPrecoBase">
-                <input type="hidden" id="modalProdRegra">
+                <input type="hidden" id="modalProdId" />
+                <input type="hidden" id="modalProdPrecoBase" />
+                <input type="hidden" id="modalProdRegra" />
                 
                 <div id="modalCorpoMedidas" class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-4"></div>
                 
                 <div id="avisoBobina" class="hidden bg-amber-50 text-amber-700 p-4 rounded border border-amber-200 text-xs font-bold mb-8 flex items-center gap-3">
-                    <i class="fa fa-exclamation-triangle text-lg"></i><span>Atenção: O material terá emenda.</span>
+                    <i class="fa fa-exclamation-triangle text-lg"></i>
+                    <span>Atenção: O material terá emenda.</span>
                 </div>
                 
                 <div class="divisor-config mb-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest border-b pb-2">Variações e Acabamentos</div>
@@ -326,7 +462,7 @@
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Investimento</p>
                     <p id="modalSubtotal" class="text-4xl font-black text-indigo-600">R$ 0.00</p>
                 </div>
-                <button onclick="confirmarAdicaoCarrinho()" class="w-full md:w-auto bg-indigo-600 text-white px-14 py-5 rounded font-bold text-xl shadow-2xl hover:scale-[1.02] transition-all">Adicionar</button>
+                <button type="button" onclick="confirmarAdicaoCarrinho()" class="w-full md:w-auto bg-indigo-600 text-white px-14 py-5 rounded font-bold text-xl shadow-2xl hover:scale-[1.02] transition-all">Adicionar</button>
             </div>
         </div>
     </div>
@@ -336,7 +472,7 @@
         <div class="bg-white w-full max-w-2xl max-h-[80vh] rounded-lg shadow-2xl flex flex-col p-10 overflow-hidden">
             <div class="flex justify-between items-center mb-6">
                 <h3 id="histNomeCli" class="text-2xl font-black text-slate-900 uppercase tracking-tighter">Histórico</h3>
-                <button onclick="document.getElementById('modalHistoricoCli').classList.add('hidden')" class="text-slate-300 hover:text-red-500 font-bold">✕ FECHAR</button>
+                <button type="button" onclick="document.getElementById('modalHistoricoCli').classList.add('hidden')" class="text-slate-300 hover:text-red-500 font-bold">✕ FECHAR</button>
             </div>
             <div id="corpoHistoricoCli" class="overflow-y-auto space-y-4"></div>
         </div>
