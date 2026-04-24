@@ -117,7 +117,17 @@
                                     <div class="space-y-1" id="divParcelas" style="display:none;">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Parcelas</label>
                                         <select id="cartParcelas" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="6">6x</option><option value="12">12x</option>
+                                            <option value="2">2x</option>
+                                            <option value="3">3x</option>
+                                            <option value="4">4x</option>
+                                            <option value="5">5x</option>
+                                            <option value="6">6x</option>
+                                            <option value="7">7x</option>
+                                            <option value="8">8x</option>
+                                            <option value="9">9x</option>
+                                            <option value="10">10x</option>
+                                            <option value="11">11x</option>
+                                            <option value="12">12x</option>
                                         </select>
                                     </div>
                                 </div>
@@ -167,9 +177,9 @@
                 </section>
 
                 <!-- ABA PRODUÇÃO -->
-                <section id="aba-producao" class="aba-content hidden h-full flex flex-col">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Painel de Produção</h2>
-                    <div id="kanbanContainer" class="flex-1 overflow-x-auto flex gap-4 pb-4 items-start no-scrollbar"></div>
+                <section id="aba-producao" class="aba-content hidden h-full flex flex-col overflow-hidden">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter shrink-0">Painel de Produção</h2>
+                    <div id="kanbanContainer" class="flex-1 overflow-x-auto overflow-y-hidden flex gap-4 pb-4 items-start no-scrollbar"></div>
                 </section>
 
                 <!-- ABA FINANCEIRO -->
