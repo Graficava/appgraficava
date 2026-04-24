@@ -155,62 +155,11 @@
                 <!-- ABA FINANCEIRO -->
                 <section id="aba-financeiro" class="aba-content hidden">
                     <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Financeiro & Relatórios</h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vendas Hoje</p>
-                            <p id="finVendasHoje" class="text-2xl font-black text-blue-600 mt-1">R$ 0.00</p>
-                        </div>
-                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Entradas Mês</p>
-                            <p id="finEntradasMes" class="text-2xl font-black text-emerald-600 mt-1">R$ 0.00</p>
-                        </div>
-                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-red-500">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saídas Mês</p>
-                            <p id="finSaidasMes" class="text-2xl font-black text-red-600 mt-1">R$ 0.00</p>
-                        </div>
-                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-indigo-500">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saldo Mês</p>
-                            <p id="finSaldoMes" class="text-2xl font-black text-indigo-600 mt-1">R$ 0.00</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 h-fit">
-                            <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Nova Movimentação</h3>
-                            <div class="space-y-4">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Tipo</label>
-                                    <select id="finTipo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
-                                        <option value="entrada">Entrada (Receita)</option>
-                                        <option value="saida">Saída (Despesa)</option>
-                                    </select>
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Descrição</label>
-                                    <input type="text" id="finDesc" placeholder="Ex: Conta de Luz..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Valor R$</label>
-                                    <input type="number" id="finValor" step="0.01" class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
-                                </div>
-                                <button type="button" onclick="salvarMovimentacao()" class="w-full bg-slate-800 text-white py-3 rounded font-bold text-xs hover:bg-slate-700 transition uppercase tracking-widest mt-2">Lançar no Caixa</button>
-                            </div>
-                        </div>
-
-                        <div class="lg:col-span-2 bg-white rounded shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
-                            <div class="p-4 border-b border-slate-100 bg-slate-50">
-                                <h3 class="font-bold text-slate-800 uppercase text-xs tracking-widest">Extrato Recente</h3>
-                            </div>
-                            <div class="flex-1 overflow-y-auto">
-                                <table class="w-full text-left text-xs font-bold">
-                                    <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider sticky top-0 shadow-sm">
-                                        <tr><th class="p-4">Data</th><th class="p-4">Descrição</th><th class="p-4 text-right">Valor</th></tr>
-                                    </thead>
-                                    <tbody id="listaExtratoTab"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left text-xs font-bold">
+                            <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider"><tr><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Valor</th><th class="p-4 text-center">Status</th><th class="p-4 text-center">Ações</th></tr></thead>
+                            <tbody id="listaPedidosTab"></tbody>
+                        </table>
                     </div>
                 </section>
 
@@ -382,7 +331,7 @@
                 <div class="w-full md:w-2/5 p-8 border-r border-slate-100 flex flex-col items-center justify-start bg-white">
                     <div id="modalHeaderImg" class="w-full h-64 bg-contain bg-no-repeat bg-center rounded-lg mb-6"></div>
                     <div id="modalObs" class="hidden w-full bg-blue-50 text-blue-700 p-4 rounded border border-blue-100 text-xs mb-4"></div>
-                    <div id="avisoBobina" class="hidden w-full bg-amber-50 text-amber-700 p-4 rounded border border-amber-200 text-xs font-bold flex items-start gap-3 shadow-sm"><i class="fa fa-exclamation-triangle text-lg mt-0.5"></i><span>Atenção: O menor lado excede a largura da bobina. O material terá emenda.</span></div>
+                    <div id="avisoBobina" class="hidden w-full bg-red-50 text-red-700 p-4 rounded border border-red-200 text-xs font-bold flex items-start gap-3 shadow-sm"><i class="fa fa-exclamation-triangle text-lg mt-0.5"></i><span>Atenção: O menor lado excede a largura da bobina. Venda bloqueada.</span></div>
                 </div>
                 <div class="w-full md:w-3/5 p-8 overflow-y-auto">
                     <input type="hidden" id="modalProdId">
