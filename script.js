@@ -11,7 +11,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let bdCategorias = [], bdProdutos = [], bdClientes =[], bdPedidos = [], bdAcabamentos = [];
+let bdCategorias = [], bdProdutos = [], bdClientes = [], bdPedidos = [], bdAcabamentos =[], bdTransacoes = [];
 let carrinho = [];
 
 const STATUSES =["Aguardando pagamento", "Em produção", "Acabamento", "Pronto para Retirada", "Entregue", "Cancelado / Estorno"];
@@ -44,23 +44,84 @@ function iniciarLeitura() {
     db.collection("clientes").orderBy("nome").onSnapshot(s => { bdClientes = s.docs.map(d => ({id: d.id, ...d.data()})); renderCliTable(); renderCliSelectCart(); });
     db.collection("acabamentos").onSnapshot(s => { bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()})); renderAcabTable(); atualizarListaAcabamentosProduto(); });
     db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => { bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()})); renderPedidosFinanceiro(); renderKanbanProducao(); });
+    db.collection("transacoes").orderBy("data", "desc").limit(50).onSnapshot(s => { bdTransacoes = s.docs.map(d => ({id: d.id, ...d.data()})); renderPedidosFinanceiro(); });
 }
 
-// --- KANBAN DE PRODUÇÃO ---
+// --- FINANCEIRO ---
+async function salvarMovimentacao() {
+    const tipo = document.getElementById('finTipo').value;
+    const desc = document.getElementById('finDesc').value;
+    const valor = parseFloat(document.getElementById('finValor').value);
+    if(!desc || !valor) return alert("Preencha descrição e valor!");
+    await db.collection("transacoes").add({ tipo: tipo, descricao: desc, valor: valor, data: new Date() });
+    document.getElementById('finDesc').value = ''; document.getElementById('finValor').value = '';
+}
+
+function renderPedidosFinanceiro() {
+    const tab = document.getElementById('listaPedidosTab');
+    const tabExtrato = document.getElementById('listaExtratoTab');
+    
+    if(tab) {
+        tab.innerHTML = bdPedidos.map(p => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td class="p-4 text-slate-400 font-medium">${p.data.toDate().toLocaleDateString('pt-BR')}</td>
+                <td class="p-4 font-bold text-slate-700">${p.clienteNome}</td>
+                <td class="p-4 font-black text-indigo-600">R$ ${p.total.toFixed(2)}</td>
+                <td class="p-4 text-center"><span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span></td>
+                <td class="p-4 text-center"><button type="button" onclick="imprimirRecibo('${p.id}')" class="text-slate-400 hover:text-indigo-600" title="Imprimir Recibo"><i class="fa fa-print"></i></button></td>
+            </tr>
+        `).join('');
+    }
+
+    if(tabExtrato) {
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        let vHoje = 0, eMes = 0, sMes = 0; let extrato =[];
+
+        bdPedidos.forEach(p => {
+            const d = p.data.toDate(); const v = p.valorPago || 0; const t = p.total || 0;
+            if(d >= hoje) vHoje += t;
+            if(d >= inicioMes) eMes += v;
+            if(v > 0) extrato.push({ data: d, desc: `Venda: ${p.clienteNome}`, valor: v, tipo: 'entrada' });
+        });
+
+        bdTransacoes.forEach(t => {
+            const d = t.data.toDate();
+            if(d >= inicioMes) { if(t.tipo === 'entrada') eMes += t.valor; else sMes += t.valor; }
+            extrato.push({ data: d, desc: t.descricao, valor: t.valor, tipo: t.tipo });
+        });
+
+        document.getElementById('finVendasHoje').innerText = "R$ " + vHoje.toFixed(2);
+        document.getElementById('finEntradasMes').innerText = "R$ " + eMes.toFixed(2);
+        document.getElementById('finSaidasMes').innerText = "R$ " + sMes.toFixed(2);
+        document.getElementById('finSaldoMes').innerText = "R$ " + (eMes - sMes).toFixed(2);
+
+        extrato.sort((a,b) => b.data - a.data);
+        tabExtrato.innerHTML = extrato.map(i => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td class="p-4 text-slate-400 font-medium">${i.data.toLocaleDateString('pt-BR')}</td>
+                <td class="p-4 font-bold text-slate-700">${i.desc}</td>
+                <td class="p-4 text-right font-black ${i.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500'}">${i.tipo === 'entrada' ? '+' : '-'} R$ ${i.valor.toFixed(2)}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+// --- KANBAN ---
 function renderKanbanProducao() {
     const container = document.getElementById('kanbanContainer');
     if(!container) return;
     let html = '';
     STATUSES.forEach(status => {
-        const pedidosDoStatus = bdPedidos.filter(p => p.status === status);
+        const peds = bdPedidos.filter(p => p.status === status);
         html += `
             <div class="bg-slate-100 rounded-xl p-4 w-80 flex-shrink-0 flex flex-col kanban-col border border-slate-200">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">${status}</h3>
-                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${pedidosDoStatus.length}</span>
+                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${peds.length}</span>
                 </div>
                 <div class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar">
-                    ${pedidosDoStatus.map(p => gerarCardPedido(p)).join('')}
+                    ${peds.map(p => gerarCardPedido(p)).join('')}
                 </div>
             </div>
         `;
@@ -69,115 +130,55 @@ function renderKanbanProducao() {
 }
 
 function gerarCardPedido(p) {
-    const dataFormatada = p.data.toDate().toLocaleDateString('pt-BR') + ' ' + p.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-    let options = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
-    let corBorda = 'border-l-slate-400';
-    if(p.status === 'Aguardando pagamento') corBorda = 'border-l-amber-400';
-    if(p.status === 'Em produção') corBorda = 'border-l-blue-500';
-    if(p.status === 'Acabamento') corBorda = 'border-l-indigo-500';
-    if(p.status === 'Pronto para Retirada') corBorda = 'border-l-emerald-400';
-    if(p.status === 'Entregue') corBorda = 'border-l-emerald-600';
-    if(p.status === 'Cancelado / Estorno') corBorda = 'border-l-red-500';
+    const dataF = p.data.toDate().toLocaleDateString('pt-BR') + ' ' + p.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    let opts = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
+    let cor = 'border-l-slate-400';
+    if(p.status === 'Aguardando pagamento') cor = 'border-l-amber-400';
+    if(p.status === 'Em produção') cor = 'border-l-blue-500';
+    if(p.status === 'Acabamento') cor = 'border-l-indigo-500';
+    if(p.status === 'Pronto para Retirada') cor = 'border-l-emerald-400';
+    if(p.status === 'Entregue') cor = 'border-l-emerald-600';
+    if(p.status === 'Cancelado / Estorno') cor = 'border-l-red-500';
 
     return `
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${corBorda}">
-            <div class="flex justify-between items-start mb-2">
-                <span class="text-[9px] font-bold text-slate-400">${dataFormatada}</span>
-                <span class="text-[10px] font-black text-indigo-600">R$ ${p.total.toFixed(2)}</span>
-            </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${cor}">
+            <div class="flex justify-between items-start mb-2"><span class="text-[9px] font-bold text-slate-400">${dataF}</span><span class="text-[10px] font-black text-indigo-600">R$ ${p.total.toFixed(2)}</span></div>
             <h4 class="font-bold text-slate-800 text-xs mb-2">${p.clienteNome}</h4>
-            <div class="text-[9px] text-slate-500 mb-3 space-y-1">
-                ${p.itens.map(i => `<p>• ${i.qtd}x ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}
-            </div>
+            <div class="text-[9px] text-slate-500 mb-3 space-y-1">${p.itens.map(i => `<p>• ${i.qtd}x ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}</div>
             <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
-                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    ${options}
-                </select>
+                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">${opts}</select>
                 <button type="button" onclick="imprimirOSA4('${p.id}')" class="bg-slate-800 text-white px-3 rounded hover:bg-slate-700 transition" title="Imprimir OS (A4)"><i class="fa fa-file-pdf"></i></button>
             </div>
         </div>
     `;
 }
 
-async function mudarStatusPedido(id, novoStatus) {
-    try { await db.collection("pedidos").doc(id).update({ status: novoStatus }); } 
-    catch(e) { console.error(e); alert("Erro ao atualizar status."); }
-}
+async function mudarStatusPedido(id, novoStatus) { await db.collection("pedidos").doc(id).update({ status: novoStatus }); }
 
-// --- IMPRESSÃO DE RECIBO (2 PÁGINAS) ---
+// --- IMPRESSÃO ---
 function imprimirReciboDireto(idPedido, objPedido) {
     const p = objPedido || bdPedidos.find(x => x.id === idPedido);
     if(!p) return;
-    
     const janela = window.open('', '', 'width=350,height=800');
     let html = `
         <html><head><style>
             body { font-family: monospace; width: 80mm; margin: 0; padding: 10px; color: #000; font-size: 12px; }
-            .center { text-align: center; }
-            .bold { font-weight: bold; }
-            .linha { border-bottom: 1px dashed #000; margin: 8px 0; }
-            table { width: 100%; font-size: 12px; border-collapse: collapse; }
-            th, td { text-align: left; padding: 2px 0; vertical-align: top; }
-            .right { text-align: right; }
+            .center { text-align: center; } .bold { font-weight: bold; } .linha { border-bottom: 1px dashed #000; margin: 8px 0; }
+            table { width: 100%; font-size: 12px; border-collapse: collapse; } th, td { text-align: left; padding: 2px 0; vertical-align: top; } .right { text-align: right; }
             img.logo { max-width: 150px; margin: 0 auto 10px auto; display: block; }
-            @media print { .page-break { page-break-before: always; } }
-            .prod-item { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
-            .prod-desc { font-size: 12px; margin-bottom: 10px; padding-left: 10px; }
         </style></head><body>
-
-        <!-- VIA DO CLIENTE -->
         <img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" />
         <div class="center bold" style="font-size: 14px;">Gráfica Venom Arts LTDA</div>
-        <div class="center" style="font-size: 10px; margin-bottom: 10px;">
-            CNPJ: 17.184.159/0001-06<br>
-            IM: 2231694 | IE: 14.623.58-2<br>
-            Rua Lopes Trovão nº 474 Lojas 202 e 201<br>
-            Icaraí, Niterói - RJ 24220-071<br>
-            www.graficava.com.br<br>
-            WhatsApp: 21 99993-0190<br>
-            Insta: @grafica.venomarts
-        </div>
-        <div class="linha"></div>
-        <div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
+        <div class="center" style="font-size: 10px; margin-bottom: 10px;">CNPJ: 17.184.159/0001-06<br>IM: 2231694 | IE: 14.623.58-2<br>Rua Lopes Trovão nº 474 Lojas 202 e 201<br>Icaraí, Niterói - RJ 24220-071<br>www.graficava.com.br<br>WhatsApp: 21 99993-0190<br>Insta: @grafica.venomarts</div>
+        <div class="linha"></div><div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
         <div class="center">Data: ${p.data.toDate ? p.data.toDate().toLocaleDateString('pt-BR') : p.data.toLocaleDateString('pt-BR')} ${p.data.toDate ? p.data.toDate().toLocaleTimeString('pt-BR') : p.data.toLocaleTimeString('pt-BR')}</div>
-        <div class="linha"></div>
-        <div>Cliente: ${p.clienteNome}</div>
-        <div class="linha"></div>
-        <table>
-            <tr><th>Qtd/Item</th><th class="right">Valor</th></tr>
-            ${p.itens.map(i => `<tr><td>${i.qtd}x ${i.nome}<br><small>${i.desc}</small></td><td class="right">R$ ${i.valor.toFixed(2)}</td></tr>`).join('')}
-        </table>
-        <div class="linha"></div>
-        <div class="right bold">Subtotal: R$ ${(p.total + (p.desconto || 0)).toFixed(2)}</div>
-        <div class="right">Desconto: R$ ${(p.desconto || 0).toFixed(2)}</div>
-        <div class="right bold">Total: R$ ${p.total.toFixed(2)}</div>
-        <div class="right">Valor Pago: R$ ${(p.valorPago || 0).toFixed(2)}</div>
-        <div class="right bold">Saldo: R$ ${(p.saldoDevedor || 0).toFixed(2)}</div>
-        <div class="linha"></div>
-        <div class="center">Obrigado pela preferência!</div>
-
-        <!-- QUEBRA DE PÁGINA PARA A VIA DA PRODUÇÃO -->
-        <div class="page-break"></div>
-
-        <!-- VIA DA PRODUÇÃO -->
-        <div class="center bold" style="font-size: 16px; margin-bottom: 10px;">VIA DA PRODUÇÃO</div>
-        <div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
-        <div class="center">Data: ${p.data.toDate ? p.data.toDate().toLocaleDateString('pt-BR') : p.data.toLocaleDateString('pt-BR')} ${p.data.toDate ? p.data.toDate().toLocaleTimeString('pt-BR') : p.data.toLocaleTimeString('pt-BR')}</div>
-        <div class="linha"></div>
-        <div class="bold" style="font-size: 14px;">Cliente: ${p.clienteNome}</div>
-        <div class="linha"></div>
-        ${p.itens.map(i => `
-            <div class="prod-item">[ ] ${i.qtd}x ${i.nome}</div>
-            <div class="prod-desc">${i.desc.replace(/\|/g, '<br>')}</div>
-        `).join('')}
-        <div class="linha"></div>
-        <div class="center">Fim da Ordem de Serviço</div>
-
-        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
-        </body></html>
+        <div class="linha"></div><div>Cliente: ${p.clienteNome}</div><div class="linha"></div>
+        <table><tr><th>Qtd/Item</th><th class="right">Valor</th></tr>${p.itens.map(i => `<tr><td>${i.qtd}x ${i.nome}<br><small>${i.desc}</small></td><td class="right">R$ ${i.valor.toFixed(2)}</td></tr>`).join('')}</table>
+        <div class="linha"></div><div class="right bold">Subtotal: R$ ${(p.total + (p.desconto || 0)).toFixed(2)}</div><div class="right">Desconto: R$ ${(p.desconto || 0).toFixed(2)}</div><div class="right bold">Total: R$ ${p.total.toFixed(2)}</div><div class="right">Valor Pago: R$ ${(p.valorPago || 0).toFixed(2)}</div><div class="right bold">Saldo: R$ ${(p.saldoDevedor || 0).toFixed(2)}</div>
+        <div class="linha"></div><div class="center">Obrigado pela preferência!</div>
+        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script></body></html>
     `;
-    janela.document.write(html);
-    janela.document.close();
+    janela.document.write(html); janela.document.close();
 }
 
 function imprimirRecibo(idPedido) { imprimirReciboDireto(idPedido, null); }
@@ -188,62 +189,30 @@ function imprimirOSA4(idPedido) {
     const janela = window.open('', '', 'width=800,height=900');
     let html = `
         <html><head><style>
-            @page { size: A4; margin: 15mm; }
-            body { font-family: Arial, sans-serif; color: #333; line-height: 1.4; }
+            @page { size: A4; margin: 15mm; } body { font-family: Arial, sans-serif; color: #333; line-height: 1.4; }
             .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
-            .logo { max-height: 50px; }
-            .title { font-size: 24px; font-weight: bold; color: #0f172a; text-transform: uppercase; }
+            .logo { max-height: 50px; } .title { font-size: 24px; font-weight: bold; color: #0f172a; text-transform: uppercase; }
             .info-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #f9fafb; }
             .item-box { border: 2px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px; page-break-inside: avoid; }
             .item-title { font-size: 18px; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px; }
-            .item-desc { font-size: 14px; margin-bottom: 10px; }
-            .check-box { display: inline-block; width: 15px; height: 15px; border: 1px solid #000; margin-right: 5px; vertical-align: middle; }
-            .task-list { margin-top: 10px; font-size: 14px; }
-            .task-item { margin-bottom: 8px; }
+            .item-desc { font-size: 14px; margin-bottom: 10px; } .check-box { display: inline-block; width: 15px; height: 15px; border: 1px solid #000; margin-right: 5px; vertical-align: middle; }
+            .task-list { margin-top: 10px; font-size: 14px; } .task-item { margin-bottom: 8px; }
         </style></head><body>
-        <div class="header">
-            <img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" />
-            <div style="text-align: right;">
-                <div class="title">ORDEM DE SERVIÇO</div>
-                <div style="font-size: 18px; font-weight: bold;">#${p.id.substring(0,6).toUpperCase()}</div>
-            </div>
-        </div>
-        <div class="info-box">
-            <strong>Cliente:</strong> ${p.clienteNome}<br>
-            <strong>Data do Pedido:</strong> ${p.data.toDate().toLocaleDateString('pt-BR')} às ${p.data.toDate().toLocaleTimeString('pt-BR')}<br>
-            <strong>Status Atual:</strong> ${p.status}
-        </div>
+        <div class="header"><img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" /><div style="text-align: right;"><div class="title">ORDEM DE SERVIÇO</div><div style="font-size: 18px; font-weight: bold;">#${p.id.substring(0,6).toUpperCase()}</div></div></div>
+        <div class="info-box"><strong>Cliente:</strong> ${p.clienteNome}<br><strong>Data do Pedido:</strong> ${p.data.toDate().toLocaleDateString('pt-BR')} às ${p.data.toDate().toLocaleTimeString('pt-BR')}<br><strong>Status Atual:</strong> ${p.status}</div>
         <h3 style="text-transform: uppercase; color: #64748b;">Itens para Produção</h3>
-        ${p.itens.map((i, index) => `
-            <div class="item-box">
-                <div class="item-title">Item ${index + 1}: ${i.qtd}x ${i.nome}</div>
-                <div class="item-desc">${i.desc.replace(/\|/g, '<br>')}</div>
-                <div class="task-list">
-                    <div class="task-item"><span class="check-box"></span> Arte Aprovada / RIP</div>
-                    <div class="task-item"><span class="check-box"></span> Impressão Concluída</div>
-                    <div class="task-item"><span class="check-box"></span> Acabamento Finalizado</div>
-                    <div class="task-item"><span class="check-box"></span> Conferência e Embalagem</div>
-                </div>
-            </div>
-        `).join('')}
-        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
-        </body></html>
+        ${p.itens.map((i, index) => `<div class="item-box"><div class="item-title">Item ${index + 1}: ${i.qtd}x ${i.nome}</div><div class="item-desc">${i.desc.replace(/\|/g, '<br>')}</div><div class="task-list"><div class="task-item"><span class="check-box"></span> Arte Aprovada / RIP</div><div class="task-item"><span class="check-box"></span> Impressão Concluída</div><div class="task-item"><span class="check-box"></span> Acabamento Finalizado</div><div class="task-item"><span class="check-box"></span> Conferência e Embalagem</div></div></div>`).join('')}
+        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script></body></html>
     `;
-    janela.document.write(html);
-    janela.document.close();
+    janela.document.write(html); janela.document.close();
 }
 
-// --- LÓGICA DE ATRIBUTOS ---
+// --- ATRIBUTOS E PRODUTOS ---
 function addOpcaoAtrib(container, n = '', p = '', fixo = false) {
     const div = document.createElement('div');
     div.className = "flex gap-2 item-opcao items-center";
     const chk = fixo ? 'checked' : '';
-    div.innerHTML = `
-        <input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-200 rounded bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
-        <input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border border-slate-200 rounded bg-slate-50 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-        <label class="text-[9px] font-bold text-slate-400 flex items-center gap-1"><input type="checkbox" class="op-fixo" ${chk}> Fixo</label>
-        <button type="button" onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500">✕</button>
-    `;
+    div.innerHTML = `<input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-200 rounded bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border border-slate-200 rounded bg-slate-50 font-bold outline-none focus:ring-2 focus:ring-indigo-500"><label class="text-[9px] font-bold text-slate-400 flex items-center gap-1"><input type="checkbox" class="op-fixo" ${chk}> Fixo</label><button type="button" onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500">✕</button>`;
     container.appendChild(div);
 }
 
@@ -334,6 +303,7 @@ async function salvarProduto() {
     const d = {
         nome: document.getElementById('prodNome').value,
         categoria: document.getElementById('prodCategoria').value,
+        subcategoria: document.getElementById('prodSubcategoria').value || '',
         tipo: document.getElementById('prodTipo').value,
         regraPreco: document.getElementById('prodRegraPreco').value,
         preco: parseFloat(document.getElementById('prodPreco').value) || 0,
@@ -364,6 +334,7 @@ function editProd(id) {
     document.getElementById('prodId').value = p.id;
     document.getElementById('prodNome').value = p.nome || '';
     document.getElementById('prodCategoria').value = p.categoria || '';
+    document.getElementById('prodSubcategoria').value = p.subcategoria || '';
     document.getElementById('prodTipo').value = p.tipo || 'grafico';
     document.getElementById('prodRegraPreco').value = p.regraPreco || 'unidade';
     document.getElementById('prodPreco').value = p.preco || 0;
@@ -485,12 +456,29 @@ function abrirConfigurador(id) {
     
     if (acabPermitidos.length > 0) {
         tituloAcabamentos.classList.remove('hidden');
-        divAcabamentos.innerHTML = acabPermitidos.map(obj => {
+        
+        // Agrupar acabamentos por grupo para criar Radio Buttons
+        let gruposAcab = {};
+        acabPermitidos.forEach(obj => {
             const a = bdAcabamentos.find(x => x.id === (obj.id || obj));
-            if (!a) return '';
-            const sel = obj.padrao ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200';
-            return `<button type="button" onclick="this.classList.toggle('bg-indigo-600'); this.classList.toggle('text-white'); this.classList.toggle('border-indigo-600'); this.classList.toggle('bg-white'); this.classList.toggle('text-slate-600'); this.classList.toggle('border-slate-200'); calcularPrecoAoVivo()" data-id="${a.id}" data-preco="${a.venda}" data-regra="${a.regra}" class="acab-btn-modal px-3 py-2 rounded border font-bold text-[10px] uppercase transition-all ${sel}">${a.nome} (+ R$ ${a.venda.toFixed(2)})</button>`;
-        }).join('');
+            if(a) {
+                const g = a.grupo || 'Geral';
+                if(!gruposAcab[g]) gruposAcab[g] =[];
+                gruposAcab[g].push({...a, padrao: obj.padrao});
+            }
+        });
+
+        let htmlAcab = '';
+        for(let g in gruposAcab) {
+            htmlAcab += `<div class="w-full mb-2"><label class="text-[9px] font-bold text-slate-400 uppercase">${g}</label><div class="flex flex-col gap-1 mt-1">`;
+            htmlAcab += `<label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white p-2 border rounded cursor-pointer hover:bg-slate-50"><input type="radio" name="acab_${g}" value="0" data-preco="0" onchange="calcularPrecoAoVivo()" checked> Nenhum / Padrão</label>`;
+            gruposAcab[g].forEach(a => {
+                const chk = a.padrao ? 'checked' : '';
+                htmlAcab += `<label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white p-2 border rounded cursor-pointer hover:bg-slate-50"><input type="radio" name="acab_${g}" value="${a.id}" data-preco="${a.venda}" data-regra="${a.regra}" onchange="calcularPrecoAoVivo()" ${chk}> ${a.nome} (+ R$ ${a.venda.toFixed(2)})</label>`;
+            });
+            htmlAcab += `</div></div>`;
+        }
+        divAcabamentos.innerHTML = htmlAcab;
     } else {
         tituloAcabamentos.classList.add('hidden');
         divAcabamentos.innerHTML = '';
@@ -561,9 +549,9 @@ function calcularPrecoAoVivo() {
     });
 
     let totalAcab = 0;
-    document.querySelectorAll('.acab-btn-modal.bg-indigo-600').forEach(btn => {
-        const pA = parseFloat(btn.dataset.preco); 
-        const rA = btn.dataset.regra;
+    document.querySelectorAll('#modalCorpoAcabamentos input[type="radio"]:checked').forEach(radio => {
+        const pA = parseFloat(radio.dataset.preco) || 0; 
+        const rA = radio.dataset.regra;
         if (rA === 'm2') totalAcab += pA * m2 * qtd; 
         else if (rA === 'lote') totalAcab += pA; 
         else totalAcab += pA * qtd;
@@ -587,6 +575,10 @@ function confirmarAdicaoCarrinho() {
     let varsEscolhidas =[];
     document.querySelectorAll('.sel-var').forEach(s => {
         varsEscolhidas.push(s.options[s.selectedIndex].text.split(" (+")[0].split(" (G")[0]);
+    });
+
+    document.querySelectorAll('#modalCorpoAcabamentos input[type="radio"]:checked').forEach(r => {
+        if(r.value !== "0") varsEscolhidas.push(r.parentElement.innerText.split(" (+")[0].trim());
     });
     
     carrinho.push({ 
@@ -682,7 +674,6 @@ function renderCliSelectCart() { const cartCli = document.getElementById('listaC
 function toggleOpcoesPagamento() { document.getElementById('divParcelas').style.display = (document.getElementById('cartPagamento').value === 'Credito_Parcelado') ? 'block' : 'none'; }
 function toggleOpcoesEntrega() { const v = document.getElementById('cartEntrega').value; document.getElementById('divFrete').style.display = (v === 'Retirada') ? 'none' : 'block'; atualizarTotalFinal(); }
 function renderAcabTable() { const tab = document.getElementById('listaAcabamentosTab'); if(tab) tab.innerHTML = bdAcabamentos.map(a => `<tr class="border-b border-slate-50"><td class="p-4 font-bold text-slate-600">${a.nome} (${a.grupo})</td><td class="p-4 text-center"><button type="button" onclick="editAcab('${a.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button><button type="button" onclick="db.collection('acabamentos').doc('${a.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button></td></tr>`).join(''); }
-function renderPedidosFinanceiro() { const tab = document.getElementById('listaPedidosTab'); if(!tab) return; tab.innerHTML = bdPedidos.map(p => `<tr class="border-b border-slate-50 hover:bg-slate-50 transition"><td class="p-4 text-slate-400 font-medium">${p.data.toDate().toLocaleDateString('pt-BR')}</td><td class="p-4 font-bold text-slate-700">${p.clienteNome}</td><td class="p-4 font-black text-indigo-600">R$ ${p.total.toFixed(2)}</td><td class="p-4 text-center"><span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span><button type="button" onclick="imprimirRecibo('${p.id}')" class="ml-2 text-slate-400 hover:text-indigo-600" title="Imprimir Recibo"><i class="fa fa-print"></i></button></td></tr>`).join(''); }
 function atualizarInfoCreditoCarrinho() { const idCli = document.getElementById('cartCliente').value; const label = document.getElementById('labelCreditoCli'); if(!idCli) { label.innerText = "Saldo: R$ 0.00"; label.className = "text-emerald-500 font-bold"; return; } const c = bdClientes.find(x => x.id === idCli); const credito = c.credito || 0; label.innerText = `Saldo: R$ ${credito.toFixed(2)}`; label.className = credito >= 0 ? "text-emerald-500 font-bold" : "text-red-500 font-bold"; }
 function renderProdTable() { const tab = document.getElementById('listaProdutosTab'); if(!tab) return; tab.innerHTML = bdProdutos.map(p => `<tr class="border-b border-slate-50 hover:bg-slate-50 transition"><td class="p-4 font-bold text-slate-700">${p.nome}</td><td class="p-4 text-slate-400 text-[10px] uppercase">${p.regraPreco}</td><td class="p-4 text-center"><button type="button" onclick="editProd('${p.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button><button type="button" onclick="db.collection('produtos').doc('${p.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button></td></tr>`).join(''); }
 function renderCliTable() { const tab = document.getElementById('listaClientesTab'); if(!tab) return; tab.innerHTML = bdClientes.map(c => `<tr class="border-b border-slate-50 hover:bg-slate-50"><td class="p-4 font-bold text-slate-700">${c.nome}</td><td class="p-4 font-bold ${c.credito >= 0 ? 'text-emerald-500' : 'text-red-500'}">R$ ${(c.credito || 0).toFixed(2)}</td><td class="p-4 text-center space-x-3"><button type="button" onclick="verHistoricoCliente('${c.id}')" class="text-indigo-400 text-[10px] font-black uppercase hover:text-indigo-500">Histórico</button><button type="button" onclick="editCli('${c.id}')" class="text-slate-400 text-[10px] font-black uppercase hover:text-indigo-500">Editar</button><button type="button" onclick="db.collection('clientes').doc('${c.id}').delete()" class="text-red-300 hover:text-red-500">✕</button></td></tr>`).join(''); }
