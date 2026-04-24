@@ -11,8 +11,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let bdCategorias = [];
-let bdProdutos =[];
+let bdCategorias =[];
+let bdProdutos = [];
 let bdClientes = [];
 let bdPedidos = [];
 let bdAcabamentos =[];
@@ -103,6 +103,7 @@ async function salvarMovimentacao() {
 
     document.getElementById('finDesc').value = '';
     document.getElementById('finValor').value = '';
+    alert("Movimentação lançada com sucesso!");
 }
 
 function renderPedidosFinanceiro() {
@@ -121,9 +122,13 @@ function renderPedidosFinanceiro() {
 
     const tabExtrato = document.getElementById('listaExtratoTab');
     if(tabExtrato) {
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const hoje = new Date(); 
+        hoje.setHours(0,0,0,0);
         const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        let vHoje = 0, eMes = 0, sMes = 0; 
+        
+        let vHoje = 0;
+        let eMes = 0;
+        let sMes = 0; 
         let extrato =[];
 
         bdPedidos.forEach(p => {
@@ -150,13 +155,17 @@ function renderPedidosFinanceiro() {
         document.getElementById('finSaldoMes').innerText = "R$ " + (eMes - sMes).toFixed(2);
 
         extrato.sort((a,b) => b.data - a.data);
-        tabExtrato.innerHTML = extrato.map(i => `
-            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                <td class="p-4 text-slate-400 font-medium">${i.data.toLocaleDateString('pt-BR')}</td>
-                <td class="p-4 font-bold text-slate-700">${i.desc}</td>
-                <td class="p-4 text-right font-black ${i.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500'}">${i.tipo === 'entrada' ? '+' : '-'} R$ ${i.valor.toFixed(2)}</td>
-            </tr>
-        `).join('');
+        tabExtrato.innerHTML = extrato.map(i => {
+            const corValor = i.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500';
+            const sinal = i.tipo === 'entrada' ? '+' : '-';
+            return `
+                <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                    <td class="p-4 text-slate-400 font-medium">${i.data.toLocaleDateString('pt-BR')}</td>
+                    <td class="p-4 font-bold text-slate-700">${i.desc}</td>
+                    <td class="p-4 text-right font-black ${corValor}">${sinal} R$ ${i.valor.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
     }
 }
 
@@ -195,6 +204,8 @@ function gerarCardPedido(p) {
     if(p.status === 'Entregue') corBorda = 'border-l-emerald-600';
     if(p.status === 'Cancelado / Estorno') corBorda = 'border-l-red-500';
 
+    const itensHtml = (p.itens ||[]).map(i => `<p>• ${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('');
+
     return `
         <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${corBorda}">
             <div class="flex justify-between items-start mb-2">
@@ -203,7 +214,7 @@ function gerarCardPedido(p) {
             </div>
             <h4 class="font-bold text-slate-800 text-xs mb-2">${p.clienteNome}</h4>
             <div class="text-[9px] text-slate-500 mb-3 space-y-1">
-                ${p.itens.map(i => `<p>• ${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}
+                ${itensHtml}
             </div>
             <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
                 <select onchange="mudarStatusPedido('${p.id}', this.value)" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
@@ -216,11 +227,15 @@ function gerarCardPedido(p) {
 }
 
 async function mudarStatusPedido(id, novoStatus) {
-    try { await db.collection("pedidos").doc(id).update({ status: novoStatus }); } 
-    catch(e) { console.error(e); alert("Erro ao atualizar status."); }
+    try { 
+        await db.collection("pedidos").doc(id).update({ status: novoStatus }); 
+    } catch(e) { 
+        console.error(e); 
+        alert("Erro ao atualizar status."); 
+    }
 }
 
-// --- IMPRESSÃO ---
+// --- IMPRESSÃO DE RECIBO (2 VIAS) ---
 function imprimirReciboDireto(idPedido, objPedido) {
     const p = objPedido || bdPedidos.find(x => x.id === idPedido);
     if(!p) return;
@@ -235,7 +250,12 @@ function imprimirReciboDireto(idPedido, objPedido) {
             .center { text-align: center; } .bold { font-weight: bold; } .linha { border-bottom: 1px dashed #000; margin: 8px 0; }
             table { width: 100%; font-size: 12px; border-collapse: collapse; } th, td { text-align: left; padding: 2px 0; vertical-align: top; } .right { text-align: right; }
             img.logo { max-width: 150px; margin: 0 auto 10px auto; display: block; }
+            @media print { .page-break { page-break-before: always; } }
+            .prod-item { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+            .prod-desc { font-size: 12px; margin-bottom: 10px; padding-left: 10px; }
         </style></head><body>
+
+        <!-- VIA DO CLIENTE -->
         <img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" />
         <div class="center bold" style="font-size: 14px;">Gráfica Venom Arts LTDA</div>
         <div class="center" style="font-size: 10px; margin-bottom: 10px;">
@@ -259,6 +279,24 @@ function imprimirReciboDireto(idPedido, objPedido) {
         <div class="right bold">Saldo: R$ ${(p.saldoDevedor || 0).toFixed(2)}</div>
         <div class="linha"></div>
         <div class="center">Obrigado pela preferência!</div>
+
+        <!-- QUEBRA DE PÁGINA PARA A VIA DA PRODUÇÃO -->
+        <div class="page-break"></div>
+
+        <!-- VIA DA PRODUÇÃO -->
+        <div class="center bold" style="font-size: 16px; margin-bottom: 10px;">VIA DA PRODUÇÃO</div>
+        <div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
+        <div class="center">Data: ${dataStr}</div>
+        <div class="linha"></div>
+        <div class="bold" style="font-size: 14px;">Cliente: ${p.clienteNome}</div>
+        <div class="linha"></div>
+        ${(p.itens || []).map(i => `
+            <div class="prod-item">[ ] ${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome}</div>
+            <div class="prod-desc">${i.desc.replace(/\|/g, '<br>')}</div>
+        `).join('')}
+        <div class="linha"></div>
+        <div class="center">Fim da Ordem de Serviço</div>
+
         <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
         </body></html>
     `;
@@ -349,6 +387,7 @@ function addAtributo(nome = '', opcoes =[]) {
     document.getElementById('listaAtributos').appendChild(div);
     const containerOpcoes = div.querySelector('.lista-opcoes');
     div.querySelector('.btn-add-op').onclick = () => addOpcaoAtrib(containerOpcoes);
+    
     if (opcoes && opcoes.length > 0) {
         opcoes.forEach(o => addOpcaoAtrib(containerOpcoes, o.nome, o.preco, o.fixo));
     } else {
@@ -394,8 +433,10 @@ function atualizarListaAcabamentosProduto(salvos =[]) {
     const container = document.getElementById('listaCheckAcabamentos');
     const catSelect = document.getElementById('prodCategoria');
     if(!container || !catSelect) return;
+    
     const cat = catSelect.value;
     const filtrados = bdAcabamentos.filter(a => a.categoria === cat || a.categoria === "Geral");
+    
     container.innerHTML = filtrados.map(a => {
         const obj = salvos.find(s => (s.id || s) === a.id);
         const checked = obj ? 'checked' : '';
@@ -476,6 +517,7 @@ async function salvarProduto() {
     } else {
         await db.collection("produtos").add(d);
     }
+    
     limparFormProd();
 }
 
@@ -832,4 +874,225 @@ async function enviarPedido(imprimir = false) {
         await db.collection("clientes").doc(idCli).update({ credito: (clienteObj.credito || 0) - pago });
     }
     
-    carrinho =
+    carrinho =[]; 
+    document.getElementById('cartValorPago').value = 0; 
+    document.getElementById('cartDesconto').value = 0; 
+    document.getElementById('cartCliente').value = '';
+    renderCarrinho();
+    
+    if(imprimir) imprimirReciboDireto(docRef.id, pedido);
+    else alert("PEDIDO SALVO!");
+}
+
+// --- AUXILIARES GERAIS ---
+function mudarAba(aba, btn) { 
+    document.querySelectorAll('.aba-content').forEach(el => el.classList.add('hidden')); 
+    document.getElementById('aba-'+aba).classList.remove('hidden'); 
+    document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('active-aba')); 
+    if(btn) btn.classList.add('active-aba'); 
+}
+
+function mudarSubAba(sub, btn) { 
+    document.querySelectorAll('.sub-aba-content').forEach(el => el.classList.add('hidden')); 
+    document.getElementById(sub).classList.remove('hidden'); 
+    document.querySelectorAll('.sub-aba-btn').forEach(b => b.classList.remove('active-sub', 'text-indigo-600')); 
+    if(btn) btn.classList.add('active-sub', 'text-indigo-600'); 
+}
+
+function fecharModal() { 
+    document.getElementById('modalW2P').classList.add('hidden'); 
+}
+
+function fecharModalFora(event) {
+    if (event.target.id === 'modalW2P') fecharModal();
+}
+
+function renderCat() { 
+    const tab = document.getElementById('listaCategoriasTab'); 
+    if(tab) {
+        tab.innerHTML = bdCategorias.map(c => `
+            <tr class="border-b border-slate-50">
+                <td class="p-4 font-bold text-slate-600">${c.nome}</td>
+                <td class="p-4 text-right">
+                    <button type="button" onclick="editCat('${c.id}')" class="text-indigo-500 mr-3">Editar</button>
+                    <button type="button" onclick="db.collection('categorias').doc('${c.id}').delete()" class="text-red-300">✕</button>
+                </td>
+            </tr>
+        `).join(''); 
+    }
+    const catSelect = document.getElementById('prodCategoria'); 
+    if(catSelect) {
+        catSelect.innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); 
+    }
+    const acabCat = document.getElementById('acabCategoria'); 
+    if(acabCat) acabCat.innerHTML = catSelect.innerHTML; 
+}
+
+function renderCliSelectCart() { 
+    const datalist = document.getElementById('listaClientesData'); 
+    if(datalist) {
+        datalist.innerHTML = bdClientes.map(c => `<option value="${c.nome}"></option>`).join(''); 
+    }
+}
+
+function toggleOpcoesPagamento() { 
+    document.getElementById('divParcelas').style.display = (document.getElementById('cartPagamento').value === 'Credito_Parcelado') ? 'block' : 'none'; 
+}
+
+function toggleOpcoesEntrega() { 
+    const v = document.getElementById('cartEntrega').value; 
+    document.getElementById('divFrete').style.display = (v === 'Retirada') ? 'none' : 'block'; 
+    atualizarTotalFinal(); 
+}
+
+function renderAcabTable() { 
+    const tab = document.getElementById('listaAcabamentosTab'); 
+    if(tab) {
+        tab.innerHTML = bdAcabamentos.map(a => `
+            <tr class="border-b border-slate-50">
+                <td class="p-4 font-bold text-slate-600">${a.nome} (${a.grupo})</td>
+                <td class="p-4 text-center">
+                    <button type="button" onclick="editAcab('${a.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button>
+                    <button type="button" onclick="db.collection('acabamentos').doc('${a.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button>
+                </td>
+            </tr>
+        `).join(''); 
+    }
+}
+
+function atualizarInfoCreditoCarrinho() { 
+    const nomeCli = document.getElementById('cartCliente').value; 
+    const label = document.getElementById('labelCreditoCli'); 
+    const c = bdClientes.find(x => x.nome === nomeCli);
+
+    if(!c) { 
+        label.innerText = "Saldo: R$ 0.00"; 
+        label.className = "text-emerald-500 font-bold"; 
+        return; 
+    } 
+    const credito = c.credito || 0; 
+    label.innerText = `Saldo: R$ ${credito.toFixed(2)}`; 
+    label.className = credito >= 0 ? "text-emerald-500 font-bold" : "text-red-500 font-bold"; 
+}
+
+function renderProdTable() { 
+    const tab = document.getElementById('listaProdutosTab'); 
+    if(!tab) return; 
+    tab.innerHTML = bdProdutos.map(p => `
+        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+            <td class="p-4 font-bold text-slate-700">${p.nome}</td>
+            <td class="p-4 text-slate-400 text-[10px] uppercase">${p.regraPreco}</td>
+            <td class="p-4 text-center">
+                <button type="button" onclick="editProd('${p.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button>
+                <button type="button" onclick="db.collection('produtos').doc('${p.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button>
+            </td>
+        </tr>
+    `).join(''); 
+}
+
+function renderCliTable() { 
+    const tab = document.getElementById('listaClientesTab'); 
+    const termo = document.getElementById('buscaCliente')?.value.toLowerCase() || '';
+    if(!tab) return; 
+
+    let filtrados = bdClientes;
+    if(termo) {
+        filtrados = filtrados.filter(c => c.nome.toLowerCase().includes(termo) || (c.documento && c.documento.includes(termo)));
+    }
+
+    tab.innerHTML = filtrados.map(c => `
+        <tr class="border-b border-slate-50 hover:bg-slate-50">
+            <td class="p-4 font-bold text-slate-700">${c.nome}</td>
+            <td class="p-4 font-bold ${c.credito >= 0 ? 'text-emerald-500' : 'text-red-500'}">R$ ${(c.credito || 0).toFixed(2)}</td>
+            <td class="p-4 text-center space-x-3">
+                <button type="button" onclick="verHistoricoCliente('${c.id}')" class="text-indigo-400 text-[10px] font-black uppercase hover:text-indigo-500">Histórico</button>
+                <button type="button" onclick="editCli('${c.id}')" class="text-slate-400 text-[10px] font-black uppercase hover:text-indigo-500">Editar</button>
+                <button type="button" onclick="db.collection('clientes').doc('${c.id}').delete()" class="text-red-300 hover:text-red-500">✕</button>
+            </td>
+        </tr>
+    `).join(''); 
+}
+
+async function salvarCliente() { 
+    const id = document.getElementById('cliId').value; 
+    const d = { 
+        nome: document.getElementById('cliNome').value, 
+        documento: document.getElementById('cliDoc').value, 
+        telefone: document.getElementById('cliTel').value, 
+        endereco: document.getElementById('cliEnd').value, 
+        credito: parseFloat(document.getElementById('cliCredito').value) || 0 
+    }; 
+    if(!d.nome) return alert("Nome obrigatório"); 
+    if(id) await db.collection("clientes").doc(id).update(d); 
+    else await db.collection("clientes").add(d); 
+    limparFormCli(); 
+}
+
+function editCli(id) { 
+    const c = bdClientes.find(x => x.id === id); 
+    document.getElementById('cliId').value = c.id; 
+    document.getElementById('cliNome').value = c.nome; 
+    document.getElementById('cliDoc').value = c.documento || ''; 
+    document.getElementById('cliTel').value = c.telefone || ''; 
+    document.getElementById('cliEnd').value = c.endereco || ''; 
+    document.getElementById('cliCredito').value = c.credito || 0; 
+    document.getElementById('tituloCliForm').innerText = "Editar Cadastro"; 
+}
+
+function limparFormCli() { 
+    document.querySelectorAll('#sub-cli input').forEach(i => i.value = ''); 
+    document.getElementById('cliId').value = ''; 
+    document.getElementById('tituloCliForm').innerText = "Novo Cliente"; 
+}
+
+async function salvarCategoria() { 
+    const id = document.getElementById('catId').value; 
+    const nome = document.getElementById('catNome').value; 
+    if(!nome) return; 
+    if(id) await db.collection("categorias").doc(id).update({nome: nome}); 
+    else await db.collection("categorias").add({nome: nome}); 
+    document.getElementById('catId').value = ''; 
+    document.getElementById('catNome').value = ''; 
+}
+
+function editCat(id) { 
+    const c = bdCategorias.find(x => x.id === id); 
+    document.getElementById('catId').value = c.id; 
+    document.getElementById('catNome').value = c.nome; 
+}
+
+async function salvarAcabamento() { 
+    const id = document.getElementById('acabId').value;
+    const d = { 
+        nome: document.getElementById('acabNome')?.value, 
+        grupo: document.getElementById('acabGrupo')?.value, 
+        categoria: document.getElementById('acabCategoria')?.value, 
+        regra: document.getElementById('acabRegra')?.value, 
+        venda: parseFloat(document.getElementById('acabPrecoVenda')?.value) || 0, 
+        custo: parseFloat(document.getElementById('acabCusto')?.value) || 0 
+    }; 
+    if(!d.nome) return alert("Nome obrigatório");
+    if(id) await db.collection("acabamentos").doc(id).update(d);
+    else await db.collection("acabamentos").add(d); 
+    limparFormAcab();
+}
+
+function editAcab(id) {
+    const a = bdAcabamentos.find(x => x.id === id);
+    if(!a) return;
+    document.getElementById('acabId').value = a.id;
+    document.getElementById('acabNome').value = a.nome;
+    document.getElementById('acabGrupo').value = a.grupo || '';
+    document.getElementById('acabCategoria').value = a.categoria || '';
+    document.getElementById('acabRegra').value = a.regra || 'unidade';
+    document.getElementById('acabPrecoVenda').value = a.venda || 0;
+    document.getElementById('acabCusto').value = a.custo || 0;
+}
+
+function limparFormAcab() {
+    document.getElementById('acabId').value = '';
+    document.getElementById('acabNome').value = '';
+    document.getElementById('acabGrupo').value = '';
+    document.getElementById('acabPrecoVenda').value = '';
+    document.getElementById('acabCusto').value = '';
+}
