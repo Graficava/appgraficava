@@ -11,7 +11,11 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let bdCategorias = [], bdProdutos = [], bdClientes = [], bdPedidos = [], bdAcabamentos =[], bdTransacoes = [];
+let bdCategorias = [];
+let bdProdutos = [];
+let bdClientes = [];
+let bdPedidos =[];
+let bdAcabamentos = [];
 let carrinho = [];
 
 const STATUSES =["Aguardando pagamento", "Em produção", "Acabamento", "Pronto para Retirada", "Entregue", "Cancelado / Estorno"];
@@ -33,95 +37,52 @@ function entrar() {
     const e = document.getElementById('email').value;
     const s = document.getElementById('senha').value;
     if (!e || !s) return;
-    auth.signInWithEmailAndPassword(e, s).catch(() => document.getElementById('msgErro').classList.remove('hidden'));
+    auth.signInWithEmailAndPassword(e, s).catch(() => {
+        document.getElementById('msgErro').classList.remove('hidden');
+    });
 }
 
 function sair() { auth.signOut(); }
 
 function iniciarLeitura() {
-    db.collection("categorias").onSnapshot(s => { bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()})); renderCat(); renderFiltrosVitrine(); });
-    db.collection("produtos").onSnapshot(s => { bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()})); renderVitrine(); renderProdTable(); });
-    db.collection("clientes").orderBy("nome").onSnapshot(s => { bdClientes = s.docs.map(d => ({id: d.id, ...d.data()})); renderCliTable(); renderCliSelectCart(); });
-    db.collection("acabamentos").onSnapshot(s => { bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()})); renderAcabTable(); atualizarListaAcabamentosProduto(); });
-    db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => { bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()})); renderPedidosFinanceiro(); renderKanbanProducao(); });
-    db.collection("transacoes").orderBy("data", "desc").limit(50).onSnapshot(s => { bdTransacoes = s.docs.map(d => ({id: d.id, ...d.data()})); renderPedidosFinanceiro(); });
+    db.collection("categorias").onSnapshot(s => { 
+        bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderCat(); renderFiltrosVitrine();
+    });
+    db.collection("produtos").onSnapshot(s => { 
+        bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderVitrine(); renderProdTable();
+    });
+    db.collection("clientes").orderBy("nome").onSnapshot(s => { 
+        bdClientes = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderCliTable(); renderCliSelectCart();
+    });
+    db.collection("acabamentos").onSnapshot(s => {
+        bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderAcabTable(); atualizarListaAcabamentosProduto();
+    });
+    db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => {
+        bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()}));
+        renderPedidosFinanceiro(); renderKanbanProducao();
+    });
 }
 
-// --- FINANCEIRO ---
-async function salvarMovimentacao() {
-    const tipo = document.getElementById('finTipo').value;
-    const desc = document.getElementById('finDesc').value;
-    const valor = parseFloat(document.getElementById('finValor').value);
-    if(!desc || !valor) return alert("Preencha descrição e valor!");
-    await db.collection("transacoes").add({ tipo: tipo, descricao: desc, valor: valor, data: new Date() });
-    document.getElementById('finDesc').value = ''; document.getElementById('finValor').value = '';
-}
-
-function renderPedidosFinanceiro() {
-    const tab = document.getElementById('listaPedidosTab');
-    const tabExtrato = document.getElementById('listaExtratoTab');
-    
-    if(tab) {
-        tab.innerHTML = bdPedidos.map(p => `
-            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                <td class="p-4 text-slate-400 font-medium">${p.data.toDate().toLocaleDateString('pt-BR')}</td>
-                <td class="p-4 font-bold text-slate-700">${p.clienteNome}</td>
-                <td class="p-4 font-black text-indigo-600">R$ ${p.total.toFixed(2)}</td>
-                <td class="p-4 text-center"><span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span></td>
-                <td class="p-4 text-center"><button type="button" onclick="imprimirRecibo('${p.id}')" class="text-slate-400 hover:text-indigo-600" title="Imprimir Recibo"><i class="fa fa-print"></i></button></td>
-            </tr>
-        `).join('');
-    }
-
-    if(tabExtrato) {
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
-        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        let vHoje = 0, eMes = 0, sMes = 0; let extrato =[];
-
-        bdPedidos.forEach(p => {
-            const d = p.data.toDate(); const v = p.valorPago || 0; const t = p.total || 0;
-            if(d >= hoje) vHoje += t;
-            if(d >= inicioMes) eMes += v;
-            if(v > 0) extrato.push({ data: d, desc: `Venda: ${p.clienteNome}`, valor: v, tipo: 'entrada' });
-        });
-
-        bdTransacoes.forEach(t => {
-            const d = t.data.toDate();
-            if(d >= inicioMes) { if(t.tipo === 'entrada') eMes += t.valor; else sMes += t.valor; }
-            extrato.push({ data: d, desc: t.descricao, valor: t.valor, tipo: t.tipo });
-        });
-
-        document.getElementById('finVendasHoje').innerText = "R$ " + vHoje.toFixed(2);
-        document.getElementById('finEntradasMes').innerText = "R$ " + eMes.toFixed(2);
-        document.getElementById('finSaidasMes').innerText = "R$ " + sMes.toFixed(2);
-        document.getElementById('finSaldoMes').innerText = "R$ " + (eMes - sMes).toFixed(2);
-
-        extrato.sort((a,b) => b.data - a.data);
-        tabExtrato.innerHTML = extrato.map(i => `
-            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                <td class="p-4 text-slate-400 font-medium">${i.data.toLocaleDateString('pt-BR')}</td>
-                <td class="p-4 font-bold text-slate-700">${i.desc}</td>
-                <td class="p-4 text-right font-black ${i.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500'}">${i.tipo === 'entrada' ? '+' : '-'} R$ ${i.valor.toFixed(2)}</td>
-            </tr>
-        `).join('');
-    }
-}
-
-// --- KANBAN ---
+// --- KANBAN DE PRODUÇÃO ---
 function renderKanbanProducao() {
     const container = document.getElementById('kanbanContainer');
     if(!container) return;
+
     let html = '';
     STATUSES.forEach(status => {
-        const peds = bdPedidos.filter(p => p.status === status);
+        const pedidosDoStatus = bdPedidos.filter(p => p.status === status);
         html += `
             <div class="bg-slate-100 rounded-xl p-4 w-80 flex-shrink-0 flex flex-col kanban-col border border-slate-200">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-slate-700 uppercase text-[10px] tracking-widest">${status}</h3>
-                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${peds.length}</span>
+                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full">${pedidosDoStatus.length}</span>
                 </div>
                 <div class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar">
-                    ${peds.map(p => gerarCardPedido(p)).join('')}
+                    ${pedidosDoStatus.map(p => gerarCardPedido(p)).join('')}
                 </div>
             </div>
         `;
@@ -130,55 +91,110 @@ function renderKanbanProducao() {
 }
 
 function gerarCardPedido(p) {
-    const dataF = p.data.toDate().toLocaleDateString('pt-BR') + ' ' + p.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-    let opts = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
-    let cor = 'border-l-slate-400';
-    if(p.status === 'Aguardando pagamento') cor = 'border-l-amber-400';
-    if(p.status === 'Em produção') cor = 'border-l-blue-500';
-    if(p.status === 'Acabamento') cor = 'border-l-indigo-500';
-    if(p.status === 'Pronto para Retirada') cor = 'border-l-emerald-400';
-    if(p.status === 'Entregue') cor = 'border-l-emerald-600';
-    if(p.status === 'Cancelado / Estorno') cor = 'border-l-red-500';
+    const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
+    const dataFormatada = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    let options = STATUSES.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('');
+
+    let corBorda = 'border-l-slate-400';
+    if(p.status === 'Aguardando pagamento') corBorda = 'border-l-amber-400';
+    if(p.status === 'Em produção') corBorda = 'border-l-blue-500';
+    if(p.status === 'Acabamento') corBorda = 'border-l-indigo-500';
+    if(p.status === 'Pronto para Retirada') corBorda = 'border-l-emerald-400';
+    if(p.status === 'Entregue') corBorda = 'border-l-emerald-600';
+    if(p.status === 'Cancelado / Estorno') corBorda = 'border-l-red-500';
+
+    const itensHtml = (p.itens ||[]).map(i => `<p>• ${i.qtdModal || 1}x ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('');
 
     return `
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${cor}">
-            <div class="flex justify-between items-start mb-2"><span class="text-[9px] font-bold text-slate-400">${dataF}</span><span class="text-[10px] font-black text-indigo-600">R$ ${p.total.toFixed(2)}</span></div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${corBorda}">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-[9px] font-bold text-slate-400">${dataFormatada}</span>
+                <span class="text-[10px] font-black text-indigo-600">R$ ${(p.total || 0).toFixed(2)}</span>
+            </div>
             <h4 class="font-bold text-slate-800 text-xs mb-2">${p.clienteNome}</h4>
-            <div class="text-[9px] text-slate-500 mb-3 space-y-1">${p.itens.map(i => `<p>• ${i.qtd}x ${i.nome} <span class="opacity-70">(${i.desc})</span></p>`).join('')}</div>
+            <div class="text-[9px] text-slate-500 mb-3 space-y-1">${itensHtml}</div>
             <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
-                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">${opts}</select>
+                <select onchange="mudarStatusPedido('${p.id}', this.value)" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    ${options}
+                </select>
                 <button type="button" onclick="imprimirOSA4('${p.id}')" class="bg-slate-800 text-white px-3 rounded hover:bg-slate-700 transition" title="Imprimir OS (A4)"><i class="fa fa-file-pdf"></i></button>
             </div>
         </div>
     `;
 }
 
-async function mudarStatusPedido(id, novoStatus) { await db.collection("pedidos").doc(id).update({ status: novoStatus }); }
+async function mudarStatusPedido(id, novoStatus) {
+    try { await db.collection("pedidos").doc(id).update({ status: novoStatus }); } 
+    catch(e) { console.error(e); alert("Erro ao atualizar status."); }
+}
 
-// --- IMPRESSÃO ---
+// --- IMPRESSÃO DE RECIBO (2 VIAS) ---
 function imprimirReciboDireto(idPedido, objPedido) {
     const p = objPedido || bdPedidos.find(x => x.id === idPedido);
     if(!p) return;
+    
     const janela = window.open('', '', 'width=350,height=800');
+    const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
+    const dataStr = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR');
+    
     let html = `
         <html><head><style>
             body { font-family: monospace; width: 80mm; margin: 0; padding: 10px; color: #000; font-size: 12px; }
             .center { text-align: center; } .bold { font-weight: bold; } .linha { border-bottom: 1px dashed #000; margin: 8px 0; }
             table { width: 100%; font-size: 12px; border-collapse: collapse; } th, td { text-align: left; padding: 2px 0; vertical-align: top; } .right { text-align: right; }
             img.logo { max-width: 150px; margin: 0 auto 10px auto; display: block; }
+            @media print { .page-break { page-break-before: always; } }
+            .prod-item { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+            .prod-desc { font-size: 12px; margin-bottom: 10px; padding-left: 10px; }
         </style></head><body>
+
+        <!-- VIA DO CLIENTE -->
         <img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" />
         <div class="center bold" style="font-size: 14px;">Gráfica Venom Arts LTDA</div>
-        <div class="center" style="font-size: 10px; margin-bottom: 10px;">CNPJ: 17.184.159/0001-06<br>IM: 2231694 | IE: 14.623.58-2<br>Rua Lopes Trovão nº 474 Lojas 202 e 201<br>Icaraí, Niterói - RJ 24220-071<br>www.graficava.com.br<br>WhatsApp: 21 99993-0190<br>Insta: @grafica.venomarts</div>
-        <div class="linha"></div><div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
-        <div class="center">Data: ${p.data.toDate ? p.data.toDate().toLocaleDateString('pt-BR') : p.data.toLocaleDateString('pt-BR')} ${p.data.toDate ? p.data.toDate().toLocaleTimeString('pt-BR') : p.data.toLocaleTimeString('pt-BR')}</div>
-        <div class="linha"></div><div>Cliente: ${p.clienteNome}</div><div class="linha"></div>
-        <table><tr><th>Qtd/Item</th><th class="right">Valor</th></tr>${p.itens.map(i => `<tr><td>${i.qtd}x ${i.nome}<br><small>${i.desc}</small></td><td class="right">R$ ${i.valor.toFixed(2)}</td></tr>`).join('')}</table>
-        <div class="linha"></div><div class="right bold">Subtotal: R$ ${(p.total + (p.desconto || 0)).toFixed(2)}</div><div class="right">Desconto: R$ ${(p.desconto || 0).toFixed(2)}</div><div class="right bold">Total: R$ ${p.total.toFixed(2)}</div><div class="right">Valor Pago: R$ ${(p.valorPago || 0).toFixed(2)}</div><div class="right bold">Saldo: R$ ${(p.saldoDevedor || 0).toFixed(2)}</div>
-        <div class="linha"></div><div class="center">Obrigado pela preferência!</div>
-        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script></body></html>
+        <div class="center" style="font-size: 10px; margin-bottom: 10px;">
+            CNPJ: 17.184.159/0001-06<br>IM: 2231694 | IE: 14.623.58-2<br>Rua Lopes Trovão nº 474 Lojas 202 e 201<br>Icaraí, Niterói - RJ 24220-071<br>www.graficava.com.br<br>WhatsApp: 21 99993-0190<br>Insta: @grafica.venomarts
+        </div>
+        <div class="linha"></div>
+        <div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
+        <div class="center">Data: ${dataStr}</div>
+        <div class="linha"></div>
+        <div>Cliente: ${p.clienteNome}</div>
+        <div class="linha"></div>
+        <table>
+            <tr><th>Qtd/Item</th><th class="right">Valor</th></tr>
+            ${(p.itens ||[]).map(i => `<tr><td>${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome}<br><small>${i.desc}</small></td><td class="right">R$ ${(i.valorModal * (i.qtdCarrinho || 1)).toFixed(2)}</td></tr>`).join('')}
+        </table>
+        <div class="linha"></div>
+        <div class="right bold">Subtotal: R$ ${(p.total + (p.desconto || 0)).toFixed(2)}</div>
+        <div class="right">Desconto: R$ ${(p.desconto || 0).toFixed(2)}</div>
+        <div class="right bold">Total: R$ ${(p.total || 0).toFixed(2)}</div>
+        <div class="right">Valor Pago: R$ ${(p.valorPago || 0).toFixed(2)}</div>
+        <div class="right bold">Saldo: R$ ${(p.saldoDevedor || 0).toFixed(2)}</div>
+        <div class="linha"></div>
+        <div class="center">Obrigado pela preferência!</div>
+
+        <!-- QUEBRA DE PÁGINA PARA A VIA DA PRODUÇÃO -->
+        <div class="page-break"></div>
+
+        <!-- VIA DA PRODUÇÃO -->
+        <div class="center bold" style="font-size: 16px; margin-bottom: 10px;">VIA DA PRODUÇÃO</div>
+        <div class="center bold" style="font-size: 14px;">Pedido: ${idPedido.substring(0,6).toUpperCase()}</div>
+        <div class="center">Data: ${dataStr}</div>
+        <div class="linha"></div>
+        <div class="bold" style="font-size: 14px;">Cliente: ${p.clienteNome}</div>
+        <div class="linha"></div>
+        ${(p.itens ||[]).map(i => `
+            <div class="prod-item">[ ] ${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome}</div>
+            <div class="prod-desc">${i.desc.replace(/\|/g, '<br>')}</div>
+        `).join('')}
+        <div class="linha"></div>
+        <div class="center">Fim da Ordem de Serviço</div>
+
+        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
+        </body></html>
     `;
-    janela.document.write(html); janela.document.close();
+    janela.document.write(html);
+    janela.document.close();
 }
 
 function imprimirRecibo(idPedido) { imprimirReciboDireto(idPedido, null); }
@@ -187,6 +203,9 @@ function imprimirOSA4(idPedido) {
     const p = bdPedidos.find(x => x.id === idPedido);
     if(!p) return;
     const janela = window.open('', '', 'width=800,height=900');
+    const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
+    const dataStr = dataObj.toLocaleDateString('pt-BR') + ' às ' + dataObj.toLocaleTimeString('pt-BR');
+
     let html = `
         <html><head><style>
             @page { size: A4; margin: 15mm; } body { font-family: Arial, sans-serif; color: #333; line-height: 1.4; }
@@ -199,15 +218,15 @@ function imprimirOSA4(idPedido) {
             .task-list { margin-top: 10px; font-size: 14px; } .task-item { margin-bottom: 8px; }
         </style></head><body>
         <div class="header"><img src="https://i.postimg.cc/GtwRkLBF/gva-pr-ERP-26.png" class="logo" alt="GVA Gráfica" /><div style="text-align: right;"><div class="title">ORDEM DE SERVIÇO</div><div style="font-size: 18px; font-weight: bold;">#${p.id.substring(0,6).toUpperCase()}</div></div></div>
-        <div class="info-box"><strong>Cliente:</strong> ${p.clienteNome}<br><strong>Data do Pedido:</strong> ${p.data.toDate().toLocaleDateString('pt-BR')} às ${p.data.toDate().toLocaleTimeString('pt-BR')}<br><strong>Status Atual:</strong> ${p.status}</div>
+        <div class="info-box"><strong>Cliente:</strong> ${p.clienteNome}<br><strong>Data do Pedido:</strong> ${dataStr}<br><strong>Status Atual:</strong> ${p.status}</div>
         <h3 style="text-transform: uppercase; color: #64748b;">Itens para Produção</h3>
-        ${p.itens.map((i, index) => `<div class="item-box"><div class="item-title">Item ${index + 1}: ${i.qtd}x ${i.nome}</div><div class="item-desc">${i.desc.replace(/\|/g, '<br>')}</div><div class="task-list"><div class="task-item"><span class="check-box"></span> Arte Aprovada / RIP</div><div class="task-item"><span class="check-box"></span> Impressão Concluída</div><div class="task-item"><span class="check-box"></span> Acabamento Finalizado</div><div class="task-item"><span class="check-box"></span> Conferência e Embalagem</div></div></div>`).join('')}
+        ${(p.itens ||[]).map((i, index) => `<div class="item-box"><div class="item-title">Item ${index + 1}: ${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome}</div><div class="item-desc">${i.desc.replace(/\|/g, '<br>')}</div><div class="task-list"><div class="task-item"><span class="check-box"></span> Arte Aprovada / RIP</div><div class="task-item"><span class="check-box"></span> Impressão Concluída</div><div class="task-item"><span class="check-box"></span> Acabamento Finalizado</div><div class="task-item"><span class="check-box"></span> Conferência e Embalagem</div></div></div>`).join('')}
         <script>setTimeout(() => { window.print(); window.close(); }, 500);</script></body></html>
     `;
     janela.document.write(html); janela.document.close();
 }
 
-// --- ATRIBUTOS E PRODUTOS ---
+// --- LÓGICA DE ATRIBUTOS ---
 function addOpcaoAtrib(container, n = '', p = '', fixo = false) {
     const div = document.createElement('div');
     div.className = "flex gap-2 item-opcao items-center";
@@ -230,11 +249,15 @@ function addAtributo(nome = '', opcoes =[]) {
 function addAtributoManual() { addAtributo('',[]); }
 
 function ajustarCamposProduto() {
-    const r = document.getElementById('prodRegraPreco').value;
-    document.getElementById('boxPrecoBase').style.display = (r === 'pacote' || r === 'progressivo') ? 'none' : 'block';
-    document.getElementById('boxPacotes').style.display = r === 'pacote' ? 'block' : 'none';
-    document.getElementById('boxProgressivo').style.display = r === 'progressivo' ? 'block' : 'none';
-    document.getElementById('boxMedidas').style.display = r === 'm2' ? 'grid' : 'none';
+    const r = document.getElementById('prodRegraPreco')?.value;
+    const pre = document.getElementById('boxPrecoBase');
+    const pac = document.getElementById('boxPacotes');
+    const pro = document.getElementById('boxProgressivo');
+    const med = document.getElementById('boxMedidas');
+    if(pre) pre.style.display = (r === 'pacote' || r === 'progressivo') ? 'none' : 'block';
+    if(pac) pac.style.display = r === 'pacote' ? 'block' : 'none';
+    if(pro) pro.style.display = r === 'progressivo' ? 'block' : 'none';
+    if(med) med.style.display = r === 'm2' ? 'grid' : 'none';
 }
 
 function addLinhaPacote(q='', p='') {
@@ -266,17 +289,17 @@ function atualizarListaAcabamentosProduto(salvos =[]) {
 }
 
 async function salvarProduto() {
-    const id = document.getElementById('prodId').value;
+    const id = document.getElementById('prodId')?.value;
     let atributos =[];
     document.querySelectorAll('.item-atrib').forEach(caixa => {
         let ops =[];
         caixa.querySelectorAll('.item-opcao').forEach(l => {
-            const n = l.querySelector('.op-nome').value;
-            const p = parseFloat(l.querySelector('.op-preco').value) || 0;
-            const f = l.querySelector('.op-fixo').checked;
+            const n = l.querySelector('.op-nome')?.value;
+            const p = parseFloat(l.querySelector('.op-preco')?.value) || 0;
+            const f = l.querySelector('.op-fixo')?.checked || false;
             if (n) ops.push({ nome: n, preco: p, fixo: f });
         });
-        const nomeAtrib = caixa.querySelector('.atrib-nome').value;
+        const nomeAtrib = caixa.querySelector('.atrib-nome')?.value;
         if (nomeAtrib) atributos.push({ nome: nomeAtrib, opcoes: ops });
     });
 
@@ -288,34 +311,34 @@ async function salvarProduto() {
 
     let pacotes =[];
     document.querySelectorAll('#listaGradePacotes > div').forEach(d => {
-        const q = d.querySelector('.q').value; 
-        const p = parseFloat(d.querySelector('.p').value);
+        const q = d.querySelector('.q')?.value; 
+        const p = parseFloat(d.querySelector('.p')?.value);
         if (q && p) pacotes.push({ qtd: q, preco: p });
     });
 
     let progressivo =[];
     document.querySelectorAll('#listaGradeProgressivo > div').forEach(d => {
-        const q = parseInt(d.querySelector('.q').value); 
-        const p = parseFloat(d.querySelector('.p').value);
+        const q = parseInt(d.querySelector('.q')?.value); 
+        const p = parseFloat(d.querySelector('.p')?.value);
         if (q && p) progressivo.push({ q: q, p: p });
     });
 
     const d = {
-        nome: document.getElementById('prodNome').value,
-        categoria: document.getElementById('prodCategoria').value,
-        subcategoria: document.getElementById('prodSubcategoria').value || '',
-        tipo: document.getElementById('prodTipo').value,
-        regraPreco: document.getElementById('prodRegraPreco').value,
-        preco: parseFloat(document.getElementById('prodPreco').value) || 0,
-        foto: document.getElementById('prodFoto').value || '',
-        ref: document.getElementById('prodRef').value || '',
-        material: document.getElementById('prodMaterial').value || '',
-        gramatura: document.getElementById('prodGramatura').value || '',
-        prazo: parseInt(document.getElementById('prodPrazo').value) || 0,
-        larguraBobina: parseFloat(document.getElementById('prodLargBobina').value) || 0,
-        larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0,
-        compMax: parseFloat(document.getElementById('prodCompMax').value) || 0,
-        obs: document.getElementById('prodObs').value || '',
+        nome: document.getElementById('prodNome')?.value || '',
+        categoria: document.getElementById('prodCategoria')?.value || '',
+        subcategoria: document.getElementById('prodSubcategoria')?.value || '',
+        tipo: document.getElementById('prodTipo')?.value || 'grafico',
+        regraPreco: document.getElementById('prodRegraPreco')?.value || 'unidade',
+        preco: parseFloat(document.getElementById('prodPreco')?.value) || 0,
+        foto: document.getElementById('prodFoto')?.value || '',
+        ref: document.getElementById('prodRef')?.value || '',
+        material: document.getElementById('prodMaterial')?.value || '',
+        gramatura: document.getElementById('prodGramatura')?.value || '',
+        prazo: parseInt(document.getElementById('prodPrazo')?.value) || 0,
+        larguraBobina: parseFloat(document.getElementById('prodLargBobina')?.value) || 0,
+        larguraMax: parseFloat(document.getElementById('prodLargMax')?.value) || 0,
+        compMax: parseFloat(document.getElementById('prodCompMax')?.value) || 0,
+        obs: document.getElementById('prodObs')?.value || '',
         atributos: atributos,
         acabamentos: acabList,
         pacotes: pacotes,
@@ -331,31 +354,32 @@ async function salvarProduto() {
 function editProd(id) {
     const p = bdProdutos.find(x => x.id === id);
     if (!p) return;
-    document.getElementById('prodId').value = p.id;
-    document.getElementById('prodNome').value = p.nome || '';
-    document.getElementById('prodCategoria').value = p.categoria || '';
-    document.getElementById('prodSubcategoria').value = p.subcategoria || '';
-    document.getElementById('prodTipo').value = p.tipo || 'grafico';
-    document.getElementById('prodRegraPreco').value = p.regraPreco || 'unidade';
-    document.getElementById('prodPreco').value = p.preco || 0;
-    document.getElementById('prodFoto').value = p.foto || '';
-    document.getElementById('prodRef').value = p.ref || '';
-    document.getElementById('prodMaterial').value = p.material || '';
-    document.getElementById('prodGramatura').value = p.gramatura || '';
-    document.getElementById('prodPrazo').value = p.prazo || 0;
-    document.getElementById('prodLargBobina').value = p.larguraBobina || 0;
-    document.getElementById('prodLargMax').value = p.larguraMax || 0;
-    document.getElementById('prodCompMax').value = p.compMax || 0;
-    document.getElementById('prodObs').value = p.obs || '';
     
-    document.getElementById('listaAtributos').innerHTML = '';
-    if (p.atributos) p.atributos.forEach(a => addAtributo(a.nome, a.opcoes));
+    if(document.getElementById('prodId')) document.getElementById('prodId').value = p.id;
+    if(document.getElementById('prodNome')) document.getElementById('prodNome').value = p.nome || '';
+    if(document.getElementById('prodCategoria')) document.getElementById('prodCategoria').value = p.categoria || '';
+    if(document.getElementById('prodSubcategoria')) document.getElementById('prodSubcategoria').value = p.subcategoria || '';
+    if(document.getElementById('prodTipo')) document.getElementById('prodTipo').value = p.tipo || 'grafico';
+    if(document.getElementById('prodRegraPreco')) document.getElementById('prodRegraPreco').value = p.regraPreco || 'unidade';
+    if(document.getElementById('prodPreco')) document.getElementById('prodPreco').value = p.preco || 0;
+    if(document.getElementById('prodFoto')) document.getElementById('prodFoto').value = p.foto || '';
+    if(document.getElementById('prodRef')) document.getElementById('prodRef').value = p.ref || '';
+    if(document.getElementById('prodMaterial')) document.getElementById('prodMaterial').value = p.material || '';
+    if(document.getElementById('prodGramatura')) document.getElementById('prodGramatura').value = p.gramatura || '';
+    if(document.getElementById('prodPrazo')) document.getElementById('prodPrazo').value = p.prazo || 0;
+    if(document.getElementById('prodLargBobina')) document.getElementById('prodLargBobina').value = p.larguraBobina || 0;
+    if(document.getElementById('prodLargMax')) document.getElementById('prodLargMax').value = p.larguraMax || 0;
+    if(document.getElementById('prodCompMax')) document.getElementById('prodCompMax').value = p.compMax || 0;
+    if(document.getElementById('prodObs')) document.getElementById('prodObs').value = p.obs || '';
     
-    document.getElementById('listaGradePacotes').innerHTML = '';
-    if (p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
+    const divAtrib = document.getElementById('listaAtributos');
+    if(divAtrib) { divAtrib.innerHTML = ''; if (p.atributos) p.atributos.forEach(a => addAtributo(a.nome, a.opcoes)); }
+    
+    const divPac = document.getElementById('listaGradePacotes');
+    if(divPac) { divPac.innerHTML = ''; if (p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco)); }
 
-    document.getElementById('listaGradeProgressivo').innerHTML = '';
-    if (p.progressivo) p.progressivo.forEach(prg => addLinhaProgressivo(prg.q, prg.p));
+    const divProg = document.getElementById('listaGradeProgressivo');
+    if(divProg) { divProg.innerHTML = ''; if (p.progressivo) p.progressivo.forEach(prg => addLinhaProgressivo(prg.q, prg.p)); }
 
     ajustarCamposProduto();
     atualizarListaAcabamentosProduto(p.acabamentos ||[]);
@@ -364,21 +388,22 @@ function editProd(id) {
 
 function limparFormProd() {
     document.querySelectorAll('#sub-prod input, #sub-prod textarea').forEach(i => i.value = '');
-    document.getElementById('listaAtributos').innerHTML = '';
-    document.getElementById('listaGradePacotes').innerHTML = '';
-    document.getElementById('listaGradeProgressivo').innerHTML = '';
+    const divAtrib = document.getElementById('listaAtributos'); if(divAtrib) divAtrib.innerHTML = '';
+    const divPac = document.getElementById('listaGradePacotes'); if(divPac) divPac.innerHTML = '';
+    const divProg = document.getElementById('listaGradeProgressivo'); if(divProg) divProg.innerHTML = '';
     document.querySelectorAll('.check-acab-prod').forEach(c => c.checked = false);
     document.querySelectorAll('.star-padrao').forEach(s => { s.classList.remove('text-amber-400'); s.classList.add('text-slate-200'); });
 }
 
 // --- PDV E MODAL ---
-function renderVitrine() {
+function renderVitrine(filtro = 'Todos') {
     const grid = document.getElementById('gradeProdutos');
     const termo = document.getElementById('buscaProduto')?.value.toLowerCase() || '';
     if (!grid) return;
     
     let prods = bdProdutos;
     if(termo !== '') prods = prods.filter(p => p.nome.toLowerCase().includes(termo) || p.categoria.toLowerCase().includes(termo));
+    else if(filtro !== 'Todos') prods = prods.filter(p => p.categoria === filtro);
     
     grid.innerHTML = prods.map(p => {
         let corTag = 'bg-slate-100 text-slate-500';
@@ -386,7 +411,7 @@ function renderVitrine() {
         if(p.tipo === 'visual') corTag = 'bg-blue-100 text-blue-700';
         if(p.tipo === 'outros') corTag = 'bg-emerald-100 text-emerald-700';
 
-        let precoExibicao = p.preco;
+        let precoExibicao = p.preco || 0;
         if(p.regraPreco === 'pacote' && p.pacotes && p.pacotes.length > 0) precoExibicao = p.pacotes[0].preco;
 
         return `
@@ -456,8 +481,6 @@ function abrirConfigurador(id) {
     
     if (acabPermitidos.length > 0) {
         tituloAcabamentos.classList.remove('hidden');
-        
-        // Agrupar acabamentos por grupo para criar Radio Buttons
         let gruposAcab = {};
         acabPermitidos.forEach(obj => {
             const a = bdAcabamentos.find(x => x.id === (obj.id || obj));
@@ -509,7 +532,9 @@ function calcularPrecoAoVivo() {
         
         if (p && p.larguraBobina > 0 && menorLado > p.larguraBobina) {
             aviso.classList.remove('hidden');
-            aviso.querySelector('span').innerText = `Atenção: O menor lado (${menorLado}m) excede a bobina (${p.larguraBobina}m). Ajuste a medida.`;
+            aviso.querySelector('span').innerText = `Erro: O menor lado (${menorLado}m) excede a bobina (${p.larguraBobina}m). Venda bloqueada.`;
+            aviso.classList.replace('bg-amber-50', 'bg-red-50');
+            aviso.classList.replace('text-amber-700', 'text-red-700');
             btnAdd.disabled = true;
             btnAdd.classList.add('opacity-50', 'cursor-not-allowed');
         } else if (aviso) {
@@ -519,17 +544,17 @@ function calcularPrecoAoVivo() {
         }
         
         m2 = l * a; 
-        if(m2 < 0.5) m2 = 0.5; // Mínimo de 0.5m2
+        if(m2 < 0.5) m2 = 0.5; 
         totalBase = base * m2 * qtd;
     } else if (regra === 'pacote') {
         const sel = document.getElementById('w2pPacote');
-        qtd = 1; // Pacote é 1 unidade do pacote
+        qtd = 1; 
         totalBase = parseFloat(sel?.options[sel.selectedIndex]?.dataset.preco) || 0;
     } else if (regra === 'progressivo') {
         qtd = parseInt(document.getElementById('w2pQtd')?.value) || 1;
         let precoUnit = base;
         if (p && p.progressivo) {
-            let faixas = [...p.progressivo].sort((a,b) => b.q - a.q);
+            let faixas =[...p.progressivo].sort((a,b) => b.q - a.q);
             let faixa = faixas.find(f => qtd >= f.q);
             if (faixa) precoUnit = faixa.p;
         }
@@ -564,12 +589,12 @@ function confirmarAdicaoCarrinho() {
     const p = bdProdutos.find(x => x.id === document.getElementById('modalProdId').value);
     const totalItem = parseFloat(document.getElementById('modalSubtotal').innerText.replace("R$ ",""));
     
-    let qtd = 1;
+    let qtdModal = 1;
     if(p.regraPreco === 'pacote') {
         const sel = document.getElementById('w2pPacote');
-        qtd = sel.options[sel.selectedIndex].text.split(" -")[0];
+        qtdModal = sel.options[sel.selectedIndex].text.split(" -")[0];
     } else {
-        qtd = document.getElementById('w2pQtd')?.value || 1;
+        qtdModal = document.getElementById('w2pQtd')?.value || 1;
     }
     
     let varsEscolhidas =[];
@@ -583,8 +608,9 @@ function confirmarAdicaoCarrinho() {
     
     carrinho.push({ 
         nome: p.nome, 
-        valor: totalItem, 
-        qtd: qtd,
+        valorModal: totalItem, 
+        qtdModal: qtdModal,
+        qtdCarrinho: 1,
         desc: varsEscolhidas.join(' | ') 
     });
     
@@ -598,22 +624,31 @@ function renderCarrinho() {
     if (!div) return;
     let sub = 0;
     div.innerHTML = carrinho.map((item, i) => {
-        sub += item.valor;
+        const totalLinha = item.valorModal * item.qtdCarrinho;
+        sub += totalLinha;
         return `
             <div class="flex justify-between items-center bg-slate-50 p-4 rounded border border-slate-100">
-                <div class="w-[70%]">
-                    <p class="font-bold text-slate-800 text-xs">${item.qtd}x ${item.nome}</p>
-                    <p class="text-[9px] font-medium text-slate-400 mt-1">${item.desc}</p>
+                <div class="w-[60%]">
+                    <p class="font-bold text-slate-800 text-xs">${item.nome}</p>
+                    <p class="text-[9px] font-medium text-slate-400 mt-1">${item.qtdModal} un. | ${item.desc}</p>
                 </div>
-                <div class="text-right">
-                    <p class="font-black text-indigo-600 text-sm">R$ ${item.valor.toFixed(2)}</p>
-                    <button type="button" onclick="carrinho.splice(${i},1);renderCarrinho()" class="text-[9px] font-bold text-red-400 uppercase mt-1 hover:text-red-600 transition">Remover</button>
+                <div class="flex items-center gap-3">
+                    <input type="number" value="${item.qtdCarrinho}" min="1" onchange="atualizarQtdCarrinho(${i}, this.value)" class="w-12 p-1 text-xs border border-slate-200 rounded outline-none text-center font-bold">
+                    <div class="text-right">
+                        <p class="font-black text-indigo-600 text-sm">R$ ${totalLinha.toFixed(2)}</p>
+                        <button type="button" onclick="carrinho.splice(${i},1);renderCarrinho()" class="text-[9px] font-bold text-red-400 uppercase mt-1 hover:text-red-600 transition">Remover</button>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
     document.getElementById('subtotalCart').innerText = "R$ " + sub.toFixed(2);
     atualizarTotalFinal();
+}
+
+function atualizarQtdCarrinho(index, novaQtd) {
+    carrinho[index].qtdCarrinho = parseInt(novaQtd) || 1;
+    renderCarrinho();
 }
 
 function atualizarTotalFinal() {
@@ -685,3 +720,4 @@ function editCat(id) { const c = bdCategorias.find(x => x.id === id); document.g
 async function salvarAcabamento() { const id = document.getElementById('acabId').value; const d = { nome: document.getElementById('acabNome')?.value, grupo: document.getElementById('acabGrupo')?.value, categoria: document.getElementById('acabCategoria')?.value, regra: document.getElementById('acabRegra')?.value, venda: parseFloat(document.getElementById('acabPrecoVenda')?.value) || 0, custo: parseFloat(document.getElementById('acabCusto')?.value) || 0 }; if(!d.nome) return alert("Nome obrigatório"); if(id) await db.collection("acabamentos").doc(id).update(d); else await db.collection("acabamentos").add(d); limparFormAcab(); alert("Acabamento Salvo!"); }
 function editAcab(id) { const a = bdAcabamentos.find(x => x.id === id); if(!a) return; document.getElementById('acabId').value = a.id; document.getElementById('acabNome').value = a.nome; document.getElementById('acabGrupo').value = a.grupo || ''; document.getElementById('acabCategoria').value = a.categoria || ''; document.getElementById('acabRegra').value = a.regra || 'unidade'; document.getElementById('acabPrecoVenda').value = a.venda || 0; document.getElementById('acabCusto').value = a.custo || 0; document.getElementById('tituloAcabForm').innerText = "Editar Acabamento"; }
 function limparFormAcab() { document.getElementById('acabId').value = ''; document.getElementById('acabNome').value = ''; document.getElementById('acabGrupo').value = ''; document.getElementById('acabPrecoVenda').value = ''; document.getElementById('acabCusto').value = ''; document.getElementById('tituloAcabForm').innerText = "Novo Acabamento"; }
+function verHistoricoCliente(idCli) { const cliente = bdClientes.find(x => x.id === idCli); const pedidosCli = bdPedidos.filter(p => p.clienteId === idCli); document.getElementById('histNomeCli').innerText = `Pedidos de: ${cliente.nome}`; const corpo = document.getElementById('corpoHistoricoCli'); corpo.innerHTML = pedidosCli.length === 0 ? "<p class='text-center text-slate-400 py-10'>Nenhum pedido.</p>" : pedidosCli.map(p => { const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data); const dataStr = dataObj.toLocaleDateString('pt-BR'); const itens = p.itens ||[]; return `<div class="bg-slate-50 p-4 rounded border border-slate-100"><div class="flex justify-between font-bold text-indigo-900 mb-2"><span>${dataStr}</span><span>R$ ${(p.total || 0).toFixed(2)}</span></div><div class="text-xs text-slate-500 mb-2">${itens.map(i => `• ${i.nome}`).join('<br>')}</div><button type="button" onclick="imprimirRecibo('${p.id}')" class="text-[10px] font-bold text-indigo-500 uppercase hover:underline"><i class="fa fa-print"></i> Imprimir Recibo</button></div>`; }).join(''); document.getElementById('modalHistoricoCli').classList.remove('hidden'); }
