@@ -4,36 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GVA Gráfica ERP | GVAsist</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         .active-aba { background-color: #f1f5f9; color: #0f172a; border-left: 4px solid #1e293b; }
         .active-sub { color: #1e293b; border-bottom: 3px solid #1e293b; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input::-webkit-outer-spin-button, 
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .kanban-col { max-height: calc(100vh - 180px); min-width: 320px; }
     </style>
 </head>
 <body class="bg-[#f4f4f2] text-slate-700 font-sans overflow-hidden">
 
-    <!-- LOGIN -->
+    <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-[#0f172a] px-4 absolute inset-0 z-[100]">
         <div class="bg-white p-10 rounded-lg shadow-2xl w-full max-w-sm text-center">
-            <div class="bg-[#0f172a] p-4 rounded-lg mb-8"><img src="https://i.postimg.cc/1RCc58qN/gva-br-1-ERP-26.png" alt="GVA" class="mx-auto h-12 object-contain"></div>
+            <div class="bg-[#0f172a] p-4 rounded-lg mb-8">
+                <img src="https://i.postimg.cc/1RCc58qN/gva-br-1-ERP-26.png" alt="GVA" class="mx-auto h-12 object-contain">
+            </div>
             <div class="space-y-4">
-                <div class="text-left space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">E-mail</label><input type="email" id="email" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500"></div>
-                <div class="text-left space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Senha</label><input type="password" id="senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500"></div>
+                <div class="text-left space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
+                    <input type="email" id="email" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
+                </div>
+                <div class="text-left space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Senha</label>
+                    <input type="password" id="senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
+                </div>
                 <button type="button" onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg mt-2">Entrar</button>
-                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Acesso negado.</p>
+                <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Acesso negado. Verifique os dados.</p>
             </div>
         </div>
     </div>
 
-    <!-- INTERFACE -->
+    <!-- INTERFACE PRINCIPAL -->
     <div id="appInterface" class="hidden h-screen flex flex-col">
+        
+        <!-- HEADER -->
         <header class="h-16 bg-[#0f172a] flex items-center justify-between px-6 shrink-0 shadow-md">
             <div class="flex items-center gap-4">
                 <img src="https://i.postimg.cc/1RCc58qN/gva-br-1-ERP-26.png" alt="GVA" class="h-8 object-contain">
@@ -51,16 +65,26 @@
         </header>
 
         <div class="flex flex-1 overflow-hidden">
+            <!-- SIDEBAR -->
             <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col shrink-0">
                 <div class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menu Principal</div>
                 <nav class="flex-1 space-y-1 overflow-y-auto">
-                    <button type="button" onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba"><i class="fa fa-shopping-cart w-5"></i> Loja PDV</button>
-                    <button type="button" onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50"><i class="fa fa-tasks w-5"></i> Produção</button>
-                    <button type="button" onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50"><i class="fa fa-chart-line w-5"></i> Financeiro</button>
-                    <button type="button" onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50"><i class="fa fa-cog w-5"></i> Configurações</button>
+                    <button type="button" onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba">
+                        <i class="fa fa-shopping-cart w-5"></i> Loja PDV
+                    </button>
+                    <button type="button" onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
+                        <i class="fa fa-tasks w-5"></i> Produção
+                    </button>
+                    <button type="button" onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
+                        <i class="fa fa-chart-line w-5"></i> Financeiro
+                    </button>
+                    <button type="button" onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
+                        <i class="fa fa-cog w-5"></i> Configurações
+                    </button>
                 </nav>
             </aside>
 
+            <!-- CONTEUDO -->
             <main class="flex-1 p-6 overflow-y-auto bg-[#f4f4f2]">
 
                 <!-- ABA LOJA -->
@@ -82,7 +106,9 @@
                             <h3 class="text-lg font-bold mb-6 border-b pb-2 text-slate-800">Carrinho de Venda</h3>
                             
                             <div class="mb-6 space-y-1">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">Cliente <span id="labelCreditoCli" class="text-emerald-600 font-bold">Saldo: R$ 0.00</span></label>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">
+                                    Cliente <span id="labelCreditoCli" class="text-emerald-600 font-bold">Saldo: R$ 0.00</span>
+                                </label>
                                 <input list="listaClientesData" id="cartCliente" onchange="atualizarInfoCreditoCarrinho()" placeholder="Digite para buscar o cliente..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                                 <datalist id="listaClientesData"></datalist>
                             </div>
@@ -94,7 +120,12 @@
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Pagamento</label>
                                         <select id="cartPagamento" onchange="toggleOpcoesPagamento()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Debito">Débito</option><option value="Credito_Vista">Crédito à Vista</option><option value="Credito_Parcelado">Crédito Parcelado</option><option value="Saldo_Cliente">Saldo de Crédito</option>
+                                            <option value="Pix">Pix</option>
+                                            <option value="Dinheiro">Dinheiro</option>
+                                            <option value="Debito">Débito</option>
+                                            <option value="Credito_Vista">Crédito à Vista</option>
+                                            <option value="Credito_Parcelado">Crédito Parcelado</option>
+                                            <option value="Saldo_Cliente">Saldo de Crédito</option>
                                         </select>
                                     </div>
                                     <div class="space-y-1" id="divParcelas" style="display:none;">
@@ -124,7 +155,8 @@
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Entrega</label>
                                         <select id="cartEntrega" onchange="toggleOpcoesEntrega()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="Retirada">Retirada</option><option value="Motoboy">Motoboy</option>
+                                            <option value="Retirada">Retirada</option>
+                                            <option value="Motoboy">Motoboy</option>
                                         </select>
                                     </div>
                                     <div class="space-y-1" id="divFrete" style="display:none;">
@@ -134,8 +166,14 @@
                                 </div>
 
                                 <div class="pt-4 border-t border-dashed border-slate-200">
-                                    <div class="flex justify-between text-slate-400 font-bold text-xs"><span>Subtotal:</span><span id="subtotalCart">R$ 0.00</span></div>
-                                    <div class="flex justify-between text-xl font-black text-slate-900 mt-1"><span>A Pagar:</span><span id="totalCarrinho">R$ 0.00</span></div>
+                                    <div class="flex justify-between text-slate-400 font-bold text-xs">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotalCart">R$ 0.00</span>
+                                    </div>
+                                    <div class="flex justify-between text-xl font-black text-slate-900 mt-1">
+                                        <span>A Pagar:</span>
+                                        <span id="totalCarrinho">R$ 0.00</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex gap-2 mt-6">
@@ -152,14 +190,65 @@
                     <div id="kanbanContainer" class="flex-1 overflow-x-auto flex flex-nowrap gap-4 pb-4 items-start no-scrollbar"></div>
                 </section>
 
-                <!-- ABA FINANCEIRO -->
+                <!-- ABA FINANCEIRO (DASHBOARD) -->
                 <section id="aba-financeiro" class="aba-content hidden">
                     <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Financeiro & Relatórios</h2>
-                    <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
-                        <table class="w-full text-left text-xs font-bold">
-                            <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider"><tr><th class="p-4">Data</th><th class="p-4">Cliente</th><th class="p-4">Valor</th><th class="p-4 text-center">Status</th><th class="p-4 text-center">Ações</th></tr></thead>
-                            <tbody id="listaPedidosTab"></tbody>
-                        </table>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vendas Hoje</p>
+                            <p id="finVendasHoje" class="text-2xl font-black text-blue-600 mt-1">R$ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Entradas Mês</p>
+                            <p id="finEntradasMes" class="text-2xl font-black text-emerald-600 mt-1">R$ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-red-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saídas Mês</p>
+                            <p id="finSaidasMes" class="text-2xl font-black text-red-600 mt-1">R$ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 border-l-4 border-l-indigo-500">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saldo Mês</p>
+                            <p id="finSaldoMes" class="text-2xl font-black text-indigo-600 mt-1">R$ 0.00</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded shadow-sm border border-slate-200 h-fit">
+                            <h3 class="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Nova Movimentação</h3>
+                            <div class="space-y-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Tipo</label>
+                                    <select id="finTipo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
+                                        <option value="entrada">Entrada (Receita)</option>
+                                        <option value="saida">Saída (Despesa)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Descrição</label>
+                                    <input type="text" id="finDesc" placeholder="Ex: Conta de Luz..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Valor R$</label>
+                                    <input type="number" id="finValor" step="0.01" class="w-full p-3 bg-slate-50 border border-slate-200 rounded outline-none font-bold focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                                <button type="button" onclick="salvarMovimentacao()" class="w-full bg-slate-800 text-white py-3 rounded font-bold text-xs hover:bg-slate-700 transition uppercase tracking-widest mt-2">Lançar no Caixa</button>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2 bg-white rounded shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50">
+                                <h3 class="font-bold text-slate-800 uppercase text-xs tracking-widest">Extrato Recente</h3>
+                            </div>
+                            <div class="flex-1 overflow-y-auto">
+                                <table class="w-full text-left text-xs font-bold">
+                                    <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider sticky top-0 shadow-sm">
+                                        <tr><th class="p-4">Data</th><th class="p-4">Descrição</th><th class="p-4 text-right">Valor</th></tr>
+                                    </thead>
+                                    <tbody id="listaExtratoTab"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -190,8 +279,17 @@
                             </div>
                         </div>
                         <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-800 uppercase text-xs tracking-widest">Lista de Clientes</h3>
+                                <div class="relative w-64">
+                                    <i class="fa fa-search absolute left-3 top-2.5 text-slate-400"></i>
+                                    <input type="text" id="buscaCliente" onkeyup="renderCliTable()" placeholder="Buscar cliente..." class="w-full pl-9 p-2 rounded-full border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
                             <table class="w-full text-left text-xs font-bold">
-                                <thead class="bg-slate-50 text-slate-400 uppercase"><tr><th class="p-4">Nome</th><th class="p-4">Crédito</th><th class="p-4 text-center">Ações</th></tr></thead>
+                                <thead class="bg-slate-50 text-slate-400 uppercase">
+                                    <tr><th class="p-4">Nome</th><th class="p-4">Crédito</th><th class="p-4 text-center">Ações</th></tr>
+                                </thead>
                                 <tbody id="listaClientesTab"></tbody>
                             </table>
                         </div>
