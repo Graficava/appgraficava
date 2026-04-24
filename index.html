@@ -18,32 +18,39 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         input::-webkit-outer-spin-button, 
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .kanban-col { max-height: calc(100vh - 180px); min-width: 320px; }
     </style>
 </head>
-<body class="bg-[#f4f4f2] text-slate-700 font-sans">
+<body class="bg-[#f4f4f2] text-slate-700 font-sans overflow-hidden">
 
     <!-- TELA DE LOGIN -->
-    <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
+    <div id="telaLogin" class="min-h-screen flex items-center justify-center bg-[#0f172a] px-4 absolute inset-0 z-[100]">
         <div class="bg-white p-10 rounded-lg shadow-2xl w-full max-w-sm text-center">
             <div class="bg-[#0f172a] p-4 rounded-lg mb-8">
-                <img src="https://i.postimg.cc/1RCc58qN/gva-br-1-ERP-26.png" alt="GVA Gráfica" class="mx-auto h-12 object-contain">
+                <img src="https://i.postimg.cc/VvQwjfSj/gva-br-ERP-26.png" alt="GVA Gráfica" class="mx-auto h-12 object-contain">
             </div>
             <div class="space-y-4">
-                <input type="email" id="email" placeholder="E-mail" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
-                <input type="password" id="senha" placeholder="Senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
-                <button type="button" onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg">Entrar</button>
+                <div class="text-left space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
+                    <input type="email" id="email" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
+                </div>
+                <div class="text-left space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Senha</label>
+                    <input type="password" id="senha" class="w-full p-3 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-slate-500">
+                </div>
+                <button type="button" onclick="entrar()" class="w-full bg-[#1e293b] text-white font-bold py-3 rounded hover:bg-slate-800 transition shadow-lg mt-2">Entrar</button>
                 <p id="msgErro" class="text-red-500 text-xs hidden font-bold">Acesso negado. Verifique os dados.</p>
             </div>
         </div>
     </div>
 
     <!-- INTERFACE PRINCIPAL -->
-    <div id="appInterface" class="hidden min-h-screen flex flex-col">
+    <div id="appInterface" class="hidden h-screen flex flex-col">
         
         <!-- HEADER -->
-        <header class="h-16 bg-[#0f172a] flex items-center justify-between px-6 sticky top-0 z-50 shadow-md">
+        <header class="h-16 bg-[#0f172a] flex items-center justify-between px-6 shrink-0 shadow-md">
             <div class="flex items-center gap-4">
-                <img src="https://i.postimg.cc/1RCc58qN/gva-br-1-ERP-26.png" alt="GVA Gráfica" class="h-8 object-contain">
+                <img src="https://i.postimg.cc/VvQwjfSj/gva-br-ERP-26.png" alt="GVA Gráfica" class="h-8 object-contain">
                 <nav class="hidden md:flex gap-6 ml-10 text-slate-400 text-[11px] font-bold uppercase">
                     <button type="button" onclick="mudarAba('loja', this)" class="hover:text-white transition">Vendas</button>
                     <button type="button" onclick="mudarAba('producao', this)" class="hover:text-white transition">Produção</button>
@@ -57,39 +64,39 @@
             </div>
         </header>
 
-        <div class="flex flex-1">
+        <div class="flex flex-1 overflow-hidden">
             <!-- SIDEBAR -->
-            <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col sticky top-16 h-[calc(100vh-64px)]">
+            <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col shrink-0">
                 <div class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menu Principal</div>
-                <nav class="flex-1 space-y-1">
+                <nav class="flex-1 space-y-1 overflow-y-auto">
                     <button type="button" onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba">
-                        <i class="fa fa-shopping-cart"></i> Loja PDV
+                        <i class="fa fa-shopping-cart w-5"></i> Loja PDV
                     </button>
                     <button type="button" onclick="mudarAba('producao', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
-                        <i class="fa fa-tasks"></i> Produção
+                        <i class="fa fa-tasks w-5"></i> Produção
                     </button>
                     <button type="button" onclick="mudarAba('financeiro', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
-                        <i class="fa fa-chart-line"></i> Financeiro
+                        <i class="fa fa-chart-line w-5"></i> Financeiro
                     </button>
                     <button type="button" onclick="mudarAba('cadastros', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50">
-                        <i class="fa fa-cog"></i> Configurações
+                        <i class="fa fa-cog w-5"></i> Configurações
                     </button>
                 </nav>
             </aside>
 
             <!-- CONTEUDO -->
-            <main class="flex-1 p-6 overflow-y-auto">
+            <main class="flex-1 p-6 overflow-y-auto bg-[#f4f4f2]">
 
                 <!-- ABA LOJA -->
                 <section id="aba-loja" class="aba-content block">
                     <div class="flex flex-col lg:flex-row gap-6">
                         <div class="flex-1">
-                            <div id="menuFiltroCat" class="flex gap-2 mb-6 overflow-x-auto pb-2"></div>
+                            <div id="menuFiltroCat" class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar"></div>
                             <div id="gradeProdutos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
                         </div>
 
                         <!-- CARRINHO -->
-                        <div class="w-full lg:w-[350px] bg-white p-6 rounded shadow-sm border border-slate-200 h-fit sticky top-6">
+                        <div class="w-full lg:w-[350px] bg-white p-6 rounded shadow-sm border border-slate-200 h-fit sticky top-0">
                             <h3 class="text-lg font-bold mb-6 border-b pb-2 text-slate-800">Carrinho de Venda</h3>
                             
                             <div class="mb-6 space-y-1">
@@ -117,17 +124,7 @@
                                     <div class="space-y-1" id="divParcelas" style="display:none;">
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Parcelas</label>
                                         <select id="cartParcelas" class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold outline-none">
-                                            <option value="2">2x</option>
-                                            <option value="3">3x</option>
-                                            <option value="4">4x</option>
-                                            <option value="5">5x</option>
-                                            <option value="6">6x</option>
-                                            <option value="7">7x</option>
-                                            <option value="8">8x</option>
-                                            <option value="9">9x</option>
-                                            <option value="10">10x</option>
-                                            <option value="11">11x</option>
-                                            <option value="12">12x</option>
+                                            <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="6">6x</option><option value="12">12x</option>
                                         </select>
                                     </div>
                                 </div>
@@ -176,10 +173,13 @@
                     </div>
                 </section>
 
-                <!-- ABA PRODUÇÃO -->
-                <section id="aba-producao" class="aba-content hidden h-full flex flex-col overflow-hidden">
-                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter shrink-0">Painel de Produção</h2>
-                    <div id="kanbanContainer" class="flex-1 overflow-x-auto overflow-y-hidden flex gap-4 pb-4 items-start no-scrollbar"></div>
+                <!-- ABA PRODUÇÃO (KANBAN) -->
+                <section id="aba-producao" class="aba-content hidden h-full flex flex-col">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Painel de Produção</h2>
+                    <!-- Adicionado flex-nowrap para não quebrar as colunas -->
+                    <div id="kanbanContainer" class="flex-1 overflow-x-auto flex flex-nowrap gap-6 pb-4 items-start no-scrollbar">
+                        <!-- Colunas injetadas via JS -->
+                    </div>
                 </section>
 
                 <!-- ABA FINANCEIRO -->
@@ -201,9 +201,9 @@
                     </div>
                 </section>
 
-                <!-- ABA CONFIGURAÇÕES (EX-CADASTROS) -->
+                <!-- ABA CONFIGURAÇÕES -->
                 <section id="aba-cadastros" class="aba-content hidden">
-                    <div class="flex gap-8 border-b border-slate-200 mb-8 overflow-x-auto">
+                    <div class="flex gap-8 border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar">
                         <button type="button" onclick="mudarSubAba('sub-cli', this)" class="sub-aba-btn pb-4 font-bold text-slate-400 active-sub">Clientes</button>
                         <button type="button" onclick="mudarSubAba('sub-prod', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Produtos</button>
                         <button type="button" onclick="mudarSubAba('sub-cat', this)" class="sub-aba-btn pb-4 font-bold text-slate-400">Categorias</button>
@@ -290,7 +290,10 @@
                                 <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Observações (Avisos, Prazos extras...)</label><textarea id="prodObs" rows="1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></textarea></div>
                             </div>
                             
-                            <button type="button" onclick="salvarProduto()" class="bg-slate-800 text-white px-12 py-3 rounded font-bold text-xs hover:bg-slate-700 transition shadow-md uppercase tracking-widest">Salvar Produto</button>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="salvarProduto()" class="bg-slate-800 text-white px-12 py-3 rounded font-bold text-xs hover:bg-slate-700 transition shadow-md uppercase tracking-widest">Salvar Produto</button>
+                                <button type="button" onclick="limparFormProd()" class="bg-slate-100 text-slate-400 px-6 py-3 rounded font-bold text-xs hover:bg-slate-200 transition">Limpar</button>
+                            </div>
                         </div>
 
                         <div class="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
@@ -340,7 +343,7 @@
                                 <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Custo R$</label><input type="number" id="acabCusto" class="w-full p-2 bg-slate-50 border border-slate-200 rounded outline-none focus:ring-2 focus:ring-indigo-500"></div>
                             </div>
                             <div class="flex gap-2">
-                                <button type="button" id="btnSalvarAcab" onclick="salvarAcabamento()" class="bg-slate-800 text-white px-10 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Acabamento</button>
+                                <button type="button" onclick="salvarAcabamento()" class="bg-slate-800 text-white px-10 py-2 rounded font-bold text-xs hover:bg-slate-700 transition">Salvar Acabamento</button>
                                 <button type="button" onclick="limparFormAcab()" class="bg-slate-100 text-slate-400 px-6 py-2 rounded font-bold text-xs hover:bg-slate-200 transition">Limpar</button>
                             </div>
                         </div>
