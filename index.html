@@ -92,13 +92,15 @@
                     <div class="flex flex-col lg:flex-row gap-6">
                         <div class="flex-1">
                             
-                            <!-- NOVO LAYOUT DE BUSCA E FILTROS -->
+                            <!-- BUSCA E FILTROS (TIPO) -->
                             <div class="flex flex-col md:flex-row gap-4 mb-6 items-center">
                                 <div class="relative w-full md:w-72 shrink-0">
                                     <i class="fa fa-search absolute left-4 top-3.5 text-slate-400"></i>
                                     <input type="text" id="buscaProduto" onkeyup="renderVitrine()" placeholder="Buscar produto..." class="w-full pl-10 p-3 rounded-lg border border-slate-200 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" />
                                 </div>
-                                <div id="menuFiltroCat" class="flex gap-3 overflow-x-auto pb-2 flex-1 no-scrollbar w-full"></div>
+                                <div id="menuFiltroCat" class="flex gap-3 overflow-x-auto pb-2 flex-1 no-scrollbar w-full">
+                                    <!-- Botões injetados via JS -->
+                                </div>
                             </div>
 
                             <div id="gradeProdutos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
