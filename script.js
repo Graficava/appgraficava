@@ -33,12 +33,12 @@ auth.onAuthStateChanged(user => {
     const telaLogin = document.getElementById('telaLogin');
     const appInterface = document.getElementById('appInterface');
     if (user) {
-        telaLogin.classList.add('hidden');
-        appInterface.classList.remove('hidden');
+        telaLogin?.classList.add('hidden');
+        appInterface?.classList.remove('hidden');
         iniciarLeitura();
     } else {
-        telaLogin.classList.remove('hidden');
-        appInterface.classList.add('hidden');
+        telaLogin?.classList.remove('hidden');
+        appInterface?.classList.add('hidden');
     }
 });
 
@@ -169,6 +169,30 @@ function renderCliTable() {
             </td>
         </tr>
     `).join(''); 
+}
+
+function verHistoricoCliente(idCli) { 
+    const cliente = bdClientes.find(x => x.id === idCli); 
+    const pedidosCli = bdPedidos.filter(p => p.clienteId === idCli); 
+    document.getElementById('histNomeCli').innerText = `Pedidos de: ${cliente.nome}`; 
+    const corpo = document.getElementById('corpoHistoricoCli'); 
+    
+    corpo.innerHTML = pedidosCli.length === 0 ? "<p class='text-center text-slate-400 py-10'>Nenhum pedido.</p>" : 
+    pedidosCli.map(p => {
+        const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
+        const dataStr = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR');
+        return `
+        <div class="bg-slate-50 p-4 rounded border border-slate-100">
+            <div class="flex justify-between font-bold text-indigo-900 mb-2">
+                <span>${dataStr}</span>
+                <span>R$ ${(p.total || 0).toFixed(2)}</span>
+            </div>
+            <div class="text-xs text-slate-500 mb-2">${(p.itens ||[]).map(i => `• ${i.qtdCarrinho || 1}x ${i.nome}`).join('<br>')}</div>
+            <button type="button" onclick="imprimirRecibo('${p.id}')" class="text-[10px] font-bold text-indigo-500 uppercase hover:underline"><i class="fa fa-print"></i> Imprimir Recibo</button>
+        </div>
+        `;
+    }).join(''); 
+    document.getElementById('modalHistoricoCli').classList.remove('hidden'); 
 }
 
 // --- CADASTRO DE CATEGORIAS ---
@@ -488,15 +512,15 @@ function renderProdTable() {
 }
 
 // --- PDV E MODAL ---
-function renderFiltrosVitrine() { 
-    const div = document.getElementById('menuFiltroCat'); 
-    if(!div) return; 
+function renderFiltrosVitrine() {
+    const div = document.getElementById('menuFiltroCat');
+    if(!div) return;
     div.innerHTML = `
         <button type="button" onclick="renderVitrine('Todos')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Todos</button>
         <button type="button" onclick="renderVitrine('grafico')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Gráfico</button>
         <button type="button" onclick="renderVitrine('visual')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Com. Visual</button>
         <button type="button" onclick="renderVitrine('outros')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Outros</button>
-    `; 
+    `;
 }
 
 function renderVitrine(filtro = 'Todos') {
@@ -661,7 +685,7 @@ function calcularPrecoAoVivo() {
         qtd = parseInt(document.getElementById('w2pQtd')?.value) || 1;
         let precoUnit = base;
         if (p && p.progressivo) {
-            let faixas = [...p.progressivo].sort((a,b) => b.q - a.q);
+            let faixas =[...p.progressivo].sort((a,b) => b.q - a.q);
             let faixa = faixas.find(f => qtd >= f.q);
             if (faixa) precoUnit = faixa.p;
         }
@@ -913,92 +937,7 @@ async function mudarStatusPedido(id, novoStatus) {
     }
 }
 
-// --- FINANCEIRO ---
-async function salvarMovimentacao() {
-    const tipo = document.getElementById('finTipo').value;
-    const desc = document.getElementById('finDesc').value;
-    const valor = parseFloat(document.getElementById('finValor').value);
-
-    if(!desc || !valor) return alert("Preencha descrição e valor!");
-
-    await db.collection("transacoes").add({
-        tipo: tipo,
-        descricao: desc,
-        valor: valor,
-        data: new Date()
-    });
-
-    document.getElementById('finDesc').value = '';
-    document.getElementById('finValor').value = '';
-}
-
-function renderPedidosFinanceiro() {
-    const tabPedidos = document.getElementById('listaPedidosTab');
-    if(tabPedidos) {
-        tabPedidos.innerHTML = bdPedidos.map(p => {
-            const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
-            return `
-            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                <td class="p-4 text-slate-400 font-medium">${dataObj.toLocaleDateString('pt-BR')}</td>
-                <td class="p-4 font-bold text-slate-700">${p.clienteNome}</td>
-                <td class="p-4 font-black text-indigo-600">R$ ${(p.total || 0).toFixed(2)}</td>
-                <td class="p-4 text-center"><span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span></td>
-                <td class="p-4 text-center"><button type="button" onclick="imprimirRecibo('${p.id}')" class="text-slate-400 hover:text-indigo-600" title="Imprimir Recibo"><i class="fa fa-print"></i></button></td>
-            </tr>
-            `;
-        }).join('');
-    }
-
-    const tabExtrato = document.getElementById('listaExtratoTab');
-    if(tabExtrato) {
-        const hoje = new Date(); 
-        hoje.setHours(0,0,0,0);
-        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        
-        let vHoje = 0;
-        let eMes = 0;
-        let sMes = 0; 
-        let extrato =[];
-
-        bdPedidos.forEach(p => {
-            const d = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
-            const v = p.valorPago || 0; 
-            const t = p.total || 0;
-            if(d >= hoje) vHoje += t;
-            if(d >= inicioMes) eMes += v;
-            if(v > 0) extrato.push({ data: d, desc: `Venda: ${p.clienteNome}`, valor: v, tipo: 'entrada' });
-        });
-
-        bdTransacoes.forEach(t => {
-            const d = t.data && t.data.toDate ? t.data.toDate() : new Date(t.data);
-            if(d >= inicioMes) { 
-                if(t.tipo === 'entrada') eMes += t.valor; 
-                else sMes += t.valor; 
-            }
-            extrato.push({ data: d, desc: t.descricao, valor: t.valor, tipo: t.tipo });
-        });
-
-        document.getElementById('finVendasHoje').innerText = "R$ " + vHoje.toFixed(2);
-        document.getElementById('finEntradasMes').innerText = "R$ " + eMes.toFixed(2);
-        document.getElementById('finSaidasMes').innerText = "R$ " + sMes.toFixed(2);
-        document.getElementById('finSaldoMes').innerText = "R$ " + (eMes - sMes).toFixed(2);
-
-        extrato.sort((a,b) => b.data - a.data);
-        tabExtrato.innerHTML = extrato.map(i => {
-            const corValor = i.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500';
-            const sinal = i.tipo === 'entrada' ? '+' : '-';
-            return `
-                <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                    <td class="p-4 text-slate-400 font-medium">${i.data.toLocaleDateString('pt-BR')}</td>
-                    <td class="p-4 font-bold text-slate-700">${i.desc}</td>
-                    <td class="p-4 text-right font-black ${corValor}">${sinal} R$ ${i.valor.toFixed(2)}</td>
-                </tr>
-            `;
-        }).join('');
-    }
-}
-
-// --- IMPRESSÃO ---
+// --- IMPRESSÃO DE RECIBO E OS ---
 function imprimirReciboDireto(idPedido, objPedido) {
     const p = objPedido || bdPedidos.find(x => x.id === idPedido);
     if(!p) return;
@@ -1103,44 +1042,4 @@ function imprimirOSA4(idPedido) {
             <strong>Status Atual:</strong> ${p.status}
         </div>
         <h3 style="text-transform: uppercase; color: #64748b;">Itens para Produção</h3>
-        ${(p.itens ||[]).map((i, index) => `
-            <div class="item-box">
-                <div class="item-title">Item ${index + 1}: ${i.qtdCarrinho || 1}x (${i.qtdModal || 1} un.) ${i.nome}</div>
-                <div class="item-desc">${i.desc.replace(/\|/g, '<br>')}</div>
-                <div class="task-list">
-                    <div class="task-item"><span class="check-box"></span> Arte Aprovada / RIP</div>
-                    <div class="task-item"><span class="check-box"></span> Impressão Concluída</div>
-                    <div class="task-item"><span class="check-box"></span> Acabamento Finalizado</div>
-                    <div class="task-item"><span class="check-box"></span> Conferência e Embalagem</div>
-                </div>
-            </div>
-        `).join('')}
-        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
-        </body></html>
-    `;
-    janela.document.write(html);
-    janela.document.close();
-}
-
-function verHistoricoCliente(idCli) { 
-    const cliente = bdClientes.find(x => x.id === idCli); 
-    const pedidosCli = bdPedidos.filter(p => p.clienteId === idCli); 
-    document.getElementById('histNomeCli').innerText = `Pedidos de: ${cliente.nome}`; 
-    const corpo = document.getElementById('corpoHistoricoCli'); 
-    corpo.innerHTML = pedidosCli.length === 0 ? "<p class='text-center text-slate-400 py-10'>Nenhum pedido.</p>" : 
-    pedidosCli.map(p => {
-        const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
-        const dataStr = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR');
-        return `
-        <div class="bg-slate-50 p-4 rounded border border-slate-100">
-            <div class="flex justify-between font-bold text-indigo-900 mb-2">
-                <span>${dataStr}</span>
-                <span>R$ ${(p.total || 0).toFixed(2)}</span>
-            </div>
-            <div class="text-xs text-slate-500 mb-2">${(p.itens ||[]).map(i => `• ${i.qtdCarrinho || 1}x ${i.nome}`).join('<br>')}</div>
-            <button type="button" onclick="imprimirRecibo('${p.id}')" class="text-[10px] font-bold text-indigo-500 uppercase hover:underline"><i class="fa fa-print"></i> Imprimir Recibo</button>
-        </div>
-        `;
-    }).join(''); 
-    document.getElementById('modalHistoricoCli').classList.remove('hidden'); 
-}
+        ${(p.itens ||
