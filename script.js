@@ -11,10 +11,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let bdCategorias = [], bdProdutos = [], bdClientes = [], bdPedidos = [], bdAcabamentos =[], bdTransacoes = [], carrinho = [];
+let bdCategorias = [], bdProdutos = [], bdClientes = [], bdPedidos =[], bdAcabamentos = [], bdTransacoes = [], carrinho = [];
 const STATUSES =["Aguardando pagamento", "Em produção", "Acabamento", "Pronto para Retirada", "Entregue", "Cancelado / Estorno"];
 
-// --- AUTENTICAÇÃO ---
+// --- AUTH ---
 auth.onAuthStateChanged(user => {
     const telaLogin = document.getElementById('telaLogin');
     const appInterface = document.getElementById('appInterface');
@@ -37,222 +37,55 @@ function entrar() {
 
 function sair() { auth.signOut(); }
 
-// --- LEITURA DE DADOS ---
+// --- LEITURA ---
 function iniciarLeitura() {
-    db.collection("categorias").onSnapshot(s => { 
-        bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderCat(); renderFiltrosVitrine();
-    });
-    db.collection("produtos").onSnapshot(s => { 
-        bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderVitrine(); renderProdTable();
-    });
-    db.collection("clientes").orderBy("nome").onSnapshot(s => { 
-        bdClientes = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderCliTable(); renderCliSelectCart();
-    });
-    db.collection("acabamentos").onSnapshot(s => {
-        bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderAcabTable(); atualizarListaAcabamentosProduto();
-    });
-    db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => {
-        bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderPedidosFinanceiro(); renderKanbanProducao();
-    });
-    db.collection("transacoes").orderBy("data", "desc").limit(50).onSnapshot(s => {
-        bdTransacoes = s.docs.map(d => ({id: d.id, ...d.data()}));
-        renderPedidosFinanceiro();
-    });
+    db.collection("categorias").onSnapshot(s => { bdCategorias = s.docs.map(d => ({id: d.id, ...d.data()})); renderCat(); renderFiltrosVitrine(); });
+    db.collection("produtos").onSnapshot(s => { bdProdutos = s.docs.map(d => ({id: d.id, ...d.data()})); renderVitrine(); renderProdTable(); });
+    db.collection("clientes").orderBy("nome").onSnapshot(s => { bdClientes = s.docs.map(d => ({id: d.id, ...d.data()})); renderCliTable(); renderCliSelectCart(); });
+    db.collection("acabamentos").onSnapshot(s => { bdAcabamentos = s.docs.map(d => ({id: d.id, ...d.data()})); renderAcabTable(); atualizarListaAcabamentosProduto(); });
+    db.collection("pedidos").orderBy("data", "desc").limit(50).onSnapshot(s => { bdPedidos = s.docs.map(d => ({id: d.id, ...d.data()})); renderPedidosFinanceiro(); renderKanbanProducao(); });
+    db.collection("transacoes").orderBy("data", "desc").limit(50).onSnapshot(s => { bdTransacoes = s.docs.map(d => ({id: d.id, ...d.data()})); renderPedidosFinanceiro(); });
 }
 
-// --- PRODUTOS (CADASTRO E EDIÇÃO) ---
-function ajustarCamposProduto() {
-    const r = document.getElementById('prodRegraPreco').value;
-    document.getElementById('boxPrecoBase').style.display = (r === 'pacote' || r === 'progressivo') ? 'none' : 'block';
-    document.getElementById('boxPacotes').style.display = r === 'pacote' ? 'block' : 'none';
-    document.getElementById('boxProgressivo').style.display = r === 'progressivo' ? 'block' : 'none';
-    document.getElementById('boxMedidas').style.display = r === 'm2' ? 'grid' : 'none';
+// --- UI GERAL ---
+function mudarAba(aba, btn) { 
+    document.querySelectorAll('.aba-content').forEach(el => el.classList.add('hidden')); 
+    document.getElementById('aba-'+aba).classList.remove('hidden'); 
+    document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('active-aba')); 
+    if(btn) btn.classList.add('active-aba'); 
+}
+function mudarSubAba(sub, btn) { 
+    document.querySelectorAll('.sub-aba-content').forEach(el => el.classList.add('hidden')); 
+    document.getElementById(sub).classList.remove('hidden'); 
+    document.querySelectorAll('.sub-aba-btn').forEach(b => b.classList.remove('active-sub', 'text-indigo-600')); 
+    if(btn) btn.classList.add('active-sub', 'text-indigo-600'); 
+}
+function fecharModal() { document.getElementById('modalW2P').classList.add('hidden'); }
+function fecharModalFora(event) { if (event.target.id === 'modalW2P') fecharModal(); }
+
+// --- FILTROS E VITRINE ---
+function renderFiltrosVitrine() {
+    const div = document.getElementById('menuFiltroCat');
+    if(!div) return;
+    div.innerHTML = `
+        <button type="button" onclick="renderVitrine('Todos')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Todos</button>
+        <button type="button" onclick="renderVitrine('grafico')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Gráfico</button>
+        <button type="button" onclick="renderVitrine('visual')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Com. Visual</button>
+        <button type="button" onclick="renderVitrine('outros')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Outros</button>
+    `;
 }
 
-function addLinhaPacote(q='', p='') {
-    const div = document.createElement('div');
-    div.className = "flex gap-2";
-    div.innerHTML = `<input type="text" placeholder="Ex: 1.000 Cartões" value="${q}" class="q w-full p-2 border border-slate-200 rounded text-xs outline-none focus:ring-2 focus:ring-amber-500"><input type="number" placeholder="Total R$" value="${p}" class="p w-full p-2 border border-slate-200 rounded font-bold text-amber-600 text-xs outline-none focus:ring-2 focus:ring-amber-500"><button type="button" onclick="this.parentElement.remove()" class="text-red-300">✕</button>`;
-    document.getElementById('listaGradePacotes').appendChild(div);
-}
-
-function addLinhaProgressivo(q='', p='') {
-    const div = document.createElement('div');
-    div.className = "flex gap-2";
-    div.innerHTML = `<input type="number" placeholder="Qtd Mín" value="${q}" class="q w-full p-2 border border-slate-200 rounded text-xs outline-none focus:ring-2 focus:ring-emerald-500"><input type="number" placeholder="Unit R$" value="${p}" class="p w-full p-2 border border-slate-200 rounded font-bold text-emerald-600 text-xs outline-none focus:ring-2 focus:ring-emerald-500"><button type="button" onclick="this.parentElement.remove()" class="text-red-300">✕</button>`;
-    document.getElementById('listaGradeProgressivo').appendChild(div);
-}
-
-function addOpcaoAtrib(container, n = '', p = '', fixo = false) {
-    const div = document.createElement('div');
-    div.className = "flex gap-2 item-opcao items-center";
-    const chk = fixo ? 'checked' : '';
-    div.innerHTML = `<input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-200 rounded bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border border-slate-200 rounded bg-slate-50 font-bold outline-none focus:ring-2 focus:ring-indigo-500"><label class="text-[9px] font-bold text-slate-400 flex items-center gap-1"><input type="checkbox" class="op-fixo" ${chk}> Fixo</label><button type="button" onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500">✕</button>`;
-    container.appendChild(div);
-}
-
-function addAtributo(nome = '', opcoes =[]) {
-    const div = document.createElement('div');
-    div.className = "bg-white p-4 rounded border border-slate-100 shadow-sm item-atrib";
-    div.innerHTML = `<div class="flex gap-2 mb-3"><input type="text" placeholder="Grupo (ex: Papel)" value="${nome}" class="atrib-nome flex-1 font-bold text-sm p-2 border-b-2 border-indigo-50 outline-none focus:border-indigo-500"><button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-300">✕</button></div><div class="lista-opcoes space-y-2"></div><button type="button" class="btn-add-op mt-3 text-[10px] font-bold uppercase text-indigo-400 hover:text-indigo-600">+ Add Opção</button>`;
-    document.getElementById('listaAtributos').appendChild(div);
-    const containerOpcoes = div.querySelector('.lista-opcoes');
-    div.querySelector('.btn-add-op').onclick = () => addOpcaoAtrib(containerOpcoes);
-    if (opcoes && opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(containerOpcoes, o.nome, o.preco, o.fixo));
-    else addOpcaoAtrib(containerOpcoes);
-}
-
-function addAtributoManual() { addAtributo('',[]); }
-
-function atualizarListaAcabamentosProduto(salvos =[]) {
-    const container = document.getElementById('listaCheckAcabamentos');
-    const catSelect = document.getElementById('prodCategoria');
-    if(!container || !catSelect) return;
-    const cat = catSelect.value;
-    const filtrados = bdAcabamentos.filter(a => a.categoria === cat || a.categoria === "Geral");
-    container.innerHTML = filtrados.map(a => {
-        const obj = salvos.find(s => (s.id || s) === a.id);
-        const checked = obj ? 'checked' : '';
-        const starAtiva = (obj && obj.padrao) ? 'text-amber-400' : 'text-slate-200';
-        return `<div class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded"><label class="text-[10px] font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" class="check-acab-prod" value="${a.id}" ${checked}> ${a.nome}</label><i class="fa fa-star cursor-pointer star-padrao ${starAtiva}" onclick="this.classList.toggle('text-amber-400'); this.classList.toggle('text-slate-200')"></i></div>`;
-    }).join('');
-}
-
-async function salvarProduto() {
-    const id = document.getElementById('prodId').value;
-    let atributos =[];
-    document.querySelectorAll('.item-atrib').forEach(caixa => {
-        let ops =[];
-        caixa.querySelectorAll('.item-opcao').forEach(l => {
-            const n = l.querySelector('.op-nome').value;
-            const p = parseFloat(l.querySelector('.op-preco').value) || 0;
-            const f = l.querySelector('.op-fixo').checked;
-            if (n) ops.push({ nome: n, preco: p, fixo: f });
-        });
-        const nomeAtrib = caixa.querySelector('.atrib-nome').value;
-        if (nomeAtrib) atributos.push({ nome: nomeAtrib, opcoes: ops });
-    });
-
-    let acabList =[];
-    document.querySelectorAll('.check-acab-prod:checked').forEach(chk => {
-        const star = chk.closest('div').querySelector('.star-padrao');
-        acabList.push({ id: chk.value, padrao: star.classList.contains('text-amber-400') });
-    });
-
-    let pacotes =[];
-    document.querySelectorAll('#listaGradePacotes > div').forEach(d => {
-        const q = d.querySelector('.q').value; 
-        const p = parseFloat(d.querySelector('.p').value);
-        if (q && p) pacotes.push({ qtd: q, preco: p });
-    });
-
-    let progressivo =[];
-    document.querySelectorAll('#listaGradeProgressivo > div').forEach(d => {
-        const q = parseInt(d.querySelector('.q').value); 
-        const p = parseFloat(d.querySelector('.p').value);
-        if (q && p) progressivo.push({ q: q, p: p });
-    });
-
-    const d = {
-        nome: document.getElementById('prodNome').value,
-        categoria: document.getElementById('prodCategoria').value,
-        subcategoria: document.getElementById('prodSubcategoria').value || '',
-        tipo: document.getElementById('prodTipo').value,
-        regraPreco: document.getElementById('prodRegraPreco').value,
-        preco: parseFloat(document.getElementById('prodPreco').value) || 0,
-        foto: document.getElementById('prodFoto').value || '',
-        ref: document.getElementById('prodRef').value || '',
-        material: document.getElementById('prodMaterial').value || '',
-        gramatura: document.getElementById('prodGramatura').value || '',
-        prazo: parseInt(document.getElementById('prodPrazo').value) || 0,
-        larguraBobina: parseFloat(document.getElementById('prodLargBobina').value) || 0,
-        larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0,
-        compMax: parseFloat(document.getElementById('prodCompMax').value) || 0,
-        obs: document.getElementById('prodObs').value || '',
-        atributos: atributos,
-        acabamentos: acabList,
-        pacotes: pacotes,
-        progressivo: progressivo
-    };
-
-    if (!d.nome) return alert("Nome obrigatório!");
-    if (id) await db.collection("produtos").doc(id).update(d); else await db.collection("produtos").add(d);
-    alert("Produto salvo com sucesso!");
-    limparFormProd();
-}
-
-function editProd(id) {
-    const p = bdProdutos.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('prodId').value = p.id;
-    document.getElementById('prodNome').value = p.nome || '';
-    document.getElementById('prodCategoria').value = p.categoria || '';
-    document.getElementById('prodSubcategoria').value = p.subcategoria || '';
-    document.getElementById('prodTipo').value = p.tipo || 'grafico';
-    document.getElementById('prodRegraPreco').value = p.regraPreco || 'unidade';
-    document.getElementById('prodPreco').value = p.preco || 0;
-    document.getElementById('prodFoto').value = p.foto || '';
-    document.getElementById('prodRef').value = p.ref || '';
-    document.getElementById('prodMaterial').value = p.material || '';
-    document.getElementById('prodGramatura').value = p.gramatura || '';
-    document.getElementById('prodPrazo').value = p.prazo || 0;
-    document.getElementById('prodLargBobina').value = p.larguraBobina || 0;
-    document.getElementById('prodLargMax').value = p.larguraMax || 0;
-    document.getElementById('prodCompMax').value = p.compMax || 0;
-    document.getElementById('prodObs').value = p.obs || '';
-    
-    document.getElementById('listaAtributos').innerHTML = '';
-    if (p.atributos) p.atributos.forEach(a => addAtributo(a.nome, a.opcoes));
-    
-    document.getElementById('listaGradePacotes').innerHTML = '';
-    if (p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
-
-    document.getElementById('listaGradeProgressivo').innerHTML = '';
-    if (p.progressivo) p.progressivo.forEach(prg => addLinhaProgressivo(prg.q, prg.p));
-
-    ajustarCamposProduto();
-    atualizarListaAcabamentosProduto(p.acabamentos ||[]);
-    mudarSubAba('sub-prod', document.querySelectorAll('.sub-aba-btn')[1]);
-}
-
-function limparFormProd() {
-    document.querySelectorAll('#sub-prod input, #sub-prod textarea').forEach(i => i.value = '');
-    document.getElementById('listaAtributos').innerHTML = '';
-    document.getElementById('listaGradePacotes').innerHTML = '';
-    document.getElementById('listaGradeProgressivo').innerHTML = '';
-    document.querySelectorAll('.check-acab-prod').forEach(c => c.checked = false);
-    document.querySelectorAll('.star-padrao').forEach(s => { s.classList.remove('text-amber-400'); s.classList.add('text-slate-200'); });
-}
-
-function renderProdTable() {
-    const tab = document.getElementById('listaProdutosTab');
-    if(!tab) return;
-    tab.innerHTML = bdProdutos.map(p => `
-        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-            <td class="p-4 font-bold text-slate-700">${p.nome}</td>
-            <td class="p-4 text-slate-400 text-[10px] uppercase">${p.regraPreco}</td>
-            <td class="p-4 text-center">
-                <button type="button" onclick="editProd('${p.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button>
-                <button type="button" onclick="db.collection('produtos').doc('${p.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// --- PDV E MODAL ---
 function renderVitrine(filtro = 'Todos') {
     const grid = document.getElementById('gradeProdutos');
     const termo = document.getElementById('buscaProduto')?.value.toLowerCase() || '';
     if (!grid) return;
     
     let prods = bdProdutos;
-    if(termo !== '') prods = prods.filter(p => p.nome.toLowerCase().includes(termo) || p.categoria.toLowerCase().includes(termo));
-    else if(filtro !== 'Todos') prods = prods.filter(p => p.categoria === filtro);
+    if(termo !== '') {
+        prods = prods.filter(p => p.nome.toLowerCase().includes(termo) || p.categoria.toLowerCase().includes(termo));
+    } else if(filtro !== 'Todos') {
+        prods = prods.filter(p => p.tipo === filtro);
+    }
     
     grid.innerHTML = prods.map(p => {
         let corTag = 'bg-slate-100 text-slate-500';
@@ -264,9 +97,9 @@ function renderVitrine(filtro = 'Todos') {
         if(p.regraPreco === 'pacote' && p.pacotes && p.pacotes.length > 0) precoExibicao = p.pacotes[0].preco;
 
         return `
-        <div onclick="abrirConfigurador('${p.id}')" class="bg-white p-6 rounded border border-slate-200 shadow-sm hover:shadow-xl cursor-pointer transition-all group relative">
+        <div onclick="abrirConfigurador('${p.id}')" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl cursor-pointer transition-all group relative">
             <span class="absolute top-4 right-4 ${corTag} px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest">${p.categoria}</span>
-            <div class="h-44 bg-slate-50 rounded mb-5 bg-contain bg-no-repeat bg-center transition group-hover:scale-105" style="background-image:url('${p.foto || 'https://via.placeholder.com/200'}')"></div>
+            <div class="h-44 bg-slate-50 rounded-xl mb-5 bg-contain bg-no-repeat bg-center transition group-hover:scale-105" style="background-image:url('${p.foto || 'https://via.placeholder.com/200'}')"></div>
             <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">${p.nome}</h4>
             <p class="text-xs font-bold text-slate-400">A partir de</p>
             <p class="text-xl font-black text-indigo-600">R$ ${precoExibicao.toFixed(2)}</p>
@@ -274,9 +107,11 @@ function renderVitrine(filtro = 'Todos') {
     `}).join('');
 }
 
+// --- CONFIGURADOR (MODAL) ---
 function abrirConfigurador(id) {
     const p = bdProdutos.find(x => x.id === id);
     if (!p) return;
+    
     document.getElementById('modalNomeProd').innerText = p.nome;
     document.getElementById('modalProdId').value = p.id;
     document.getElementById('modalProdPrecoBase').value = p.preco || 0;
@@ -467,7 +302,7 @@ function confirmarAdicaoCarrinho() {
     renderCarrinho();
 }
 
-// --- CARRINHO E CHECKOUT ---
+// --- CARRINHO ---
 function renderCarrinho() {
     const div = document.getElementById('listaCarrinho');
     if (!div) return;
@@ -513,6 +348,28 @@ function atualizarTotalFinal() {
     document.getElementById('cartSaldoDevedor').innerText = "R$ " + saldo.toFixed(2);
 }
 
+function renderCliSelectCart() { 
+    const datalist = document.getElementById('listaClientesData'); 
+    if(datalist) datalist.innerHTML = bdClientes.map(c => `<option value="${c.nome}"></option>`).join(''); 
+}
+
+function atualizarInfoCreditoCarrinho() { 
+    const nomeCli = document.getElementById('cartCliente').value; 
+    const label = document.getElementById('labelCreditoCli'); 
+    const c = bdClientes.find(x => x.nome === nomeCli);
+    if(!c) { 
+        label.innerText = "Saldo: R$ 0.00"; 
+        label.className = "text-emerald-500 font-bold"; 
+        return; 
+    } 
+    const credito = c.credito || 0; 
+    label.innerText = `Saldo: R$ ${credito.toFixed(2)}`; 
+    label.className = credito >= 0 ? "text-emerald-500 font-bold" : "text-red-500 font-bold"; 
+}
+
+function toggleOpcoesPagamento() { document.getElementById('divParcelas').style.display = (document.getElementById('cartPagamento').value === 'Credito_Parcelado') ? 'block' : 'none'; }
+function toggleOpcoesEntrega() { const v = document.getElementById('cartEntrega').value; document.getElementById('divFrete').style.display = (v === 'Retirada') ? 'none' : 'block'; atualizarTotalFinal(); }
+
 async function enviarPedido(imprimir = false) {
     if (carrinho.length === 0) return alert("Carrinho vazio!");
     
@@ -550,7 +407,7 @@ async function enviarPedido(imprimir = false) {
     else alert("PEDIDO SALVO!");
 }
 
-// --- KANBAN E PRODUÇÃO ---
+// --- KANBAN DE PRODUÇÃO ---
 function renderKanbanProducao() {
     const container = document.getElementById('kanbanContainer');
     if(!container) return;
@@ -608,6 +465,67 @@ async function mudarStatusPedido(id, novoStatus) {
     catch(e) { console.error(e); alert("Erro ao atualizar status."); }
 }
 
+// --- FINANCEIRO ---
+async function salvarMovimentacao() {
+    const tipo = document.getElementById('finTipo').value;
+    const desc = document.getElementById('finDesc').value;
+    const valor = parseFloat(document.getElementById('finValor').value);
+    if(!desc || !valor) return alert("Preencha descrição e valor!");
+    await db.collection("transacoes").add({ tipo: tipo, descricao: desc, valor: valor, data: new Date() });
+    document.getElementById('finDesc').value = ''; document.getElementById('finValor').value = '';
+}
+
+function renderPedidosFinanceiro() {
+    const tabPedidos = document.getElementById('listaPedidosTab');
+    if(tabPedidos) {
+        tabPedidos.innerHTML = bdPedidos.map(p => {
+            const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td class="p-4 text-slate-400 font-medium">${dataObj.toLocaleDateString('pt-BR')}</td>
+                <td class="p-4 font-bold text-slate-700">${p.clienteNome}</td>
+                <td class="p-4 font-black text-indigo-600">R$ ${(p.total || 0).toFixed(2)}</td>
+                <td class="p-4 text-center"><span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded text-[10px] font-black uppercase">${p.status}</span></td>
+                <td class="p-4 text-center"><button type="button" onclick="imprimirRecibo('${p.id}')" class="text-slate-400 hover:text-indigo-600" title="Imprimir Recibo"><i class="fa fa-print"></i></button></td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    const tabExtrato = document.getElementById('listaExtratoTab');
+    if(tabExtrato) {
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        let vHoje = 0, eMes = 0, sMes = 0; let extrato =[];
+
+        bdPedidos.forEach(p => {
+            const d = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
+            const v = p.valorPago || 0; const t = p.total || 0;
+            if(d >= hoje) vHoje += t;
+            if(d >= inicioMes) eMes += v;
+            if(v > 0) extrato.push({ data: d, desc: `Venda: ${p.clienteNome}`, valor: v, tipo: 'entrada' });
+        });
+
+        bdTransacoes.forEach(t => {
+            const d = t.data && t.data.toDate ? t.data.toDate() : new Date(t.data);
+            if(d >= inicioMes) { if(t.tipo === 'entrada') eMes += t.valor; else sMes += t.valor; }
+            extrato.push({ data: d, desc: t.descricao, valor: t.valor, tipo: t.tipo });
+        });
+
+        document.getElementById('finVendasHoje').innerText = "R$ " + vHoje.toFixed(2);
+        document.getElementById('finEntradasMes').innerText = "R$ " + eMes.toFixed(2);
+        document.getElementById('finSaidasMes').innerText = "R$ " + sMes.toFixed(2);
+        document.getElementById('finSaldoMes').innerText = "R$ " + (eMes - sMes).toFixed(2);
+
+        extrato.sort((a,b) => b.data - a.data);
+        tabExtrato.innerHTML = extrato.map(i => {
+            const corValor = i.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-500';
+            const sinal = i.tipo === 'entrada' ? '+' : '-';
+            return `<tr class="border-b border-slate-50 hover:bg-slate-50 transition"><td class="p-4 text-slate-400 font-medium">${i.data.toLocaleDateString('pt-BR')}</td><td class="p-4 font-bold text-slate-700">${i.desc}</td><td class="p-4 text-right font-black ${corValor}">${sinal} R$ ${i.valor.toFixed(2)}</td></tr>`;
+        }).join('');
+    }
+}
+
 // --- IMPRESSÃO ---
 function imprimirReciboDireto(idPedido, objPedido) {
     const p = objPedido || bdPedidos.find(x => x.id === idPedido);
@@ -615,7 +533,6 @@ function imprimirReciboDireto(idPedido, objPedido) {
     const janela = window.open('', '', 'width=350,height=800');
     const dataObj = p.data && p.data.toDate ? p.data.toDate() : new Date(p.data);
     const dataStr = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR');
-    
     let html = `
         <html><head><style>
             body { font-family: monospace; width: 80mm; margin: 0; padding: 10px; color: #000; font-size: 12px; }
@@ -669,7 +586,184 @@ function imprimirOSA4(idPedido) {
     janela.document.write(html); janela.document.close();
 }
 
-// --- CLIENTES ---
+// --- CADASTROS (PRODUTOS, CLIENTES, CATEGORIAS, ACABAMENTOS) ---
+function addOpcaoAtrib(container, n = '', p = '', fixo = false) {
+    const div = document.createElement('div');
+    div.className = "flex gap-2 item-opcao items-center";
+    const chk = fixo ? 'checked' : '';
+    div.innerHTML = `<input type="text" placeholder="Opção" value="${n}" class="op-nome flex-1 text-xs p-2 border border-slate-200 rounded bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"><input type="number" placeholder="R$" value="${p}" class="op-preco w-20 text-xs p-2 border border-slate-200 rounded bg-slate-50 font-bold outline-none focus:ring-2 focus:ring-indigo-500"><label class="text-[9px] font-bold text-slate-400 flex items-center gap-1"><input type="checkbox" class="op-fixo" ${chk}> Fixo</label><button type="button" onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500">✕</button>`;
+    container.appendChild(div);
+}
+
+function addAtributo(nome = '', opcoes =[]) {
+    const div = document.createElement('div');
+    div.className = "bg-white p-4 rounded border border-slate-100 shadow-sm item-atrib";
+    div.innerHTML = `<div class="flex gap-2 mb-3"><input type="text" placeholder="Grupo (ex: Papel)" value="${nome}" class="atrib-nome flex-1 font-bold text-sm p-2 border-b-2 border-indigo-50 outline-none focus:border-indigo-500"><button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-300">✕</button></div><div class="lista-opcoes space-y-2"></div><button type="button" class="btn-add-op mt-3 text-[10px] font-bold uppercase text-indigo-400 hover:text-indigo-600">+ Add Opção</button>`;
+    document.getElementById('listaAtributos').appendChild(div);
+    const containerOpcoes = div.querySelector('.lista-opcoes');
+    div.querySelector('.btn-add-op').onclick = () => addOpcaoAtrib(containerOpcoes);
+    if (opcoes && opcoes.length > 0) opcoes.forEach(o => addOpcaoAtrib(containerOpcoes, o.nome, o.preco, o.fixo));
+    else addOpcaoAtrib(containerOpcoes);
+}
+
+function addAtributoManual() { addAtributo('',[]); }
+
+function ajustarCamposProduto() {
+    const r = document.getElementById('prodRegraPreco').value;
+    document.getElementById('boxPrecoBase').style.display = (r === 'pacote' || r === 'progressivo') ? 'none' : 'block';
+    document.getElementById('boxPacotes').style.display = r === 'pacote' ? 'block' : 'none';
+    document.getElementById('boxProgressivo').style.display = r === 'progressivo' ? 'block' : 'none';
+    document.getElementById('boxMedidas').style.display = r === 'm2' ? 'grid' : 'none';
+}
+
+function addLinhaPacote(q='', p='') {
+    const div = document.createElement('div');
+    div.className = "flex gap-2";
+    div.innerHTML = `<input type="text" placeholder="Ex: 1.000 Cartões" value="${q}" class="q w-full p-2 border border-slate-200 rounded text-xs outline-none focus:ring-2 focus:ring-amber-500"><input type="number" placeholder="Total R$" value="${p}" class="p w-full p-2 border border-slate-200 rounded font-bold text-amber-600 text-xs outline-none focus:ring-2 focus:ring-amber-500"><button type="button" onclick="this.parentElement.remove()" class="text-red-300">✕</button>`;
+    document.getElementById('listaGradePacotes').appendChild(div);
+}
+
+function addLinhaProgressivo(q='', p='') {
+    const div = document.createElement('div');
+    div.className = "flex gap-2";
+    div.innerHTML = `<input type="number" placeholder="Qtd Mín" value="${q}" class="q w-full p-2 border border-slate-200 rounded text-xs outline-none focus:ring-2 focus:ring-emerald-500"><input type="number" placeholder="Unit R$" value="${p}" class="p w-full p-2 border border-slate-200 rounded font-bold text-emerald-600 text-xs outline-none focus:ring-2 focus:ring-emerald-500"><button type="button" onclick="this.parentElement.remove()" class="text-red-300">✕</button>`;
+    document.getElementById('listaGradeProgressivo').appendChild(div);
+}
+
+function atualizarListaAcabamentosProduto(salvos =[]) {
+    const container = document.getElementById('listaCheckAcabamentos');
+    const catSelect = document.getElementById('prodCategoria');
+    if(!container || !catSelect) return;
+    const cat = catSelect.value;
+    const filtrados = bdAcabamentos.filter(a => a.categoria === cat || a.categoria === "Geral");
+    container.innerHTML = filtrados.map(a => {
+        const obj = salvos.find(s => (s.id || s) === a.id);
+        const checked = obj ? 'checked' : '';
+        const starAtiva = (obj && obj.padrao) ? 'text-amber-400' : 'text-slate-200';
+        return `<div class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded"><label class="text-[10px] font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" class="check-acab-prod" value="${a.id}" ${checked}> ${a.nome}</label><i class="fa fa-star cursor-pointer star-padrao ${starAtiva}" onclick="this.classList.toggle('text-amber-400'); this.classList.toggle('text-slate-200')"></i></div>`;
+    }).join('');
+}
+
+async function salvarProduto() {
+    const id = document.getElementById('prodId').value;
+    let atributos =[];
+    document.querySelectorAll('.item-atrib').forEach(caixa => {
+        let ops =[];
+        caixa.querySelectorAll('.item-opcao').forEach(l => {
+            const n = l.querySelector('.op-nome').value;
+            const p = parseFloat(l.querySelector('.op-preco').value) || 0;
+            const f = l.querySelector('.op-fixo').checked;
+            if (n) ops.push({ nome: n, preco: p, fixo: f });
+        });
+        const nomeAtrib = caixa.querySelector('.atrib-nome').value;
+        if (nomeAtrib) atributos.push({ nome: nomeAtrib, opcoes: ops });
+    });
+
+    let acabList =[];
+    document.querySelectorAll('.check-acab-prod:checked').forEach(chk => {
+        const star = chk.closest('div').querySelector('.star-padrao');
+        acabList.push({ id: chk.value, padrao: star.classList.contains('text-amber-400') });
+    });
+
+    let pacotes =[];
+    document.querySelectorAll('#listaGradePacotes > div').forEach(d => {
+        const q = d.querySelector('.q').value; 
+        const p = parseFloat(d.querySelector('.p').value);
+        if (q && p) pacotes.push({ qtd: q, preco: p });
+    });
+
+    let progressivo =[];
+    document.querySelectorAll('#listaGradeProgressivo > div').forEach(d => {
+        const q = parseInt(d.querySelector('.q').value); 
+        const p = parseFloat(d.querySelector('.p').value);
+        if (q && p) progressivo.push({ q: q, p: p });
+    });
+
+    const d = {
+        nome: document.getElementById('prodNome').value,
+        categoria: document.getElementById('prodCategoria').value,
+        subcategoria: document.getElementById('prodSubcategoria').value || '',
+        tipo: document.getElementById('prodTipo').value,
+        regraPreco: document.getElementById('prodRegraPreco').value,
+        preco: parseFloat(document.getElementById('prodPreco').value) || 0,
+        foto: document.getElementById('prodFoto').value || '',
+        ref: document.getElementById('prodRef').value || '',
+        material: document.getElementById('prodMaterial').value || '',
+        gramatura: document.getElementById('prodGramatura').value || '',
+        prazo: parseInt(document.getElementById('prodPrazo').value) || 0,
+        larguraBobina: parseFloat(document.getElementById('prodLargBobina').value) || 0,
+        larguraMax: parseFloat(document.getElementById('prodLargMax').value) || 0,
+        compMax: parseFloat(document.getElementById('prodCompMax').value) || 0,
+        obs: document.getElementById('prodObs').value || '',
+        atributos: atributos,
+        acabamentos: acabList,
+        pacotes: pacotes,
+        progressivo: progressivo
+    };
+
+    if (!d.nome) return alert("Nome obrigatório!");
+    if (id) await db.collection("produtos").doc(id).update(d); else await db.collection("produtos").add(d);
+    limparFormProd();
+}
+
+function editProd(id) {
+    const p = bdProdutos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('prodId').value = p.id;
+    document.getElementById('prodNome').value = p.nome || '';
+    document.getElementById('prodCategoria').value = p.categoria || '';
+    document.getElementById('prodSubcategoria').value = p.subcategoria || '';
+    document.getElementById('prodTipo').value = p.tipo || 'grafico';
+    document.getElementById('prodRegraPreco').value = p.regraPreco || 'unidade';
+    document.getElementById('prodPreco').value = p.preco || 0;
+    document.getElementById('prodFoto').value = p.foto || '';
+    document.getElementById('prodRef').value = p.ref || '';
+    document.getElementById('prodMaterial').value = p.material || '';
+    document.getElementById('prodGramatura').value = p.gramatura || '';
+    document.getElementById('prodPrazo').value = p.prazo || 0;
+    document.getElementById('prodLargBobina').value = p.larguraBobina || 0;
+    document.getElementById('prodLargMax').value = p.larguraMax || 0;
+    document.getElementById('prodCompMax').value = p.compMax || 0;
+    document.getElementById('prodObs').value = p.obs || '';
+    
+    document.getElementById('listaAtributos').innerHTML = '';
+    if (p.atributos) p.atributos.forEach(a => addAtributo(a.nome, a.opcoes));
+    
+    document.getElementById('listaGradePacotes').innerHTML = '';
+    if (p.pacotes) p.pacotes.forEach(pct => addLinhaPacote(pct.qtd, pct.preco));
+
+    document.getElementById('listaGradeProgressivo').innerHTML = '';
+    if (p.progressivo) p.progressivo.forEach(prg => addLinhaProgressivo(prg.q, prg.p));
+
+    ajustarCamposProduto();
+    atualizarListaAcabamentosProduto(p.acabamentos ||[]);
+    mudarSubAba('sub-prod', document.querySelectorAll('.sub-aba-btn')[1]);
+}
+
+function limparFormProd() {
+    document.querySelectorAll('#sub-prod input, #sub-prod textarea').forEach(i => i.value = '');
+    document.getElementById('listaAtributos').innerHTML = '';
+    document.getElementById('listaGradePacotes').innerHTML = '';
+    document.getElementById('listaGradeProgressivo').innerHTML = '';
+    document.querySelectorAll('.check-acab-prod').forEach(c => c.checked = false);
+    document.querySelectorAll('.star-padrao').forEach(s => { s.classList.remove('text-amber-400'); s.classList.add('text-slate-200'); });
+}
+
+function renderProdTable() {
+    const tab = document.getElementById('listaProdutosTab');
+    if(!tab) return;
+    tab.innerHTML = bdProdutos.map(p => `
+        <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+            <td class="p-4 font-bold text-slate-700">${p.nome}</td>
+            <td class="p-4 text-slate-400 text-[10px] uppercase">${p.regraPreco}</td>
+            <td class="p-4 text-center">
+                <button type="button" onclick="editProd('${p.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button>
+                <button type="button" onclick="db.collection('produtos').doc('${p.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
 async function salvarCliente() { 
     const id = document.getElementById('cliId').value; 
     const d = { nome: document.getElementById('cliNome').value, documento: document.getElementById('cliDoc').value, telefone: document.getElementById('cliTel').value, endereco: document.getElementById('cliEnd').value, credito: parseFloat(document.getElementById('cliCredito').value) || 0 }; 
@@ -709,7 +803,6 @@ function verHistoricoCliente(idCli) {
     document.getElementById('modalHistoricoCli').classList.remove('hidden'); 
 }
 
-// --- CATEGORIAS ---
 async function salvarCategoria() { 
     const id = document.getElementById('catId').value; const nome = document.getElementById('catNome').value; 
     if(!nome) return; 
@@ -722,7 +815,15 @@ function editCat(id) {
     document.getElementById('catId').value = c.id; document.getElementById('catNome').value = c.nome; 
 }
 
-// --- ACABAMENTOS ---
+function renderCat() { 
+    const tab = document.getElementById('listaCategoriasTab'); 
+    if(tab) tab.innerHTML = bdCategorias.map(c => `<tr class="border-b border-slate-50"><td class="p-4 font-bold text-slate-600">${c.nome}</td><td class="p-4 text-right"><button type="button" onclick="editCat('${c.id}')" class="text-indigo-500 mr-3">Editar</button><button type="button" onclick="db.collection('categorias').doc('${c.id}').delete()" class="text-red-300">✕</button></td></tr>`).join(''); 
+    const catSelect = document.getElementById('prodCategoria'); 
+    if(catSelect) catSelect.innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); 
+    const acabCat = document.getElementById('acabCategoria'); 
+    if(acabCat) acabCat.innerHTML = catSelect.innerHTML; 
+}
+
 async function salvarAcabamento() { 
     const id = document.getElementById('acabId').value;
     const d = { nome: document.getElementById('acabNome')?.value, grupo: document.getElementById('acabGrupo')?.value, categoria: document.getElementById('acabCategoria')?.value, regra: document.getElementById('acabRegra')?.value, venda: parseFloat(document.getElementById('acabPrecoVenda')?.value) || 0, custo: parseFloat(document.getElementById('acabCusto')?.value) || 0 }; 
@@ -734,22 +835,14 @@ async function salvarAcabamento() {
 function editAcab(id) {
     const a = bdAcabamentos.find(x => x.id === id);
     if(!a) return;
-    document.getElementById('acabId').value = a.id; document.getElementById('acabNome').value = a.nome; document.getElementById('acabGrupo').value = a.grupo || ''; document.getElementById('acabCategoria').value = a.categoria || ''; document.getElementById('acabRegra').value = a.regra || 'unidade'; document.getElementById('acabPrecoVenda').value = a.venda || 0; document.getElementById('acabCusto').value = a.custo || 0; document.getElementById('tituloAcabForm').innerText = "Editar Acabamento";
+    document.getElementById('acabId').value = a.id; document.getElementById('acabNome').value = a.nome; document.getElementById('acabGrupo').value = a.grupo || ''; document.getElementById('acabCategoria').value = a.categoria || ''; document.getElementById('acabRegra').value = a.regra || 'unidade'; document.getElementById('acabPrecoVenda').value = a.venda || 0; document.getElementById('acabCusto').value = a.custo || 0;
 }
 
 function limparFormAcab() {
-    document.getElementById('acabId').value = ''; document.getElementById('acabNome').value = ''; document.getElementById('acabGrupo').value = ''; document.getElementById('acabPrecoVenda').value = ''; document.getElementById('acabCusto').value = ''; document.getElementById('tituloAcabForm').innerText = "Novo Acabamento";
+    document.getElementById('acabId').value = ''; document.getElementById('acabNome').value = ''; document.getElementById('acabGrupo').value = ''; document.getElementById('acabPrecoVenda').value = ''; document.getElementById('acabCusto').value = '';
 }
 
-// --- AUXILIARES GERAIS ---
-function mudarAba(aba, btn) { document.querySelectorAll('.aba-content').forEach(el => el.classList.add('hidden')); document.getElementById('aba-'+aba).classList.remove('hidden'); document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('active-aba')); if(btn) btn.classList.add('active-aba'); }
-function mudarSubAba(sub, btn) { document.querySelectorAll('.sub-aba-content').forEach(el => el.classList.add('hidden')); document.getElementById(sub).classList.remove('hidden'); document.querySelectorAll('.sub-aba-btn').forEach(b => b.classList.remove('active-sub', 'text-indigo-600')); if(btn) btn.classList.add('active-sub', 'text-indigo-600'); }
-function fecharModal() { document.getElementById('modalW2P').classList.add('hidden'); }
-function fecharModalFora(event) { if (event.target.id === 'modalW2P') fecharModal(); }
-function renderCat() { const tab = document.getElementById('listaCategoriasTab'); if(tab) tab.innerHTML = bdCategorias.map(c => `<tr class="border-b border-slate-50"><td class="p-4 font-bold text-slate-600">${c.nome}</td><td class="p-4 text-right"><button type="button" onclick="editCat('${c.id}')" class="text-indigo-500 mr-3">Editar</button><button type="button" onclick="db.collection('categorias').doc('${c.id}').delete()" class="text-red-300">✕</button></td></tr>`).join(''); const catSelect = document.getElementById('prodCategoria'); if(catSelect) catSelect.innerHTML = bdCategorias.map(c => `<option value="${c.nome}">${c.nome}</option>`).join(''); const acabCat = document.getElementById('acabCategoria'); if(acabCat) acabCat.innerHTML = catSelect.innerHTML; }
-function renderCliSelectCart() { const datalist = document.getElementById('listaClientesData'); if(datalist) datalist.innerHTML = bdClientes.map(c => `<option value="${c.nome}"></option>`).join(''); }
-function toggleOpcoesPagamento() { document.getElementById('divParcelas').style.display = (document.getElementById('cartPagamento').value === 'Credito_Parcelado') ? 'block' : 'none'; }
-function toggleOpcoesEntrega() { const v = document.getElementById('cartEntrega').value; document.getElementById('divFrete').style.display = (v === 'Retirada') ? 'none' : 'block'; atualizarTotalFinal(); }
-function renderAcabTable() { const tab = document.getElementById('listaAcabamentosTab'); if(tab) tab.innerHTML = bdAcabamentos.map(a => `<tr class="border-b border-slate-50"><td class="p-4 font-bold text-slate-600">${a.nome} (${a.grupo})</td><td class="p-4 text-center"><button type="button" onclick="editAcab('${a.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button><button type="button" onclick="db.collection('acabamentos').doc('${a.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button></td></tr>`).join(''); }
-function atualizarInfoCreditoCarrinho() { const nomeCli = document.getElementById('cartCliente').value; const label = document.getElementById('labelCreditoCli'); const c = bdClientes.find(x => x.nome === nomeCli); if(!c) { label.innerText = "Saldo: R$ 0.00"; label.className = "text-emerald-500 font-bold"; return; } const credito = c.credito || 0; label.innerText = `Saldo: R$ ${credito.toFixed(2)}`; label.className = credito >= 0 ? "text-emerald-500 font-bold" : "text-red-500 font-bold"; }
-function renderFiltrosVitrine() { const div = document.getElementById('menuFiltroCat'); if(!div) return; div.innerHTML = `<button type="button" onclick="renderVitrine('Todos')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">Todos</button>` + bdCategorias.map(c => `<button type="button" onclick="renderVitrine('${c.nome}')" class="px-6 py-3 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap">${c.nome}</button>`).join(''); }
+function renderAcabTable() { 
+    const tab = document.getElementById('listaAcabamentosTab'); 
+    if(tab) tab.innerHTML = bdAcabamentos.map(a => `<tr class="border-b border-slate-50"><td class="p-4 font-bold text-slate-600">${a.nome} (${a.grupo})</td><td class="p-4 text-center"><button type="button" onclick="editAcab('${a.id}')" class="text-indigo-500 mr-3 font-bold text-[10px] uppercase">Editar</button><button type="button" onclick="db.collection('acabamentos').doc('${a.id}').delete()" class="text-red-300 font-bold text-[10px]">X</button></td></tr>`).join(''); 
+}
