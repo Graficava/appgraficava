@@ -19,6 +19,12 @@
         input::-webkit-outer-spin-button, 
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .kanban-col { max-height: calc(100vh - 180px); min-width: 320px; }
+        
+        /* Nova Barra de Rolagem Elegante */
+        .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 3px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-[#f4f4f2] text-slate-700 font-sans overflow-hidden">
@@ -68,7 +74,7 @@
             <!-- SIDEBAR -->
             <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col shrink-0">
                 <div class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menu Principal</div>
-                <nav class="flex-1 space-y-1 overflow-y-auto">
+                <nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
                     <button type="button" onclick="mudarAba('loja', this)" class="aba-btn w-full flex items-center gap-3 p-4 font-bold text-slate-500 hover:bg-slate-50 active-aba">
                         <i class="fa fa-shopping-cart w-5"></i> Loja PDV
                     </button>
@@ -85,7 +91,7 @@
             </aside>
 
             <!-- CONTEUDO -->
-            <main class="flex-1 p-6 overflow-y-auto bg-[#f4f4f2]">
+            <main class="flex-1 p-6 overflow-y-auto bg-[#f4f4f2] custom-scrollbar">
 
                 <!-- ABA LOJA -->
                 <section id="aba-loja" class="aba-content block">
@@ -98,7 +104,7 @@
                                     <i class="fa fa-search absolute left-4 top-3.5 text-slate-400"></i>
                                     <input type="text" id="buscaProduto" onkeyup="renderVitrine()" placeholder="Buscar produto..." class="w-full pl-10 p-3 rounded-lg border border-slate-200 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" />
                                 </div>
-                                <div id="menuFiltroCat" class="flex gap-3 overflow-x-auto pb-2 flex-1 no-scrollbar w-full"></div>
+                                <div id="menuFiltroCat" class="flex gap-3 overflow-x-auto pb-2 flex-1 custom-scrollbar w-full"></div>
                             </div>
 
                             <div id="gradeProdutos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
@@ -116,7 +122,7 @@
                                 <datalist id="listaClientesData"></datalist>
                             </div>
 
-                            <div id="listaCarrinho" class="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1"></div>
+                            <div id="listaCarrinho" class="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1 custom-scrollbar"></div>
                             
                             <div class="border-t border-slate-100 pt-4 space-y-3">
                                 <div class="grid grid-cols-2 gap-2">
@@ -193,7 +199,8 @@
                 <!-- ABA PRODUÇÃO (KANBAN) -->
                 <section id="aba-producao" class="aba-content hidden h-full flex flex-col">
                     <h2 class="text-2xl font-bold text-slate-900 mb-6 uppercase italic tracking-tighter">Painel de Produção</h2>
-                    <div id="kanbanContainer" class="flex-1 overflow-x-auto flex flex-nowrap gap-4 pb-4 items-start no-scrollbar"></div>
+                    <!-- AQUI ESTÁ A BARRA DE ROLAGEM CUSTOMIZADA -->
+                    <div id="kanbanContainer" class="flex-1 overflow-x-auto flex flex-nowrap gap-4 pb-6 items-start custom-scrollbar"></div>
                 </section>
 
                 <!-- ABA FINANCEIRO -->
@@ -246,7 +253,7 @@
                             <div class="p-4 border-b border-slate-100 bg-slate-50">
                                 <h3 class="font-bold text-slate-800 uppercase text-xs tracking-widest">Extrato Recente</h3>
                             </div>
-                            <div class="flex-1 overflow-y-auto">
+                            <div class="flex-1 overflow-y-auto custom-scrollbar">
                                 <table class="w-full text-left text-xs font-bold">
                                     <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider sticky top-0 shadow-sm">
                                         <tr>
@@ -350,7 +357,7 @@
                                 </div>
                                 <div class="bg-slate-50 p-4 rounded border border-slate-100">
                                     <h4 class="font-bold text-slate-400 mb-4 text-[10px] uppercase tracking-widest">Acabamentos Disponíveis</h4>
-                                    <div id="listaCheckAcabamentos" class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1"></div>
+                                    <div id="listaCheckAcabamentos" class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar"></div>
                                 </div>
                             </div>
 
@@ -450,7 +457,7 @@
                     </div>
                 </div>
 
-                <div class="w-full md:w-3/5 p-8 overflow-y-auto">
+                <div class="w-full md:w-3/5 p-8 overflow-y-auto custom-scrollbar">
                     <input type="hidden" id="modalProdId" />
                     <input type="hidden" id="modalProdPrecoBase" />
                     <input type="hidden" id="modalProdRegra" />
@@ -483,7 +490,7 @@
                 <h3 id="histNomeCli" class="text-2xl font-black text-slate-900 uppercase tracking-tighter">Histórico</h3>
                 <button type="button" onclick="document.getElementById('modalHistoricoCli').classList.add('hidden')" class="text-slate-300 hover:text-red-500 font-bold">✕ FECHAR</button>
             </div>
-            <div id="corpoHistoricoCli" class="overflow-y-auto space-y-4"></div>
+            <div id="corpoHistoricoCli" class="overflow-y-auto space-y-4 custom-scrollbar"></div>
         </div>
     </div>
 
